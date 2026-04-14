@@ -34,12 +34,22 @@ const BookingModal = ({ children, lang }: { children: React.ReactNode, lang: "EN
         <DialogHeader className="p-6 pb-0">
           <DialogTitle className="text-3xl font-serif">{t.title}</DialogTitle>
         </DialogHeader>
-        <div className="flex-1 w-full h-full min-h-0 mt-4">
+        <div className="flex-1 w-full h-full min-h-0 mt-4 relative">
           <iframe 
             src={GOOGLE_CALENDAR_URL} 
             className="w-full h-full border-0"
             title="Google Calendar Appointment Scheduling"
           />
+          <div className="absolute bottom-4 right-4">
+            <a 
+              href={GOOGLE_CALENDAR_URL.replace('?gv=true', '')} 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-xs text-muted-foreground hover:text-primary underline bg-background/80 backdrop-blur-sm px-2 py-1 rounded"
+            >
+              {lang === "EN" ? "Trouble viewing? Open in new tab" : "Probleme bei der Anzeige? In neuem Tab öffnen"}
+            </a>
+          </div>
         </div>
       </DialogContent>
     </Dialog>
@@ -524,7 +534,9 @@ const Footer = ({ lang }: { lang: "EN" | "DE" }) => {
               </li>
               <li className="flex items-start gap-3 text-muted-foreground">
                 <MessageCircle className="w-5 h-5 text-primary shrink-0" />
-                <span>WhatsApp: +49 123 456 789</span>
+                <a href="https://wa.me/4915175315761" target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors">
+                  WhatsApp: +49 151 75315761
+                </a>
               </li>
             </ul>
           </div>
@@ -542,7 +554,7 @@ const Footer = ({ lang }: { lang: "EN" | "DE" }) => {
       </div>
       
       <a 
-        href="https://wa.me/49123456789?text=Hi%20Richa,%20I'm%20interested%20in%20learning%20more%20about%20your%20wellness%20sessions!" 
+        href="https://wa.me/4915175315761?text=Hi%20Richa,%20I'm%20interested%20in%20learning%20more%20about%20your%20wellness%20sessions!" 
         target="_blank" 
         rel="noopener noreferrer"
         className="fixed bottom-8 right-8 bg-[#25D366] text-white p-4 rounded-full shadow-2xl hover:scale-110 transition-transform z-50 flex items-center gap-2 group"

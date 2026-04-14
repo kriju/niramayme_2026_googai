@@ -1,6 +1,6 @@
 import { Heart, Sparkles, Brain, Zap, ShieldCheck } from "lucide-react";
 
-export const GOOGLE_CALENDAR_URL = "https://calendar.app.google/eyWe7aE6zyZ5yfHg9";
+export const GOOGLE_CALENDAR_URL = "https://calendar.google.com/calendar/appointments/schedules/AcZssZ0bFjK2E2xI3wiT55LqPigmiOHHDxGTghizdBbhy4MSdbw1p6CRUsxVk8gZYqJTnMgoKOAcJjZO?gv=true";
 
 export const TRANSLATIONS = {
   EN: {
