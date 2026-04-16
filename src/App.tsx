@@ -71,7 +71,7 @@ const Navbar = ({ lang, setLang }: { lang: "EN" | "DE", setLang: (l: "EN" | "DE"
     <nav className={`fixed top-0 w-full z-50 transition-all duration-300 ${isScrolled ? "bg-background/80 backdrop-blur-md border-b py-3" : "bg-transparent py-6"}`}>
       <div className="container mx-auto px-6 flex justify-between items-center">
         <div className="flex items-center gap-2">
-          <img src="/logo.png" alt="Niramay Logo" className="w-10 h-10 object-contain" referrerPolicy="no-referrer" />
+          <img src="/logo.svg" alt="Niramay Logo" className="w-10 h-10 object-contain" referrerPolicy="no-referrer" />
           <span className="font-serif text-2xl font-bold tracking-tight">Niramay</span>
         </div>
 
@@ -490,7 +490,7 @@ const Footer = ({ lang }: { lang: "EN" | "DE" }) => {
         <div className="grid md:grid-cols-4 gap-12 mb-16">
           <div className="col-span-2">
             <div className="flex items-center gap-2 mb-6">
-              <img src="/logo.png" alt="Niramay Logo" className="w-10 h-10 object-contain" referrerPolicy="no-referrer" />
+              <img src="/logo.svg" alt="Niramay Logo" className="w-10 h-10 object-contain" referrerPolicy="no-referrer" />
               <span className="font-serif text-2xl font-bold tracking-tight">Niramay</span>
             </div>
             <p className="text-muted-foreground text-lg max-w-md mb-8">
