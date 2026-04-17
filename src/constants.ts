@@ -1,4 +1,4 @@
-import { Heart, Sparkles, Brain, Zap, ShieldCheck } from "lucide-react";
+import { Heart, Sparkles, Brain, Zap, ShieldCheck, Moon } from "lucide-react";
 
 export const GOOGLE_CALENDAR_URL = "https://calendar.google.com/calendar/appointments/schedules/AcZssZ0bFjK2E2xI3wiT55LqPigmiOHHDxGTghizdBbhy4MSdbw1p6CRUsxVk8gZYqJTnMgoKOAcJjZO?gv=true";
 
@@ -240,6 +240,23 @@ export const SERVICES = [
       title: "Rückführung in vergangene Leben",
       description: "Erforschen Sie Ihre unterbewussten Erinnerungen, um aktuelle Lebensmuster zu verstehen und spirituelle Heilung zu finden.",
       outcome: "Gewinnen Sie tiefe Einblicke in die Reise Ihrer Seele und lösen Sie karmische Blockaden.",
+    }
+  },
+  {
+    id: "sleep-restoration",
+    icon: Moon,
+    color: "bg-stone-100",
+    category: "Physical Wellness",
+    link: "https://sleep-foundation.lovable.app/",
+    EN: {
+      title: "Recharge Through Rest",
+      description: "Experience deep wellness through sleep restoration techniques designed to optimize your natural circadian rhythm.",
+      outcome: "Achieve restorative sleep, improved energy levels, and enhanced cognitive function.",
+    },
+    DE: {
+      title: "Auftanken durch Ruhe",
+      description: "Erleben Sie tiefes Wohlbefinden durch Techniken zur Schlafwiederherstellung, die darauf ausgelegt sind, Ihren natürlichen zirkadianen Rhythmus zu optimieren.",
+      outcome: "Ereichen Sie erholsamen Schlaf, ein verbessertes Energieniveau und eine gesteigerte kognitive Funktion.",
     }
   },
 ];

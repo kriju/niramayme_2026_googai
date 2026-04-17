@@ -217,9 +217,17 @@ const ServiceCard = ({ service, index, lang }: { service: any, index: number, la
             <p className="text-xs font-bold uppercase tracking-wider text-primary/50 mb-2">{t.outcomeLabel}</p>
             <p className="text-sm font-medium">{content.outcome}</p>
           </div>
-          <Button variant="link" className="mt-6 p-0 h-auto font-bold text-primary group-hover:translate-x-1 transition-transform">
-            {t.learnMore} <ArrowRight className="w-4 h-4 ml-2" />
-          </Button>
+          {service.link ? (
+            <a href={service.link} target="_blank" rel="noopener noreferrer" className="inline-block mt-6">
+              <Button variant="link" className="p-0 h-auto font-bold text-primary group-hover:translate-x-1 transition-transform">
+                {t.learnMore} <ArrowRight className="w-4 h-4 ml-2" />
+              </Button>
+            </a>
+          ) : (
+            <Button variant="link" className="mt-6 p-0 h-auto font-bold text-primary group-hover:translate-x-1 transition-transform">
+              {t.learnMore} <ArrowRight className="w-4 h-4 ml-2" />
+            </Button>
+          )}
         </CardContent>
       </Card>
     </motion.div>
