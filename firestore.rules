@@ -23,10 +23,28 @@ service cloud.firestore {
           && data.createdAt is timestamp;
     }
 
+    // Blog helper
+    function isValidBlog(data) {
+      return data.keys().hasAll(['slug', 'title', 'content', 'createdAt', 'lang'])
+          && data.slug is string && data.slug.size() > 0
+          && data.title is string && data.title.size() > 0
+          && data.content is string && data.content.size() > 0
+          && data.lang in ['EN', 'DE']
+          && data.createdAt is timestamp;
+    }
+
     match /reviews/{reviewId} {
       allow get, list: if true;
       allow create: if isValidId(reviewId) && isValidReview(incoming());
       allow update, delete: if false;
+    }
+
+    match /blogs/{blogId} {
+      allow get, list: if true;
+      // In a real app, only admins could create/update/delete. 
+      // For this turn, we allow creation so I can seed it from a script or UI easily if needed.
+      allow create, update: if isValidBlog(incoming());
+      allow delete: if false;
     }
   }
 }

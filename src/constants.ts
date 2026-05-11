@@ -9,6 +9,7 @@ export const TRANSLATIONS = {
       services: "Services",
       about: "About",
       reviews: "Reviews",
+      blog: "Blog",
       faq: "FAQ",
       sessions: "Sessions",
       bookNow: "Book Now",
@@ -96,6 +97,36 @@ export const TRANSLATIONS = {
       rights: "All rights reserved.",
       impressum: "Impressum",
       privacy: "Privacy Policy",
+    },
+    blog: {
+      title: "Insights & Wisdom",
+      description: "Explore our collection of articles on holistic healing, yoga, and mindfulness.",
+      readMore: "Read Full Article",
+      loadMore: "Load More",
+      showLess: "Show Less",
+      backToList: "Back to Blog",
+      addPost: "Add New Post",
+      categories: {
+        all: "All Insights",
+        physical: "Physical Wellness",
+        mental: "Mental Clarity",
+        spiritual: "Spiritual Healing",
+        kids: "Kids Yoga",
+        dance: "Dance Therapy",
+        tarot: "Tarot Reading",
+        chair: "Chair Yoga"
+      },
+      editor: {
+        title: "Create Post",
+        titleLabel: "Post Title",
+        excerptLabel: "Short Summary",
+        contentLabel: "Main Content",
+        categoryLabel: "Category",
+        imageLabel: "Image URL (Unsplash)",
+        submit: "Publish Article",
+        cancel: "Cancel",
+        saving: "Publishing..."
+      }
     }
   },
   DE: {
@@ -103,6 +134,7 @@ export const TRANSLATIONS = {
       services: "Dienstleistungen",
       about: "Über mich",
       reviews: "Bewertungen",
+      blog: "Blog",
       faq: "FAQ",
       sessions: "Sitzungen",
       bookNow: "Jetzt buchen",
@@ -190,6 +222,36 @@ export const TRANSLATIONS = {
       rights: "Alle Rechte vorbehalten.",
       impressum: "Impressum",
       privacy: "Datenschutz",
+    },
+    blog: {
+      title: "Einblicke & Weisheit",
+      description: "Entdecken Sie unsere Sammlung von Artikeln über ganzheitliche Heilung, Yoga und Achtsamkeit.",
+      readMore: "Vollständigen Artikel lesen",
+      loadMore: "Mehr laden",
+      showLess: "Weniger anzeigen",
+      backToList: "Zurück zum Blog",
+      addPost: "Neuen Post erstellen",
+      categories: {
+        all: "Alle Einblicke",
+        physical: "Körperlich",
+        mental: "Geistig",
+        spiritual: "Spirituell",
+        kids: "Kinder Yoga",
+        dance: "Tanztherapie",
+        tarot: "Tarot-Lesung",
+        chair: "Stuhl-Yoga"
+      },
+      editor: {
+        title: "Post erstellen",
+        titleLabel: "Titel des Posts",
+        excerptLabel: "Kurze Zusammenfassung",
+        contentLabel: "Hauptinhalt",
+        categoryLabel: "Kategorie",
+        imageLabel: "Bild-URL (Unsplash)",
+        submit: "Artikel veröffentlichen",
+        cancel: "Abbrechen",
+        saving: "Wird veröffentlicht..."
+      }
     }
   }
 };
@@ -281,15 +343,18 @@ export const SERVICES = [
     color: "bg-stone-100",
     category: "Physical Wellness",
     link: "https://sleep-foundation.lovable.app/",
+    openInModal: true,
     EN: {
       title: "Recharge Through Rest",
       description: "Experience deep wellness through sleep restoration techniques designed to optimize your natural circadian rhythm.",
       outcome: "Achieve restorative sleep, improved energy levels, and enhanced cognitive function.",
+      linkLabel: "Try this interactive tool to learn more",
     },
     DE: {
       title: "Auftanken durch Ruhe",
       description: "Erleben Sie tiefes Wohlbefinden durch Techniken zur Schlafwiederherstellung, die darauf ausgelegt sind, Ihren natürlichen zirkadianen Rhythmus zu optimieren.",
       outcome: "Ereichen Sie erholsamen Schlaf, ein verbessertes Energieniveau und eine gesteigerte kognitive Funktion.",
+      linkLabel: "Probieren Sie dieses interaktive Tool aus, um mehr zu erfahren",
     }
   },
   {
@@ -298,17 +363,18 @@ export const SERVICES = [
     color: "bg-stone-100",
     category: "Mental Clarity",
     link: "https://better-relationships.lovable.app/",
+    openInModal: true,
     EN: {
       title: "Relationship Counselling",
       description: "Navigate relationship challenges and strengthen your emotional bonds through specialized counselling and coaching techniques.",
       outcome: "Improved communication, deeper intimacy, and healthier relationship patterns.",
-      linkLabel: "Try this tool",
+      linkLabel: "Try this interactive tool to learn more",
     },
     DE: {
       title: "Beziehungsberatung",
       description: "Bewältigen Sie Beziehungsherausforderungen und stärken Sie Ihre emotionalen Bindungen durch spezialisierte Beratungs- und Coaching-Techniken.",
       outcome: "Verbesserte Kommunikation, tiefere Intimität und gesündere Beziehungsmuster.",
-      linkLabel: "Probieren Sie dieses Tool aus",
+      linkLabel: "Probieren Sie dieses interaktive Tool aus, um mehr zu erfahren",
     }
   },
 ];

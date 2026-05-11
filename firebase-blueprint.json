@@ -16,12 +16,34 @@
         "lang": { "type": "string", "enum": ["EN", "DE"] }
       },
       "required": ["name", "rating", "content", "category", "createdAt", "lang"]
+    },
+    "BlogPost": {
+      "title": "BlogPost",
+      "description": "An article or blog post published by trainers.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "slug": { "type": "string" },
+        "title": { "type": "string" },
+        "excerpt": { "type": "string" },
+        "content": { "type": "string" },
+        "author": { "type": "string" },
+        "image": { "type": "string" },
+        "category": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "lang": { "type": "string", "enum": ["EN", "DE"] }
+      },
+      "required": ["slug", "title", "content", "createdAt", "lang"]
     }
   },
   "firestore": {
     "/reviews/{reviewId}": {
       "schema": "Review",
       "description": "Collection of user-submitted reviews."
+    },
+    "/blogs/{blogId}": {
+      "schema": "BlogPost",
+      "description": "Collection of blog posts and articles."
     }
   }
 }

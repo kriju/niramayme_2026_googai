@@ -22,8 +22,26 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { db } from "./lib/firebase";
-import { collection, onSnapshot, query, orderBy, addDoc, serverTimestamp, Timestamp } from "firebase/firestore";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { 
+  collection, 
+  onSnapshot, 
+  query, 
+  orderBy, 
+  addDoc, 
+  serverTimestamp, 
+  Timestamp, 
+  limit,
+  where,
+  getDocs
+} from "firebase/firestore";
+import { 
+  Card, 
+  CardContent, 
+  CardDescription, 
+  CardHeader, 
+  CardTitle,
+  CardFooter
+} from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -168,6 +186,357 @@ const LeaveReviewModal = ({ lang }: { lang: "EN" | "DE" }) => {
   );
 };
 
+const BlogCard = ({ blog, lang, onReadMore }: { blog: any, lang: "EN" | "DE", onReadMore: (b: any) => void, key?: any }) => {
+  const t = TRANSLATIONS[lang].blog;
+  return (
+    <motion.div
+      layout
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -20 }}
+      className="h-full"
+    >
+      <Card className="overflow-hidden border-stone-100 flex flex-col h-full hover:shadow-xl transition-all duration-500 group">
+        <div className="relative h-56 overflow-hidden">
+          <img 
+            src={blog.image} 
+            alt={blog.title} 
+            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+            referrerPolicy="no-referrer"
+          />
+          <div className="absolute top-4 left-4">
+            <Badge className="bg-white/90 backdrop-blur-md text-primary border-none">
+              {blog.category}
+            </Badge>
+          </div>
+        </div>
+        <CardHeader className="flex-grow">
+          <CardTitle className="text-xl font-serif mb-2 line-clamp-2 leading-tight">
+            {blog.title}
+          </CardTitle>
+          <CardDescription className="line-clamp-3">
+            {blog.excerpt}
+          </CardDescription>
+        </CardHeader>
+        <CardFooter className="pt-0">
+          <Button 
+            variant="link" 
+            className="px-0 text-primary font-bold group-hover:translate-x-1 transition-transform"
+            onClick={() => onReadMore(blog)}
+          >
+            {t.readMore} <Plus className="ml-2 w-4 h-4" />
+          </Button>
+        </CardFooter>
+      </Card>
+    </motion.div>
+  );
+};
+
+const BlogDetailModal = ({ blog, open, onOpenChange, lang }: { blog: any, open: boolean, onOpenChange: (o: boolean) => void, lang: "EN" | "DE" }) => {
+  if (!blog) return null;
+  
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader className="mb-6">
+          <div className="flex gap-2 mb-4">
+            <Badge variant="outline">{blog.category}</Badge>
+            <span className="text-sm text-stone-400">
+              {blog.createdAt?.toDate ? blog.createdAt.toDate().toLocaleDateString(lang === "DE" ? "de-DE" : "en-US") : ""}
+            </span>
+          </div>
+          <DialogTitle className="text-3xl md:text-4xl font-serif leading-tight">
+            {blog.title}
+          </DialogTitle>
+        </DialogHeader>
+        
+        <div className="space-y-6">
+          {blog.externalLink ? (
+            <div className="w-full aspect-[4/3] md:aspect-video rounded-2xl overflow-hidden border border-stone-100 shadow-inner">
+              <iframe 
+                src={blog.externalLink} 
+                className="w-full h-full border-0"
+                title={blog.title}
+              />
+            </div>
+          ) : (
+            <>
+              <img 
+                src={blog.image} 
+                alt={blog.title} 
+                className="w-full aspect-video object-cover rounded-2xl"
+                referrerPolicy="no-referrer"
+              />
+              
+              <div className="prose prose-stone max-w-none prose-lg">
+                {blog.content.split('\n').map((paragraph: string, i: number) => (
+                  <p key={i} className="text-stone-600 leading-relaxed">
+                    {paragraph}
+                  </p>
+                ))}
+              </div>
+            </>
+          )}
+          
+          <div className="pt-12 border-t border-stone-100 flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-full bg-stone-100 flex items-center justify-center font-bold text-stone-600">
+                {blog.author?.[0] || "R"}
+              </div>
+              <div>
+                <p className="font-bold">{blog.author || "Richa"}</p>
+                <p className="text-sm text-stone-400">Therapist & Founder</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+const BlogEditorModal = ({ open, setOpen, lang }: { open: boolean, setOpen: (o: boolean) => void, lang: "EN" | "DE" }) => {
+  const t = TRANSLATIONS[lang].blog.editor;
+  const [loading, setLoading] = useState(false);
+  const [formData, setFormData] = useState({
+    title: "",
+    excerpt: "",
+    content: "",
+    category: "Physical Wellness",
+    image: "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&q=80&w=800",
+    author: "Richa"
+  });
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      await addDoc(collection(db, "blogs"), {
+        ...formData,
+        lang,
+        createdAt: serverTimestamp()
+      });
+      setOpen(false);
+      setFormData({
+        title: "",
+        excerpt: "",
+        content: "",
+        category: "Physical Wellness",
+        image: "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&q=80&w=800",
+        author: "Richa"
+      });
+    } catch (error) {
+      console.error("Error adding blog:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="text-2xl font-serif">{t.title}</DialogTitle>
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="space-y-4 pt-4">
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-stone-600">{t.titleLabel}</label>
+            <input 
+              required 
+              className="w-full px-4 py-3 rounded-xl border border-stone-200 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all font-serif italic text-lg" 
+              placeholder="e.g. The Power of Alignment"
+              value={formData.title} 
+              onChange={e => setFormData({...formData, title: e.target.value})} 
+            />
+          </div>
+          <div className="grid md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-stone-600">{t.categoryLabel}</label>
+              <select 
+                className="w-full px-4 py-3 rounded-xl border border-stone-200 bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
+                value={formData.category}
+                onChange={e => setFormData({...formData, category: e.target.value})}
+              >
+                {["Physical Wellness", "Mental Clarity", "Spiritual Healing", "Kids Yoga", "Dance Therapy", "Tarot Reading", "Chair Yoga"].map(c => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+              </select>
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-stone-600">{t.imageLabel}</label>
+              <input 
+                className="w-full px-4 py-3 rounded-xl border border-stone-200 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all text-sm" 
+                value={formData.image} 
+                onChange={e => setFormData({...formData, image: e.target.value})} 
+              />
+            </div>
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-stone-600">{t.excerptLabel}</label>
+            <textarea 
+              required 
+              className="w-full px-4 py-3 rounded-xl border border-stone-200 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all h-24 resize-none" 
+              value={formData.excerpt} 
+              onChange={e => setFormData({...formData, excerpt: e.target.value})} 
+            />
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-stone-600">{t.contentLabel}</label>
+            <textarea 
+              required 
+              className="w-full px-4 py-3 rounded-xl border border-stone-200 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all h-64" 
+              value={formData.content} 
+              onChange={e => setFormData({...formData, content: e.target.value})} 
+            />
+          </div>
+          <div className="flex justify-end gap-3 pt-6">
+            <Button type="button" variant="ghost" onClick={() => setOpen(false)}>{t.cancel}</Button>
+            <Button type="submit" disabled={loading} className="px-8">{loading ? t.saving : t.submit}</Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+const BlogSection = ({ lang }: { lang: "EN" | "DE" }) => {
+  const [blogs, setBlogs] = useState<any[]>([]);
+  const [filter, setFilter] = useState("all");
+  const [selectedBlog, setSelectedBlog] = useState<any>(null);
+  const [isEditorOpen, setIsEditorOpen] = useState(false);
+  const [visibleCount, setVisibleCount] = useState(3);
+  const t = TRANSLATIONS[lang].blog;
+
+  useEffect(() => {
+    // Listen for blogs based on current language
+    const q = query(
+      collection(db, "blogs"), 
+      where("lang", "==", lang),
+      orderBy("createdAt", "desc")
+    );
+    
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const b = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setBlogs(b);
+    });
+    
+    return () => unsubscribe();
+  }, [lang]);
+
+  const filtered = filter === "all" ? blogs : blogs.filter(b => b.category === filter);
+  const currentBlogs = filtered.slice(0, visibleCount);
+  const hasMore = visibleCount < filtered.length;
+
+  return (
+    <section id="blog" className="py-24 bg-stone-50 overflow-hidden">
+      <div className="container mx-auto px-6">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-16 gap-8">
+          <div className="max-w-2xl">
+            <div className="flex items-center gap-4 mb-4">
+              <h2 className="text-4xl md:text-5xl font-serif font-bold text-primary">{t.title}</h2>
+              <Button 
+                variant="outline" 
+                size="icon" 
+                className="rounded-full border-stone-200 hover:bg-white hover:text-primary transition-all"
+                onClick={() => setIsEditorOpen(true)}
+              >
+                <Plus className="w-5 h-5" />
+              </Button>
+            </div>
+            <p className="text-stone-500 text-lg">
+              {t.description}
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {[
+              "all", 
+              "Physical Wellness", 
+              "Mental Clarity", 
+              "Spiritual Healing", 
+              "Kids Yoga", 
+              "Dance Therapy", 
+              "Tarot Reading", 
+              "Chair Yoga"
+            ].map(cat => {
+              const key = cat === "all" ? "all" : 
+                cat === "Physical Wellness" ? "physical" :
+                cat === "Mental Clarity" ? "mental" :
+                cat === "Spiritual Healing" ? "spiritual" :
+                cat === "Kids Yoga" ? "kids" :
+                cat === "Dance Therapy" ? "dance" :
+                cat === "Tarot Reading" ? "tarot" :
+                cat === "Chair Yoga" ? "chair" : "all";
+                
+              return (
+                <Button 
+                  key={cat} 
+                  variant={filter === cat ? "secondary" : "outline"} 
+                  size="sm" 
+                  onClick={() => {
+                    setFilter(cat);
+                    setVisibleCount(3);
+                  }}
+                  className="rounded-full transition-all duration-300"
+                >
+                  {t.categories[key as keyof typeof t.categories]}
+                </Button>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
+          <AnimatePresence mode="popLayout">
+            {currentBlogs.map(blog => (
+              <BlogCard 
+                key={blog.id} 
+                blog={blog} 
+                lang={lang} 
+                onReadMore={(b) => setSelectedBlog(b)} 
+              />
+            ))}
+          </AnimatePresence>
+        </div>
+
+        {filtered.length > 0 && (
+          <div className="flex justify-center">
+            {hasMore ? (
+              <Button 
+                variant="ghost" 
+                className="font-bold text-primary group"
+                onClick={() => setVisibleCount(prev => prev + 3)}
+              >
+                {t.loadMore} <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
+              </Button>
+            ) : filtered.length > 3 && (
+              <Button 
+                variant="ghost" 
+                className="text-stone-400"
+                onClick={() => setVisibleCount(3)}
+              >
+                {t.showLess}
+              </Button>
+            )}
+          </div>
+        )}
+      </div>
+      
+      <BlogDetailModal 
+        blog={selectedBlog} 
+        open={!!selectedBlog} 
+        onOpenChange={(open) => !open && setSelectedBlog(null)} 
+        lang={lang}
+      />
+
+      <BlogEditorModal 
+        open={isEditorOpen} 
+        setOpen={setIsEditorOpen} 
+        lang={lang} 
+      />
+    </section>
+  );
+};
+
 const Navbar = ({ lang, setLang }: { lang: "EN" | "DE", setLang: (l: "EN" | "DE") => void }) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -191,6 +560,7 @@ const Navbar = ({ lang, setLang }: { lang: "EN" | "DE", setLang: (l: "EN" | "DE"
           <a href="#services" className="text-sm font-medium hover:text-primary transition-colors">{t.services}</a>
           <a href="#sessions" className="text-sm font-medium hover:text-primary transition-colors">{t.sessions}</a>
           <a href="#about" className="text-sm font-medium hover:text-primary transition-colors">{t.about}</a>
+          <a href="#blog" className="text-sm font-medium hover:text-primary transition-colors">{t.blog}</a>
           <a href="#testimonials" className="text-sm font-medium hover:text-primary transition-colors">{t.reviews}</a>
           <a href="#faq" className="text-sm font-medium hover:text-primary transition-colors">{t.faq}</a>
           
@@ -221,6 +591,7 @@ const Navbar = ({ lang, setLang }: { lang: "EN" | "DE", setLang: (l: "EN" | "DE"
             <a href="#services" onClick={() => setIsMobileMenuOpen(false)}>{t.services}</a>
             <a href="#sessions" onClick={() => setIsMobileMenuOpen(false)}>{t.sessions}</a>
             <a href="#about" onClick={() => setIsMobileMenuOpen(false)}>{t.about}</a>
+            <a href="#blog" onClick={() => setIsMobileMenuOpen(false)}>{t.blog}</a>
             <a href="#testimonials" onClick={() => setIsMobileMenuOpen(false)}>{t.reviews}</a>
             <a href="#faq" onClick={() => setIsMobileMenuOpen(false)}>{t.faq}</a>
             <Separator />
@@ -305,7 +676,7 @@ const Hero = ({ lang }: { lang: "EN" | "DE" }) => {
   );
 };
 
-const ServiceCard = ({ service, index, lang }: { service: any, index: number, lang: "EN" | "DE", key?: any }) => {
+const ServiceCard = ({ service, index, lang, onLearnMore }: { service: any, index: number, lang: "EN" | "DE", onLearnMore?: (s: any) => void, key?: any }) => {
   const t = TRANSLATIONS[lang].services;
   const content = service[lang];
   return (
@@ -329,15 +700,19 @@ const ServiceCard = ({ service, index, lang }: { service: any, index: number, la
             <p className="text-xs font-bold uppercase tracking-wider text-primary/50 mb-2">{t.outcomeLabel}</p>
             <p className="text-sm font-medium">{content.outcome}</p>
           </div>
-          {service.link ? (
+          {service.link && !service.openInModal ? (
             <a href={service.link} target="_blank" rel="noopener noreferrer" className="inline-block mt-6">
               <Button variant="link" className="p-0 h-auto font-bold text-primary group-hover:translate-x-1 transition-transform">
                 {content.linkLabel || t.learnMore} <ArrowRight className="w-4 h-4 ml-2" />
               </Button>
             </a>
           ) : (
-            <Button variant="link" className="mt-6 p-0 h-auto font-bold text-primary group-hover:translate-x-1 transition-transform">
-              {t.learnMore} <ArrowRight className="w-4 h-4 ml-2" />
+            <Button 
+              variant="link" 
+              className="mt-6 p-0 h-auto font-bold text-primary group-hover:translate-x-1 transition-transform"
+              onClick={() => onLearnMore?.(service)}
+            >
+              {content.linkLabel || t.learnMore} <ArrowRight className="w-4 h-4 ml-2" />
             </Button>
           )}
         </CardContent>
@@ -346,7 +721,7 @@ const ServiceCard = ({ service, index, lang }: { service: any, index: number, la
   );
 };
 
-const ServicesSection = ({ lang }: { lang: "EN" | "DE" }) => {
+const ServicesSection = ({ lang, onLearnMore }: { lang: "EN" | "DE", onLearnMore?: (s: any) => void }) => {
   const t = TRANSLATIONS[lang].services;
   return (
     <section id="services" className="py-24 bg-stone-50/50">
@@ -370,13 +745,13 @@ const ServicesSection = ({ lang }: { lang: "EN" | "DE" }) => {
 
           <TabsContent value="all" className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             {SERVICES.map((service, idx) => (
-              <ServiceCard key={service.id} service={service} index={idx} lang={lang} />
+              <ServiceCard key={service.id} service={service} index={idx} lang={lang} onLearnMore={onLearnMore} />
             ))}
           </TabsContent>
           {["Physical Wellness", "Mental Clarity", "Spiritual Healing"].map(cat => (
             <TabsContent key={cat} value={cat} className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
               {SERVICES.filter(s => s.category === cat).map((service, idx) => (
-                <ServiceCard key={service.id} service={service} index={idx} lang={lang} />
+                <ServiceCard key={service.id} service={service} index={idx} lang={lang} onLearnMore={onLearnMore} />
               ))}
             </TabsContent>
           ))}
@@ -729,6 +1104,7 @@ const Footer = ({ lang }: { lang: "EN" | "DE" }) => {
               <li><a href="#services" className="text-muted-foreground hover:text-primary transition-colors">{nav.services}</a></li>
               <li><a href="#about" className="text-muted-foreground hover:text-primary transition-colors">{nav.about}</a></li>
               <li><a href="#testimonials" className="text-muted-foreground hover:text-primary transition-colors">{nav.reviews}</a></li>
+              <li><a href="#blog" className="text-muted-foreground hover:text-primary transition-colors">{nav.blog}</a></li>
               <li><a href="#faq" className="text-muted-foreground hover:text-primary transition-colors">{nav.faq}</a></li>
             </ul>
           </div>
@@ -776,19 +1152,64 @@ const Footer = ({ lang }: { lang: "EN" | "DE" }) => {
 
 export default function App() {
   const [lang, setLang] = useState<"EN" | "DE">("EN");
+  const [selectedBlog, setSelectedBlog] = useState<any>(null);
+
+  const handleServiceLearnMore = async (service: any) => {
+    if (service.link && service.openInModal) {
+      setSelectedBlog({
+        id: service.id,
+        title: service[lang].title,
+        category: service.category,
+        image: "https://images.unsplash.com/photo-1484480974693-6ca0a78fb36b?auto=format&fit=crop&q=80&w=800",
+        content: service[lang].description,
+        externalLink: service.link,
+        author: "Niramay Tool"
+      });
+      return;
+    }
+
+    // Find a blog post that matches this service's category
+    const q = query(
+      collection(db, "blogs"), 
+      where("category", "==", service.category),
+      where("lang", "==", lang),
+      limit(1)
+    );
+    
+    try {
+      const snap = await getDocs(q);
+      if (!snap.empty) {
+        setSelectedBlog({ id: snap.docs[0].id, ...snap.docs[0].data() });
+      } else {
+        // Fallback to scrolling to blog section if no specific post found
+        document.getElementById('blog')?.scrollIntoView({ behavior: 'smooth' });
+      }
+    } catch (error) {
+      console.error("Error fetching blog for service:", error);
+      document.getElementById('blog')?.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
 
   return (
     <div className="min-h-screen selection:bg-primary/20">
       <Navbar lang={lang} setLang={setLang} />
       <main>
         <Hero lang={lang} />
-        <ServicesSection lang={lang} />
+        <ServicesSection lang={lang} onLearnMore={handleServiceLearnMore} />
         <OngoingSessionsSection lang={lang} />
         <AboutSection lang={lang} />
+        <BlogSection lang={lang} />
         <TestimonialsSection lang={lang} />
         <FAQSection lang={lang} />
       </main>
       <Footer lang={lang} />
+      
+      <BlogDetailModal 
+        blog={selectedBlog} 
+        open={!!selectedBlog} 
+        onOpenChange={(open) => !open && setSelectedBlog(null)} 
+        lang={lang}
+      />
     </div>
   );
 }
