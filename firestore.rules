@@ -1,0 +1,32 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Global helpers
+    function isValidId(id) { return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$'); }
+    function incoming() { return request.resource.data; }
+    function existing() { return resource.data; }
+    
+    // Review helper
+    function isValidReview(data) {
+      return data.keys().hasAll(['name', 'rating', 'content', 'category', 'createdAt', 'lang'])
+          && data.keys().size() >= 6
+          && data.name is string && data.name.size() > 0 && data.name.size() <= 100
+          && data.rating is number && data.rating >= 1 && data.rating <= 5
+          && data.content is string && data.content.size() > 0 && data.content.size() <= 1000
+          && data.category in ['Physical Wellness', 'Mental Clarity', 'Spiritual Healing', 'Kids Yoga', 'Dance Therapy', 'Tarot Reading', 'Chair Yoga']
+          && data.lang in ['EN', 'DE']
+          && data.createdAt is timestamp;
+    }
+
+    match /reviews/{reviewId} {
+      allow get, list: if true;
+      allow create: if isValidId(reviewId) && isValidReview(incoming());
+      allow update, delete: if false;
+    }
+  }
+}

@@ -1,6 +1,7 @@
-import { Heart, Sparkles, Brain, Zap, ShieldCheck, Moon } from "lucide-react";
+import { Heart, Sparkles, Brain, Zap, ShieldCheck, Moon, Users } from "lucide-react";
 
 export const GOOGLE_CALENDAR_URL = "https://calendar.google.com/calendar/appointments/schedules/AcZssZ0bFjK2E2xI3wiT55LqPigmiOHHDxGTghizdBbhy4MSdbw1p6CRUsxVk8gZYqJTnMgoKOAcJjZO?gv=true";
+export const GOOGLE_REVIEW_URL = "https://www.google.com/search?q=Niramay+Ostfildern+reviews";
 
 export const TRANSLATIONS = {
   EN: {
@@ -45,11 +46,27 @@ export const TRANSLATIONS = {
       title: "Real Stories of Transformation",
       description: "Hear from those who have walked the path of healing with us.",
       googleReview: "Review us on Google",
+      leaveReview: "Leave a Review",
+      modalTitle: "Share Your Experience",
+      modalDesc: "Your feedback helps others on their healing journey.",
+      form: {
+        name: "Name",
+        rating: "Rating",
+        content: "Your Review",
+        category: "Service Category",
+        role: "Outcome/Benefit",
+        submit: "Post Review",
+        cancel: "Cancel",
+      },
       filters: {
         all: "All Reviews",
         physical: "Physical",
         mental: "Mental",
         spiritual: "Spiritual",
+        kids: "Kids Yoga",
+        dance: "Dance Therapy",
+        tarot: "Tarot Reading",
+        chair: "Chair Yoga",
       }
     },
     faq: {
@@ -123,11 +140,27 @@ export const TRANSLATIONS = {
       title: "Echte Geschichten der Transformation",
       description: "Hören Sie von denen, die den Weg der Heilung mit uns gegangen sind.",
       googleReview: "Bewerten Sie uns auf Google",
+      leaveReview: "Bewertung abgeben",
+      modalTitle: "Teilen Sie Ihre Erfahrung",
+      modalDesc: "Ihr Feedback hilft anderen auf ihrer Heilungsreise.",
+      form: {
+        name: "Name",
+        rating: "Bewertung",
+        content: "Ihre Bewertung",
+        category: "Dienstleistungskategorie",
+        role: "Ergebnis/Nutzen",
+        submit: "Bewertung senden",
+        cancel: "Abbrechen",
+      },
       filters: {
         all: "Alle Bewertungen",
         physical: "Körperlich",
         mental: "Geistig",
         spiritual: "Spirituell",
+        kids: "Kinder Yoga",
+        dance: "Tanztherapie",
+        tarot: "Tarot-Lesung",
+        chair: "Stuhl-Yoga",
       }
     },
     faq: {
@@ -257,6 +290,25 @@ export const SERVICES = [
       title: "Auftanken durch Ruhe",
       description: "Erleben Sie tiefes Wohlbefinden durch Techniken zur Schlafwiederherstellung, die darauf ausgelegt sind, Ihren natürlichen zirkadianen Rhythmus zu optimieren.",
       outcome: "Ereichen Sie erholsamen Schlaf, ein verbessertes Energieniveau und eine gesteigerte kognitive Funktion.",
+    }
+  },
+  {
+    id: "relationship-counselling",
+    icon: Users,
+    color: "bg-stone-100",
+    category: "Mental Clarity",
+    link: "https://better-relationships.lovable.app/",
+    EN: {
+      title: "Relationship Counselling",
+      description: "Navigate relationship challenges and strengthen your emotional bonds through specialized counselling and coaching techniques.",
+      outcome: "Improved communication, deeper intimacy, and healthier relationship patterns.",
+      linkLabel: "Try this tool",
+    },
+    DE: {
+      title: "Beziehungsberatung",
+      description: "Bewältigen Sie Beziehungsherausforderungen und stärken Sie Ihre emotionalen Bindungen durch spezialisierte Beratungs- und Coaching-Techniken.",
+      outcome: "Verbesserte Kommunikation, tiefere Intimität und gesündere Beziehungsmuster.",
+      linkLabel: "Probieren Sie dieses Tool aus",
     }
   },
 ];

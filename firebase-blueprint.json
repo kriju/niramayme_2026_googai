@@ -1,0 +1,27 @@
+{
+  "entities": {
+    "Review": {
+      "title": "Review",
+      "description": "A review or testimonial submitted by a user.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "rating": { "type": "number" },
+        "content": { "type": "string" },
+        "category": { "type": "string", "enum": ["Physical Wellness", "Mental Clarity", "Spiritual Healing", "Kids Yoga", "Dance Therapy", "Tarot Reading", "Chair Yoga"] },
+        "role": { "type": "string" },
+        "approved": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "lang": { "type": "string", "enum": ["EN", "DE"] }
+      },
+      "required": ["name", "rating", "content", "category", "createdAt", "lang"]
+    }
+  },
+  "firestore": {
+    "/reviews/{reviewId}": {
+      "schema": "Review",
+      "description": "Collection of user-submitted reviews."
+    }
+  }
+}

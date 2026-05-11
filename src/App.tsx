@@ -14,16 +14,22 @@ import {
   MapPin,
   Sparkles,
   Clock,
-  Euro
+  Euro,
+  Star,
+  Plus,
+  ChevronLeft,
+  ChevronRight
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { db } from "./lib/firebase";
+import { collection, onSnapshot, query, orderBy, addDoc, serverTimestamp, Timestamp } from "firebase/firestore";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { SERVICES, TESTIMONIALS, FAQS, CERTIFICATIONS, TRANSLATIONS, ONGOING_SESSIONS, GOOGLE_CALENDAR_URL } from "./constants";
+import { SERVICES, TESTIMONIALS, FAQS, CERTIFICATIONS, TRANSLATIONS, ONGOING_SESSIONS, GOOGLE_CALENDAR_URL, GOOGLE_REVIEW_URL } from "./constants";
 
 const BookingModal = ({ children, lang }: { children: React.ReactNode, lang: "EN" | "DE" }) => {
   const t = TRANSLATIONS[lang].booking;
@@ -51,6 +57,112 @@ const BookingModal = ({ children, lang }: { children: React.ReactNode, lang: "EN
             </a>
           </div>
         </div>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+const LeaveReviewModal = ({ lang }: { lang: "EN" | "DE" }) => {
+  const t = TRANSLATIONS[lang].testimonials;
+  const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [formData, setFormData] = useState({
+    name: "",
+    rating: 5,
+    content: "",
+    category: "Mental Clarity",
+    role: "",
+  });
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      await addDoc(collection(db, "reviews"), {
+        ...formData,
+        createdAt: serverTimestamp(),
+        lang,
+        approved: true, // Auto-approve for demo simplicity as requested
+      });
+      setOpen(false);
+      setFormData({ name: "", rating: 5, content: "", category: "Mental Clarity", role: "" });
+    } catch (error) {
+      console.error("Error adding review:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger render={
+        <Button variant="outline" className="rounded-full border-white/20 text-white hover:bg-white hover:text-primary gap-2">
+          <Plus className="w-4 h-4" /> {t.leaveReview}
+        </Button>
+      } />
+      <DialogContent className="sm:max-w-[425px]">
+        <DialogHeader>
+          <DialogTitle className="text-2xl font-serif">{t.modalTitle}</DialogTitle>
+          <p className="text-sm text-muted-foreground">{t.modalDesc}</p>
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="grid gap-4 py-4">
+          <div className="grid gap-2">
+            <label className="text-sm font-medium">{t.form.name}</label>
+            <input 
+              required
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              value={formData.name}
+              onChange={e => setFormData({ ...formData, name: e.target.value })}
+            />
+          </div>
+          <div className="grid gap-2">
+            <label className="text-sm font-medium">{t.form.rating}</label>
+            <div className="flex gap-1">
+              {[1,2,3,4,5].map(i => (
+                <Star 
+                  key={i} 
+                  className={`w-6 h-6 cursor-pointer ${i <= formData.rating ? 'text-yellow-500 fill-yellow-500' : 'text-stone-300'}`}
+                  onClick={() => setFormData({ ...formData, rating: i })}
+                />
+              ))}
+            </div>
+          </div>
+          <div className="grid gap-2">
+            <label className="text-sm font-medium">{t.form.category}</label>
+            <select 
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              value={formData.category}
+              onChange={e => setFormData({ ...formData, category: e.target.value })}
+            >
+              <option value="Physical Wellness">Physical Wellness</option>
+              <option value="Mental Clarity">Mental Clarity</option>
+              <option value="Spiritual Healing">Spiritual Healing</option>
+            </select>
+          </div>
+          <div className="grid gap-2">
+            <label className="text-sm font-medium">{t.form.role}</label>
+            <input 
+              placeholder="e.g. Burnout Recovery"
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              value={formData.role}
+              onChange={e => setFormData({ ...formData, role: e.target.value })}
+            />
+          </div>
+          <div className="grid gap-2">
+            <label className="text-sm font-medium">{t.form.content}</label>
+            <textarea 
+              required
+              rows={4}
+              className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              value={formData.content}
+              onChange={e => setFormData({ ...formData, content: e.target.value })}
+            />
+          </div>
+          <div className="flex justify-end gap-3 mt-4">
+            <Button type="button" variant="outline" onClick={() => setOpen(false)}>{t.form.cancel}</Button>
+            <Button type="submit" disabled={loading}>{loading ? "..." : t.form.submit}</Button>
+          </div>
+        </form>
       </DialogContent>
     </Dialog>
   );
@@ -220,7 +332,7 @@ const ServiceCard = ({ service, index, lang }: { service: any, index: number, la
           {service.link ? (
             <a href={service.link} target="_blank" rel="noopener noreferrer" className="inline-block mt-6">
               <Button variant="link" className="p-0 h-auto font-bold text-primary group-hover:translate-x-1 transition-transform">
-                {t.learnMore} <ArrowRight className="w-4 h-4 ml-2" />
+                {content.linkLabel || t.learnMore} <ArrowRight className="w-4 h-4 ml-2" />
               </Button>
             </a>
           ) : (
@@ -388,9 +500,35 @@ const AboutSection = ({ lang }: { lang: "EN" | "DE" }) => {
 
 const TestimonialsSection = ({ lang }: { lang: "EN" | "DE" }) => {
   const [filter, setFilter] = useState("all");
+  const [dynamicReviews, setDynamicReviews] = useState<any[]>([]);
   const t = TRANSLATIONS[lang].testimonials;
   
-  const filtered = filter === "all" ? TESTIMONIALS : TESTIMONIALS.filter(t => t.category === filter);
+  useEffect(() => {
+    const q = query(collection(db, "reviews"), orderBy("createdAt", "desc"));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const reviews = snapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          ...data,
+          // Make review content available in both language variants
+          EN: {
+            content: data.content,
+            role: data.role
+          },
+          DE: {
+            content: data.content,
+            role: data.role
+          }
+        };
+      });
+      setDynamicReviews(reviews);
+    });
+    return () => unsubscribe();
+  }, []); // Remove lang from dependency to avoid unnecessary re-triggers, though it works either way
+
+  const allReviews = [...TESTIMONIALS, ...dynamicReviews];
+  const filtered = filter === "all" ? allReviews : allReviews.filter(t => t.category === filter);
 
   return (
     <section id="testimonials" className="py-24 bg-primary text-primary-foreground">
@@ -398,55 +536,117 @@ const TestimonialsSection = ({ lang }: { lang: "EN" | "DE" }) => {
         <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-8">
           <div className="max-w-2xl">
             <h2 className="text-4xl md:text-5xl font-serif font-bold mb-6">{t.title}</h2>
-            <p className="text-primary-foreground/70 text-lg">
+            <p className="text-primary-foreground/70 text-lg mb-8">
               {t.description}
             </p>
+            <div className="flex flex-wrap gap-4">
+              <a href={GOOGLE_REVIEW_URL} target="_blank" rel="noopener noreferrer">
+                <Button className="rounded-full bg-white text-primary hover:bg-stone-100 gap-2">
+                  <Globe className="w-4 h-4" /> {t.googleReview}
+                </Button>
+              </a>
+              <LeaveReviewModal lang={lang} />
+            </div>
           </div>
           <div className="flex flex-wrap gap-2">
-            {["all", "Physical Wellness", "Mental Clarity", "Spiritual Healing"].map(cat => (
-              <Button 
-                key={cat} 
-                variant={filter === cat ? "secondary" : "outline"} 
-                size="sm" 
-                onClick={() => setFilter(cat)}
-                className="rounded-full border-primary-foreground/20 hover:bg-primary-foreground hover:text-primary"
-              >
-                {cat === "all" ? t.filters.all : t.filters[cat.split(" ")[0].toLowerCase() as keyof typeof t.filters]}
-              </Button>
-            ))}
+            {["all", "Physical Wellness", "Mental Clarity", "Spiritual Healing", "Kids Yoga", "Dance Therapy", "Tarot Reading", "Chair Yoga"].map(cat => {
+              const key = cat === "all" ? "all" : 
+                cat === "Physical Wellness" ? "physical" :
+                cat === "Mental Clarity" ? "mental" :
+                cat === "Spiritual Healing" ? "spiritual" :
+                cat === "Kids Yoga" ? "kids" :
+                cat === "Dance Therapy" ? "dance" :
+                cat === "Tarot Reading" ? "tarot" :
+                cat === "Chair Yoga" ? "chair" : "all";
+              
+              return (
+                <Button 
+                  key={cat} 
+                  variant={filter === cat ? "secondary" : "outline"} 
+                  size="sm" 
+                  onClick={() => setFilter(cat)}
+                  className="rounded-full border-primary-foreground/20 hover:bg-primary-foreground hover:text-primary transition-all duration-300"
+                >
+                  {t.filters[key as keyof typeof t.filters]}
+                </Button>
+              );
+            })}
           </div>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-8">
-          <AnimatePresence mode="popLayout">
-            {filtered.map((test, idx) => {
-              const content = test[lang];
-              return (
-                <motion.div
-                  key={test.id}
-                  layout
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.9 }}
-                  transition={{ duration: 0.4 }}
-                >
-                  <Card className="bg-white/10 border-white/10 backdrop-blur-sm text-white h-full">
-                    <CardHeader>
-                      <div className="flex gap-1 mb-4">
-                        {[1,2,3,4,5].map(i => <Sparkles key={i} className="w-4 h-4 text-yellow-400 fill-yellow-400" />)}
-                      </div>
-                      <p className="text-xl italic font-serif leading-relaxed mb-6">"{content.content}"</p>
-                      <Separator className="bg-white/10 mb-6" />
-                      <div>
-                        <p className="font-bold text-lg">{test.name}</p>
-                        <p className="text-sm text-white/60">{content.role}</p>
-                      </div>
-                    </CardHeader>
-                  </Card>
-                </motion.div>
-              );
-            })}
-          </AnimatePresence>
+        <div className="relative group">
+          <div 
+            id="reviews-container"
+            className="flex overflow-x-auto gap-8 pb-12 snap-x no-scrollbar scroll-smooth"
+          >
+            <AnimatePresence mode="popLayout">
+              {filtered.map((test, idx) => {
+                const content = test[lang] || test["EN"] || test["DE"];
+                return (
+                  <motion.div
+                    key={test.id || idx}
+                    layout
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -20 }}
+                    transition={{ duration: 0.4 }}
+                    className="min-w-[280px] md:min-w-[380px] flex-shrink-0 snap-start"
+                  >
+                    <Card className="bg-white/10 border-white/10 backdrop-blur-sm text-white h-[400px] hover:bg-white/15 transition-colors flex flex-col">
+                      <CardHeader className="flex-grow flex flex-col">
+                        <div className="flex gap-1 mb-4">
+                          {[1,2,3,4,5].map(i => (
+                            <Star
+                              key={i} 
+                              className={`w-4 h-4 ${i <= (test.rating || 5) ? 'text-yellow-400 fill-yellow-400' : 'text-white/20'}`} 
+                            />
+                          ))}
+                        </div>
+                        <div className="flex-grow overflow-y-auto no-scrollbar mb-6">
+                           <p className="text-lg italic font-serif leading-relaxed line-clamp-6">"{content.content}"</p>
+                        </div>
+                        <Separator className="bg-white/10 mb-6" />
+                        <div className="flex items-center gap-4">
+                          <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center font-bold text-sm flex-shrink-0">
+                            {test.name ? test.name[0] : "N"}
+                          </div>
+                          <div className="min-w-0">
+                            <p className="font-bold text-lg leading-none mb-1 truncate">{test.name}</p>
+                            <p className="text-sm text-white/60 truncate">{content.role}</p>
+                          </div>
+                        </div>
+                      </CardHeader>
+                    </Card>
+                  </motion.div>
+                );
+              })}
+            </AnimatePresence>
+          </div>
+          
+          {/* Scroll indicators/fade */}
+          <div className="absolute top-0 right-0 h-full w-24 bg-gradient-to-l from-primary to-transparent pointer-events-none hidden md:block" />
+          
+          {/* Navigation Buttons for better UX */}
+          <div className="absolute -left-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity hidden md:block">
+            <Button 
+              variant="outline" 
+              size="icon" 
+              className="rounded-full bg-white/10 border-white/20 text-white backdrop-blur-md"
+              onClick={() => document.getElementById('reviews-container')?.scrollBy({ left: -400, behavior: 'smooth' })}
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </Button>
+          </div>
+          <div className="absolute -right-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity hidden md:block">
+            <Button 
+              variant="outline" 
+              size="icon" 
+              className="rounded-full bg-white/10 border-white/20 text-white backdrop-blur-md"
+              onClick={() => document.getElementById('reviews-container')?.scrollBy({ left: 400, behavior: 'smooth' })}
+            >
+              <ChevronRight className="w-4 h-4" />
+            </Button>
+          </div>
         </div>
         
         <div className="mt-16 text-center">
