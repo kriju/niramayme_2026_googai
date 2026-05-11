@@ -16,7 +16,7 @@ export const TRANSLATIONS = {
       switchLang: "Switch to German",
     },
     hero: {
-      badge: "Holistic Therapy in Ostfildern, Germany",
+      badge: "Holistic Wellbeing in Ostfildern, Germany",
       title: "Start Your Healing Journey Today.",
       titleItalic: "Healing",
       description: "Bridging ancient wisdom and modern psychology to help you find balance, clarity, and lasting transformation.",
@@ -97,6 +97,53 @@ export const TRANSLATIONS = {
       rights: "All rights reserved.",
       impressum: "Impressum",
       privacy: "Privacy Policy",
+      legal: {
+        impressum: {
+          title: "Legal Notice (Impressum)",
+          section1: {
+            title: "Information according to § 5 TMG",
+            content: "Niramay - Holistic Wellbeing\nRicha [Your Last Name]\n[Your Street & House Number]\n73760 Ostfildern\nGermany"
+          },
+          section2: {
+            title: "Contact",
+            content: "Phone: [Your Phone Number]\nEmail: richa@niramay.me"
+          },
+          section3: {
+            title: "Professional Regulation",
+            content: "Professional designation: Therapist/Coach\nState where the professional title was awarded: Germany"
+          },
+          section4: {
+            title: "EU Dispute Resolution",
+            content: "The European Commission provides a platform for online dispute resolution (OS): https://ec.europa.eu/consumers/odr. We are not obliged or willing to participate in dispute resolution proceedings before a consumer arbitration board."
+          }
+        },
+        privacy: {
+          title: "Privacy Policy",
+          intro: "We take the protection of your personal data very seriously. We treat your personal data confidentially and in accordance with the statutory data protection regulations and this privacy policy.",
+          sections: [
+            {
+              title: "1. Data Protection at a Glance",
+              content: "The following information provides a simple overview of what happens to your personal data when you visit our website. Personal data is any data with which you can be personally identified."
+            },
+            {
+              title: "2. Responsibility",
+              content: "The controller for data processing on this website is:\nRicha [Your Last Name]\n[Your Street]\n73760 Ostfildern\nEmail: richa@niramay.me"
+            },
+            {
+              title: "3. Data Collection on our Website",
+              content: "Data is collected on the one hand by you communicating it to us. This can be, for example, data that you enter in a contact form or during appointment booking. Other data is collected automatically by our IT systems when you visit the website (e.g., browser, operating system, or time of page view)."
+            },
+            {
+              title: "4. Third-Party Services (Google Calendar & Reviews)",
+              content: "Our website uses services from Google Ireland Limited (Gordon House, Barrow Street, Dublin 4, Ireland) for appointment booking and reviews. When you use these services, data may be transmitted to Google."
+            },
+            {
+              title: "5. Your Rights",
+              content: "You have the right to receive information about the origin, recipient, and purpose of your stored personal data at any time free of charge. You also have the right to request the correction, blocking, or deletion of this data."
+            }
+          ]
+        }
+      }
     },
     blog: {
       title: "Insights & Wisdom",
@@ -141,7 +188,7 @@ export const TRANSLATIONS = {
       switchLang: "Auf Englisch wechseln",
     },
     hero: {
-      badge: "Ganzheitliche Therapie in Ostfildern, Deutschland",
+      badge: "Ganzheitliches Wohlbefinden in Ostfildern, Deutschland",
       title: "Beginnen Sie heute Ihre Heilungsreise.",
       titleItalic: "Heilungs",
       description: "Die Verbindung von altem Wissen und moderner Psychologie, um Ihnen zu helfen, Balance, Klarheit und dauerhafte Transformation zu finden.",
@@ -222,6 +269,53 @@ export const TRANSLATIONS = {
       rights: "Alle Rechte vorbehalten.",
       impressum: "Impressum",
       privacy: "Datenschutz",
+      legal: {
+        impressum: {
+          title: "Impressum",
+          section1: {
+            title: "Angaben gemäß § 5 TMG",
+            content: "Niramay - Ganzheitliches Wohlbefinden\nRicha [Ihr Nachname]\n[Ihre Straße & Hausnummer]\n73760 Ostfildern\nDeutschland"
+          },
+          section2: {
+            title: "Kontakt",
+            content: "Telefon: [Ihre Telefonnummer]\nE-Mail: richa@niramay.me"
+          },
+          section3: {
+            title: "Berufsbezeichnung",
+            content: "Berufsbezeichnung: Therapeutin/Coach\nStaat, in dem die Berufsbezeichnung verliehen wurde: Deutschland"
+          },
+          section4: {
+            title: "EU-Streitschlichtung",
+            content: "Die Europäische Kommission stellt eine Plattform zur Online-Streitbeilegung (OS) bereit: https://ec.europa.eu/consumers/odr. Wir sind nicht bereit oder verpflichtet, an Streitbeilegungsverfahren vor einer Verbraucherschlichtungsstelle teilzunehmen."
+          }
+        },
+        privacy: {
+          title: "Datenschutzerklärung",
+          intro: "Wir nehmen den Schutz Ihrer persönlichen Daten sehr ernst. Wir behandeln Ihre personenbezogenen Daten vertraulich und entsprechend der gesetzlichen Datenschutzvorschriften sowie dieser Datenschutzerklärung.",
+          sections: [
+            {
+              title: "1. Datenschutz auf einen Blick",
+              content: "Die folgenden Hinweise geben einen einfachen Überblick darüber, was mit Ihren personenbezogenen Daten passiert, wenn Sie unsere Website besuchen. Personenbezogene Daten sind alle Daten, mit denen Sie persönlich identifiziert werden können."
+            },
+            {
+              title: "2. Verantwortlicher",
+              content: "Verantwortlicher für die Datenverarbeitung auf dieser Website ist:\nRicha [Ihr Nachname]\n[Ihre Straße]\n73760 Ostfildern\nE-Mail: richa@niramay.me"
+            },
+            {
+              title: "3. Datenerfassung auf unserer Website",
+              content: "Die Datenerfassung erfolgt einerseits dadurch, dass Sie uns diese mitteilen. Hierbei kann es sich z. B. um Daten handeln, die Sie in ein Kontaktformular oder bei der Terminbuchung eingeben. Andere Daten werden automatisch beim Besuch der Website durch unsere IT-Systeme erfasst (z. B. Browser, Betriebssystem oder Uhrzeit des Seitenaufrufs)."
+            },
+            {
+              title: "4. Drittanbieter (Google Calendar & Reviews)",
+              content: "Unsere Website nutzt Dienste der Google Ireland Limited (Gordon House, Barrow Street, Dublin 4, Irland) für die Terminbuchung und Bewertungen. Bei der Nutzung dieser Dienste können Daten an Google übertragen werden."
+            },
+            {
+              title: "5. Ihre Rechte",
+              content: "Sie haben jederzeit das Recht, unentgeltlich Auskunft über Herkunft, Empfänger und Zweck Ihrer gespeicherten personenbezogenen Daten zu erhalten. Sie haben außerdem ein Recht, die Berichtigung, Sperrung oder Löschung dieser Daten zu verlangen."
+            }
+          ]
+        }
+      }
     },
     blog: {
       title: "Einblicke & Weisheit",

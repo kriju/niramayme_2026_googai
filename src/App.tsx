@@ -1064,7 +1064,7 @@ const FAQSection = ({ lang }: { lang: "EN" | "DE" }) => {
   );
 };
 
-const Footer = ({ lang }: { lang: "EN" | "DE" }) => {
+const Footer = ({ lang, onOpenLegal }: { lang: "EN" | "DE", onOpenLegal: (type: "impressum" | "privacy") => void }) => {
   const t = TRANSLATIONS[lang].footer;
   const nav = TRANSLATIONS[lang].nav;
   return (
@@ -1131,8 +1131,8 @@ const Footer = ({ lang }: { lang: "EN" | "DE" }) => {
         <div className="flex flex-col md:flex-row justify-between items-center gap-6 text-sm text-muted-foreground">
           <p>© 2024 Niramay Wellness. {t.rights}</p>
           <div className="flex gap-8">
-            <a href="#" className="hover:text-primary transition-colors">{t.impressum}</a>
-            <a href="#" className="hover:text-primary transition-colors">{t.privacy}</a>
+            <button onClick={() => onOpenLegal("impressum")} className="hover:text-primary transition-colors cursor-pointer bg-transparent border-none p-0">{t.impressum}</button>
+            <button onClick={() => onOpenLegal("privacy")} className="hover:text-primary transition-colors cursor-pointer bg-transparent border-none p-0">{t.privacy}</button>
           </div>
         </div>
       </div>
@@ -1150,9 +1150,51 @@ const Footer = ({ lang }: { lang: "EN" | "DE" }) => {
   );
 };
 
+const LegalModal = ({ type, open, setOpen, lang }: { type: "impressum" | "privacy" | null, open: boolean, setOpen: (o: boolean) => void, lang: "EN" | "DE" }) => {
+  if (!type) return null;
+  const t = TRANSLATIONS[lang].footer.legal[type];
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogContent className="sm:max-w-3xl max-h-[85vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="text-3xl font-serif font-bold text-primary">{t.title}</DialogTitle>
+        </DialogHeader>
+        
+        <div className="mt-8 space-y-12">
+          {type === "impressum" ? (
+            <div className="space-y-8">
+              {["section1", "section2", "section3", "section4"].map((s) => {
+                const section = (t as any)[s];
+                return (
+                  <div key={s}>
+                    <h3 className="text-xl font-bold mb-4 text-stone-800">{section.title}</h3>
+                    <p className="text-stone-600 leading-relaxed whitespace-pre-wrap">{section.content}</p>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="space-y-8">
+              <p className="text-lg text-stone-600 italic">{(t as any).intro}</p>
+              {(t as any).sections.map((section: any, idx: number) => (
+                <div key={idx}>
+                  <h3 className="text-xl font-bold mb-4 text-stone-800">{section.title}</h3>
+                  <p className="text-stone-600 leading-relaxed whitespace-pre-wrap">{section.content}</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
 export default function App() {
   const [lang, setLang] = useState<"EN" | "DE">("EN");
   const [selectedBlog, setSelectedBlog] = useState<any>(null);
+  const [legalModal, setLegalModal] = useState<"impressum" | "privacy" | null>(null);
 
   const handleServiceLearnMore = async (service: any) => {
     if (service.link && service.openInModal) {
@@ -1202,12 +1244,19 @@ export default function App() {
         <TestimonialsSection lang={lang} />
         <FAQSection lang={lang} />
       </main>
-      <Footer lang={lang} />
+      <Footer lang={lang} onOpenLegal={setLegalModal} />
       
       <BlogDetailModal 
         blog={selectedBlog} 
         open={!!selectedBlog} 
         onOpenChange={(open) => !open && setSelectedBlog(null)} 
+        lang={lang}
+      />
+
+      <LegalModal 
+        type={legalModal}
+        open={!!legalModal}
+        setOpen={(o) => !o && setLegalModal(null)}
         lang={lang}
       />
     </div>
