@@ -13,6 +13,7 @@ export const TRANSLATIONS = {
       faq: "FAQ",
       sessions: "Sessions",
       bookNow: "Book Now",
+      book: "Book",
       switchLang: "Switch to German",
     },
     hero: {
@@ -162,8 +163,7 @@ export const TRANSLATIONS = {
         dance: "Dance Therapy",
         tarot: "Tarot Reading",
         chair: "Chair Yoga"
-      },
-      editor: {
+      },      editor: {
         title: "Create Post",
         titleLabel: "Post Title",
         excerptLabel: "Short Summary",
@@ -174,6 +174,15 @@ export const TRANSLATIONS = {
         cancel: "Cancel",
         saving: "Publishing..."
       }
+    },
+    book: {
+      title: "Journey from Body to Bliss",
+      subtitle: "The Niramay Path to Pancha Koshas",
+      description: "Explore the transformative path of holistic healing through the Five Sheaths (Pancha Koshas) of human existence. From physical vitality to spiritual ecstasy, this book provides a comprehensive roadmap for self-discovery and lasting transformation.",
+      author: "Richa Jain Kansal",
+      cta: "Order on Amazon",
+      link: "https://a.co/d/05dRUInw",
+      badges: ["Holistic Guide", "Ancient Wisdom"],
     }
   },
   DE: {
@@ -185,6 +194,7 @@ export const TRANSLATIONS = {
       faq: "FAQ",
       sessions: "Sitzungen",
       bookNow: "Jetzt buchen",
+      book: "Buch",
       switchLang: "Auf Englisch wechseln",
     },
     hero: {
@@ -240,6 +250,7 @@ export const TRANSLATIONS = {
         dance: "Tanztherapie",
         tarot: "Tarot-Lesung",
         chair: "Stuhl-Yoga",
+        withImage: "Mit Bild",
       }
     },
     faq: {
@@ -306,7 +317,7 @@ export const TRANSLATIONS = {
               content: "Die Datenerfassung erfolgt einerseits dadurch, dass Sie uns diese mitteilen. Hierbei kann es sich z. B. um Daten handeln, die Sie in ein Kontaktformular oder bei der Terminbuchung eingeben. Andere Daten werden automatisch beim Besuch der Website durch unsere IT-Systeme erfasst (z. B. Browser, Betriebssystem oder Uhrzeit des Seitenaufrufs)."
             },
             {
-              title: "4. Drittanbieter (Google Calendar & Reviews)",
+              title: "4. Drittanbieter (Google Calendar & Bewertungen)",
               content: "Unsere Website nutzt Dienste der Google Ireland Limited (Gordon House, Barrow Street, Dublin 4, Irland) für die Terminbuchung und Bewertungen. Bei der Nutzung dieser Dienste können Daten an Google übertragen werden."
             },
             {
@@ -346,6 +357,15 @@ export const TRANSLATIONS = {
         cancel: "Abbrechen",
         saving: "Wird veröffentlicht..."
       }
+    },
+    book: {
+      title: "Reise vom Körper zur Glückseligkeit",
+      subtitle: "Der Niramay-Pfad zu den Pancha Koshas",
+      description: "Erkunden Sie den transformativen Pfad der ganzheitlichen Heilung durch die fünf Hüllen (Pancha Koshas) der menschlichen Existenz. Von körperlicher Vitalität bis hin zu spiritueller Ekstase bietet dieses Buch einen umfassenden Fahrplan für Selbsterkenntnis und dauerhafte Transformation.",
+      author: "Richa Jain Kansal",
+      cta: "Auf Amazon bestellen",
+      link: "https://a.co/d/05dRUInw",
+      badges: ["Ganzheitlicher Leitfaden", "Altes Wissen"],
     }
   }
 };

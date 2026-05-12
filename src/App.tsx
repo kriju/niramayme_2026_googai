@@ -560,6 +560,7 @@ const Navbar = ({ lang, setLang }: { lang: "EN" | "DE", setLang: (l: "EN" | "DE"
           <a href="#services" className="text-sm font-medium hover:text-primary transition-colors">{t.services}</a>
           <a href="#sessions" className="text-sm font-medium hover:text-primary transition-colors">{t.sessions}</a>
           <a href="#about" className="text-sm font-medium hover:text-primary transition-colors">{t.about}</a>
+          <a href="#book" className="text-sm font-medium hover:text-primary transition-colors">{t.book}</a>
           <a href="#blog" className="text-sm font-medium hover:text-primary transition-colors">{t.blog}</a>
           <a href="#testimonials" className="text-sm font-medium hover:text-primary transition-colors">{t.reviews}</a>
           <a href="#faq" className="text-sm font-medium hover:text-primary transition-colors">{t.faq}</a>
@@ -591,6 +592,7 @@ const Navbar = ({ lang, setLang }: { lang: "EN" | "DE", setLang: (l: "EN" | "DE"
             <a href="#services" onClick={() => setIsMobileMenuOpen(false)}>{t.services}</a>
             <a href="#sessions" onClick={() => setIsMobileMenuOpen(false)}>{t.sessions}</a>
             <a href="#about" onClick={() => setIsMobileMenuOpen(false)}>{t.about}</a>
+            <a href="#book" onClick={() => setIsMobileMenuOpen(false)}>{t.book}</a>
             <a href="#blog" onClick={() => setIsMobileMenuOpen(false)}>{t.blog}</a>
             <a href="#testimonials" onClick={() => setIsMobileMenuOpen(false)}>{t.reviews}</a>
             <a href="#faq" onClick={() => setIsMobileMenuOpen(false)}>{t.faq}</a>
@@ -1103,6 +1105,7 @@ const Footer = ({ lang, onOpenLegal }: { lang: "EN" | "DE", onOpenLegal: (type: 
             <ul className="space-y-4">
               <li><a href="#services" className="text-muted-foreground hover:text-primary transition-colors">{nav.services}</a></li>
               <li><a href="#about" className="text-muted-foreground hover:text-primary transition-colors">{nav.about}</a></li>
+              <li><a href="#book" className="text-muted-foreground hover:text-primary transition-colors">{nav.book}</a></li>
               <li><a href="#testimonials" className="text-muted-foreground hover:text-primary transition-colors">{nav.reviews}</a></li>
               <li><a href="#blog" className="text-muted-foreground hover:text-primary transition-colors">{nav.blog}</a></li>
               <li><a href="#faq" className="text-muted-foreground hover:text-primary transition-colors">{nav.faq}</a></li>
@@ -1191,6 +1194,108 @@ const LegalModal = ({ type, open, setOpen, lang }: { type: "impressum" | "privac
   );
 };
 
+const BookSection = ({ lang }: { lang: "EN" | "DE" }) => {
+  const t = TRANSLATIONS[lang].book;
+  return (
+    <section id="book" className="py-24 bg-[#FAF9F6]">
+      <div className="container mx-auto px-6">
+        <div className="flex flex-col lg:flex-row items-center gap-16">
+          <motion.div 
+            initial={{ opacity: 0, x: -30 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            className="lg:w-1/2 relative"
+          >
+            <div className="relative z-10 rounded-2xl overflow-hidden shadow-[20px_30px_60px_-12px_rgba(0,0,0,0.5)] group bg-stone-900 aspect-[2/3] max-w-sm mx-auto border-r-4 border-stone-800">
+              <img 
+                src="/bookcover1.svg" 
+                alt="Journey from Body to Bliss Book" 
+                className="w-full h-full object-contain transition-transform duration-1000 group-hover:scale-105"
+                referrerPolicy="no-referrer"
+              />
+              <div className="absolute inset-0 bg-gradient-to-r from-black/20 via-transparent to-transparent" />
+              <div className="absolute inset-0 flex flex-col items-center justify-center p-12 text-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+                <p className="text-white text-lg font-serif italic mb-4">{t.subtitle}</p>
+                <div className="w-12 h-0.5 bg-primary/60" />
+              </div>
+            </div>
+            {/* Decorative background elements */}
+            <div className="absolute -top-20 -left-20 w-80 h-80 bg-primary/10 rounded-full blur-[100px] -z-10 animate-pulse" />
+            <div className="absolute -bottom-20 -right-20 w-96 h-96 bg-stone-200 rounded-full blur-[120px] -z-10" />
+            
+            {/* Float badge */}
+            <motion.div 
+              animate={{ y: [0, -10, 0] }}
+              transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+              className="absolute -right-4 top-20 z-20 bg-white p-6 rounded-2xl shadow-xl border border-stone-100 hidden md:block"
+            >
+              <div className="flex flex-col items-center gap-2">
+                <div className="flex text-yellow-500">
+                  {[1,2,3,4,5].map(i => <Star key={i} className="w-4 h-4 fill-current" />)}
+                </div>
+                <p className="text-xs font-bold text-stone-400 tracking-widest uppercase">{t.badges[0]}</p>
+              </div>
+            </motion.div>
+          </motion.div>
+
+          <motion.div 
+            initial={{ opacity: 0, x: 30 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            className="lg:w-1/2"
+          >
+            <div className="flex flex-wrap gap-3 mb-6">
+              {t.badges.map((badge, idx) => (
+                <Badge key={idx} variant="outline" className="text-primary border-primary/20 bg-primary/5 px-4 py-1">
+                  {badge}
+                </Badge>
+              ))}
+            </div>
+            
+            <h2 className="text-4xl md:text-6xl font-serif font-bold mb-4 text-primary leading-tight">
+              {t.title}
+            </h2>
+            <h3 className="text-xl md:text-2xl font-serif italic text-stone-500 mb-8">
+              {t.subtitle}
+            </h3>
+            
+            <p className="text-lg text-muted-foreground mb-8 leading-relaxed">
+              {t.description}
+            </p>
+
+            <div className="flex items-center gap-4 mb-10">
+              <div className="w-14 h-14 rounded-full bg-stone-200 overflow-hidden border-2 border-white shadow-sm">
+                <img 
+                  src="https://picsum.photos/seed/richa/200/200" 
+                  alt={t.author} 
+                  className="w-full h-full object-cover"
+                  referrerPolicy="no-referrer"
+                />
+              </div>
+              <div>
+                <p className="font-bold text-stone-800">{t.author}</p>
+                <p className="text-sm text-stone-500">{lang === "EN" ? "Lead Trainer & Author" : "Cheftrainerin & Autorin"}</p>
+              </div>
+            </div>
+
+            <a 
+              href={t.link} 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="inline-block"
+            >
+              <Button size="lg" className="rounded-full px-10 h-16 text-lg gap-3 shadow-xl hover:shadow-primary/20 transition-all">
+                <Sparkles className="w-5 h-5" />
+                {t.cta}
+              </Button>
+            </a>
+          </motion.div>
+        </div>
+      </div>
+    </section>
+  );
+};
+
 export default function App() {
   const [lang, setLang] = useState<"EN" | "DE">("EN");
   const [selectedBlog, setSelectedBlog] = useState<any>(null);
@@ -1240,6 +1345,7 @@ export default function App() {
         <ServicesSection lang={lang} onLearnMore={handleServiceLearnMore} />
         <OngoingSessionsSection lang={lang} />
         <AboutSection lang={lang} />
+        <BookSection lang={lang} />
         <BlogSection lang={lang} />
         <TestimonialsSection lang={lang} />
         <FAQSection lang={lang} />
