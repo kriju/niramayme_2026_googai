@@ -13,7 +13,7 @@ export const TRANSLATIONS = {
       faq: "FAQ",
       sessions: "Sessions",
       bookNow: "Book Now",
-      book: "Book",
+      book: "My Book",
       switchLang: "Switch to German",
     },
     hero: {
@@ -194,7 +194,7 @@ export const TRANSLATIONS = {
       faq: "FAQ",
       sessions: "Sitzungen",
       bookNow: "Jetzt buchen",
-      book: "Buch",
+      book: "Mein Buch",
       switchLang: "Auf Englisch wechseln",
     },
     hero: {
