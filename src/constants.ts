@@ -19,6 +19,7 @@ export const TRANSLATIONS = {
       blog: "Blog",
       faq: "FAQ",
       sessions: "Sessions",
+      astrology: "Astrology",
       bookNow: "Book Now",
       book: "My Book",
       switchLang: "Switch to German",
@@ -182,6 +183,69 @@ export const TRANSLATIONS = {
         saving: "Publishing..."
       }
     },
+    astrology: {
+      badge: "1:1 Astrological Guidance & Kundali Analysis",
+      title: "Decode Your Soul's Blueprint.",
+      subtitle: "Navigate Life's Cycles with Clarity.",
+      traditionNote: "Rooted in Vedic Astrology (Jyotish) — India's ancient science of birth-chart analysis.",
+      intro1: "Most people view astrology as rigid fortune-telling or fear-driven predictions. Here, we approach your birth chart as your living energetic map—an empowering tool to understand who you are at a core level, why certain life situations keep repeating, and where your natural flow lies.",
+      intro2: "Astrology doesn't freeze your destiny; it shows you the weather of your life so you can navigate the storms, seize the sunny seasons, and stop fighting against your own nature.",
+      exploreTitle: "What We Explore Together",
+      exploreItems: [
+        {
+          title: "Your Core Soul Energy & True Purpose (Dharma)",
+          description: "Discover your innate nature (Swabhava), authentic strengths, and what genuine fulfillment looks like for you beyond society's definitions of \"success.\"",
+        },
+        {
+          title: "Understanding Challenging Life Situations",
+          description: "Decode repetitive life patterns, career blocks, or emotional burnout. Understand the lesson life is currently presenting so you can complete the cycle rather than relive it.",
+        },
+        {
+          title: "Navigating Difficult Transitions",
+          description: "Gain clarity during heavy or confusing phases (Mahadashas, Sade Sati, or major planetary transits) with practical guidance on whether to push forward, pivot, or pause.",
+        },
+        {
+          title: "Relationships & Emotional Dynamics",
+          description: "Understand how you relate to others, the karmic roots of your relationship friction, and how to build emotionally safe, conscious connections.",
+        },
+        {
+          title: "Guidance on Children & Family",
+          description: "Understand your child's unique nature, emotional tendencies, and learning styles through their energetic blueprint, helping you nurture them according to who they are rather than external pressures.",
+        },
+        {
+          title: "Channeling Energy Productively",
+          description: "Pinpoint exactly where your time, focus, and emotional reserves will yield real growth, and where pushing causes unnecessary friction.",
+        },
+      ],
+      whoTitle: "Who This Guidance Is For",
+      whoItems: [
+        "Anyone feeling stuck in a repeating life pattern or emotional loop.",
+        "Individuals standing at a career or personal crossroads seeking objective direction.",
+        "Seekers asking: \"What am I truly meant to learn or create in this chapter?\"",
+        "Parents wanting to understand their child's natural temperament and developmental rhythm.",
+        "Anyone looking for grounded, conscious guidance free from fear, superstition, or fatalism.",
+      ],
+      howTitle: "How It Works",
+      howSteps: [
+        {
+          title: "Submit Your Details",
+          description: "Complete the booking form with your exact birth date, birth time, and birth city, along with the primary areas of life you want to focus on.",
+        },
+        {
+          title: "Chart Preparation",
+          description: "Your chart is thoroughly prepared and studied prior to the call.",
+        },
+        {
+          title: "Connect Live",
+          description: "We meet online via Google Meet/Zoom for an in-depth, eye-opening exploration of your cosmic blueprint.",
+        },
+        {
+          title: "Session Write-Up",
+          description: "Receive the write-up of your analysis so you can revisit the insights whenever you need a compass.",
+        },
+      ],
+      cta: "Book Your Reading",
+    },
     book: {
       title: "Journey from Body to Bliss",
       subtitle: "The Niramay Path to Pancha Koshas",
@@ -200,6 +264,7 @@ export const TRANSLATIONS = {
       blog: "Blog",
       faq: "FAQ",
       sessions: "Sitzungen",
+      astrology: "Astrologie",
       bookNow: "Jetzt buchen",
       book: "Mein Buch",
       switchLang: "Auf Englisch wechseln",
@@ -364,6 +429,69 @@ export const TRANSLATIONS = {
         cancel: "Abbrechen",
         saving: "Wird veröffentlicht..."
       }
+    },
+    astrology: {
+      badge: "1:1 Astrologische Beratung & Kundali-Analyse",
+      title: "Entschlüsseln Sie den Bauplan Ihrer Seele.",
+      subtitle: "Meistern Sie die Zyklen des Lebens mit Klarheit.",
+      traditionNote: "Verwurzelt in der vedischen Astrologie (Jyotish) – Indiens jahrtausendealter Wissenschaft der Geburtshoroskop-Analyse.",
+      intro1: "Die meisten Menschen betrachten Astrologie als starre Wahrsagerei oder angstgetriebene Vorhersagen. Hier betrachten wir Ihr Geburtshoroskop als Ihre lebendige energetische Landkarte – ein stärkendes Werkzeug, um zu verstehen, wer Sie im Kern sind, warum sich bestimmte Lebenssituationen wiederholen, und wo Ihr natürlicher Fluss liegt.",
+      intro2: "Astrologie friert Ihr Schicksal nicht ein; sie zeigt Ihnen das Wetter Ihres Lebens, damit Sie die Stürme meistern, die sonnigen Phasen nutzen und aufhören können, gegen Ihre eigene Natur anzukämpfen.",
+      exploreTitle: "Was wir gemeinsam erkunden",
+      exploreItems: [
+        {
+          title: "Ihre Seelenenergie & wahre Bestimmung (Dharma)",
+          description: "Entdecken Sie Ihre angeborene Natur (Swabhava), authentische Stärken und wie echte Erfüllung für Sie aussieht – jenseits gesellschaftlicher Definitionen von \"Erfolg\".",
+        },
+        {
+          title: "Herausfordernde Lebenssituationen verstehen",
+          description: "Entschlüsseln Sie wiederkehrende Lebensmuster, berufliche Blockaden oder emotionales Burnout. Verstehen Sie die Lektion, die das Leben Ihnen gerade zeigt, damit Sie den Kreislauf abschließen statt ihn erneut zu durchleben.",
+        },
+        {
+          title: "Schwierige Übergangsphasen meistern",
+          description: "Gewinnen Sie Klarheit in schweren oder verwirrenden Phasen (Mahadashas, Sade Sati oder große planetare Transite) mit praktischer Orientierung, ob Sie vorangehen, umlenken oder innehalten sollten.",
+        },
+        {
+          title: "Beziehungen & emotionale Dynamiken",
+          description: "Verstehen Sie, wie Sie sich zu anderen in Beziehung setzen, die karmischen Wurzeln von Beziehungsreibungen und wie Sie emotional sichere, bewusste Verbindungen aufbauen.",
+        },
+        {
+          title: "Begleitung für Kinder & Familie",
+          description: "Verstehen Sie die einzigartige Natur, emotionalen Tendenzen und Lernstile Ihres Kindes durch sein energetisches Profil und begleiten Sie es entsprechend seinem wahren Wesen statt äußerem Druck.",
+        },
+        {
+          title: "Energie gezielt einsetzen",
+          description: "Erkennen Sie genau, wo Ihre Zeit, Ihr Fokus und Ihre emotionalen Ressourcen echtes Wachstum bewirken – und wo Anstrengung unnötige Reibung erzeugt.",
+        },
+      ],
+      whoTitle: "Für wen diese Beratung geeignet ist",
+      whoItems: [
+        "Für alle, die in einem wiederkehrenden Lebensmuster oder emotionalen Kreislauf feststecken.",
+        "Für Menschen an einem beruflichen oder persönlichen Wendepunkt, die eine objektive Orientierung suchen.",
+        "Für Suchende, die sich fragen: \"Was soll ich in diesem Lebensabschnitt wirklich lernen oder erschaffen?\"",
+        "Für Eltern, die das natürliche Temperament und den Entwicklungsrhythmus ihres Kindes verstehen möchten.",
+        "Für alle, die sich eine fundierte, bewusste Begleitung wünschen – frei von Angst, Aberglauben oder Fatalismus.",
+      ],
+      howTitle: "So funktioniert es",
+      howSteps: [
+        {
+          title: "Angaben übermitteln",
+          description: "Füllen Sie das Buchungsformular mit Ihrem genauen Geburtsdatum, Ihrer Geburtszeit und Ihrem Geburtsort aus, sowie den wichtigsten Lebensbereichen, auf die Sie sich konzentrieren möchten.",
+        },
+        {
+          title: "Horoskop-Vorbereitung",
+          description: "Ihr Horoskop wird vor dem Gespräch gründlich vorbereitet und analysiert.",
+        },
+        {
+          title: "Live-Gespräch",
+          description: "Wir treffen uns online per Google Meet/Zoom für eine tiefgehende, aufschlussreiche Erkundung Ihres kosmischen Bauplans.",
+        },
+        {
+          title: "Zusammenfassung der Sitzung",
+          description: "Sie erhalten eine schriftliche Zusammenfassung Ihrer Analyse, auf die Sie jederzeit als Kompass zurückgreifen können.",
+        },
+      ],
+      cta: "Termin für Ihre Lesung buchen",
     },
     book: {
       title: "Reise vom Körper zur Glückseligkeit",

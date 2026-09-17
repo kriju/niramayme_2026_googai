@@ -559,6 +559,7 @@ const Navbar = ({ lang, setLang }: { lang: "EN" | "DE", setLang: (l: "EN" | "DE"
         <div className="hidden md:flex items-center gap-8">
           <a href="#services" className="text-sm font-medium hover:text-primary transition-colors">{t.services}</a>
           <a href="#sessions" className="text-sm font-medium hover:text-primary transition-colors">{t.sessions}</a>
+          <a href="#astrology" className="text-sm font-medium hover:text-primary transition-colors">{t.astrology}</a>
           <a href="#about" className="text-sm font-medium hover:text-primary transition-colors">{t.about}</a>
           <a href="#book" className="text-sm font-medium hover:text-primary transition-colors">{t.book}</a>
           {FEATURE_BLOG_ENABLED && <a href="#blog" className="text-sm font-medium hover:text-primary transition-colors">{t.blog}</a>}
@@ -591,6 +592,7 @@ const Navbar = ({ lang, setLang }: { lang: "EN" | "DE", setLang: (l: "EN" | "DE"
           >
             <a href="#services" onClick={() => setIsMobileMenuOpen(false)}>{t.services}</a>
             <a href="#sessions" onClick={() => setIsMobileMenuOpen(false)}>{t.sessions}</a>
+            <a href="#astrology" onClick={() => setIsMobileMenuOpen(false)}>{t.astrology}</a>
             <a href="#about" onClick={() => setIsMobileMenuOpen(false)}>{t.about}</a>
             <a href="#book" onClick={() => setIsMobileMenuOpen(false)}>{t.book}</a>
             {FEATURE_BLOG_ENABLED && <a href="#blog" onClick={() => setIsMobileMenuOpen(false)}>{t.blog}</a>}
@@ -814,6 +816,88 @@ const OngoingSessionsSection = ({ lang }: { lang: "EN" | "DE" }) => {
               </motion.div>
             );
           })}
+        </div>
+      </div>
+    </section>
+  );
+};
+
+const AstrologySection = ({ lang }: { lang: "EN" | "DE" }) => {
+  const t = TRANSLATIONS[lang].astrology;
+  return (
+    <section id="astrology" className="py-24 bg-stone-50/50 overflow-hidden">
+      <div className="container mx-auto px-6">
+        <div className="text-center max-w-3xl mx-auto mb-16">
+          <Badge variant="secondary" className="mb-6 px-4 py-1 rounded-full text-primary font-medium">
+            {t.badge}
+          </Badge>
+          <h2 className="text-4xl md:text-5xl font-serif font-bold mb-4">{t.title}</h2>
+          <p className="text-xl md:text-2xl font-serif italic text-primary/80 mb-6">{t.subtitle}</p>
+          <p className="text-sm font-medium uppercase tracking-wider text-primary/60 mb-8">{t.traditionNote}</p>
+          <p className="text-muted-foreground text-lg leading-relaxed mb-4">{t.intro1}</p>
+          <p className="text-muted-foreground text-lg leading-relaxed">{t.intro2}</p>
+        </div>
+
+        <div className="mb-20">
+          <h3 className="text-2xl md:text-3xl font-serif font-bold text-center mb-10">{t.exploreTitle}</h3>
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {t.exploreItems.map((item, idx) => (
+              <motion.div
+                key={idx}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: idx * 0.08 }}
+              >
+                <Card className="h-full border-none shadow-sm bg-white">
+                  <CardHeader>
+                    <CardTitle className="text-lg font-serif leading-snug">{item.title}</CardTitle>
+                    <CardDescription className="leading-relaxed">{item.description}</CardDescription>
+                  </CardHeader>
+                </Card>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+
+        <div className="grid md:grid-cols-2 gap-16 items-start mb-16">
+          <div>
+            <h3 className="text-2xl md:text-3xl font-serif font-bold mb-8">{t.whoTitle}</h3>
+            <ul className="space-y-4">
+              {t.whoItems.map((item, idx) => (
+                <li key={idx} className="flex items-start gap-3">
+                  <CheckCircle2 className="w-5 h-5 text-primary mt-1 shrink-0" />
+                  <span className="text-muted-foreground leading-relaxed">{item}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div>
+            <h3 className="text-2xl md:text-3xl font-serif font-bold mb-8">{t.howTitle}</h3>
+            <div className="space-y-6">
+              {t.howSteps.map((step, idx) => (
+                <div key={idx} className="flex gap-4">
+                  <div className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold shrink-0">
+                    {idx + 1}
+                  </div>
+                  <div>
+                    <p className="font-bold mb-1">{step.title}</p>
+                    <p className="text-muted-foreground text-sm leading-relaxed">{step.description}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="text-center">
+          <BookingModal lang={lang}>
+            <Button size="lg" className="rounded-full px-10 h-16 text-lg gap-3 shadow-xl hover:shadow-primary/20 transition-all">
+              <Sparkles className="w-5 h-5" />
+              {t.cta}
+            </Button>
+          </BookingModal>
         </div>
       </div>
     </section>
@@ -1104,6 +1188,7 @@ const Footer = ({ lang, onOpenLegal }: { lang: "EN" | "DE", onOpenLegal: (type: 
             <h4 className="font-bold mb-6">{t.quickLinks}</h4>
             <ul className="space-y-4">
               <li><a href="#services" className="text-muted-foreground hover:text-primary transition-colors">{nav.services}</a></li>
+              <li><a href="#astrology" className="text-muted-foreground hover:text-primary transition-colors">{nav.astrology}</a></li>
               <li><a href="#about" className="text-muted-foreground hover:text-primary transition-colors">{nav.about}</a></li>
               <li><a href="#book" className="text-muted-foreground hover:text-primary transition-colors">{nav.book}</a></li>
               <li><a href="#testimonials" className="text-muted-foreground hover:text-primary transition-colors">{nav.reviews}</a></li>
@@ -1348,6 +1433,7 @@ export default function App() {
         <Hero lang={lang} />
         <ServicesSection lang={lang} onLearnMore={handleServiceLearnMore} />
         <OngoingSessionsSection lang={lang} />
+        <AstrologySection lang={lang} />
         <AboutSection lang={lang} />
         <BookSection lang={lang} />
         {FEATURE_BLOG_ENABLED && <BlogSection lang={lang} />}
