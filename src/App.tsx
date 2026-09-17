@@ -1132,7 +1132,7 @@ const Footer = ({ lang, onOpenLegal }: { lang: "EN" | "DE", onOpenLegal: (type: 
         <Separator className="mb-8" />
         
         <div className="flex flex-col md:flex-row justify-between items-center gap-6 text-sm text-muted-foreground">
-          <p>© 2024 Niramay Wellness. {t.rights}</p>
+          <p>© {new Date().getFullYear()} Niramay Wellness. {t.rights}</p>
           <div className="flex gap-8">
             <button onClick={() => onOpenLegal("impressum")} className="hover:text-primary transition-colors cursor-pointer bg-transparent border-none p-0">{t.impressum}</button>
             <button onClick={() => onOpenLegal("privacy")} className="hover:text-primary transition-colors cursor-pointer bg-transparent border-none p-0">{t.privacy}</button>
