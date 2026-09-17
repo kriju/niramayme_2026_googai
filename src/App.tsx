@@ -47,7 +47,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { SERVICES, TESTIMONIALS, FAQS, CERTIFICATIONS, TRANSLATIONS, ONGOING_SESSIONS, GOOGLE_CALENDAR_URL, GOOGLE_REVIEW_URL } from "./constants";
+import { SERVICES, TESTIMONIALS, FAQS, CERTIFICATIONS, TRANSLATIONS, ONGOING_SESSIONS, GOOGLE_CALENDAR_URL, GOOGLE_REVIEW_URL, FEATURE_BLOG_ENABLED } from "./constants";
 
 const BookingModal = ({ children, lang }: { children: React.ReactNode, lang: "EN" | "DE" }) => {
   const t = TRANSLATIONS[lang].booking;
@@ -561,7 +561,7 @@ const Navbar = ({ lang, setLang }: { lang: "EN" | "DE", setLang: (l: "EN" | "DE"
           <a href="#sessions" className="text-sm font-medium hover:text-primary transition-colors">{t.sessions}</a>
           <a href="#about" className="text-sm font-medium hover:text-primary transition-colors">{t.about}</a>
           <a href="#book" className="text-sm font-medium hover:text-primary transition-colors">{t.book}</a>
-          <a href="#blog" className="text-sm font-medium hover:text-primary transition-colors">{t.blog}</a>
+          {FEATURE_BLOG_ENABLED && <a href="#blog" className="text-sm font-medium hover:text-primary transition-colors">{t.blog}</a>}
           <a href="#testimonials" className="text-sm font-medium hover:text-primary transition-colors">{t.reviews}</a>
           <a href="#faq" className="text-sm font-medium hover:text-primary transition-colors">{t.faq}</a>
           
@@ -593,7 +593,7 @@ const Navbar = ({ lang, setLang }: { lang: "EN" | "DE", setLang: (l: "EN" | "DE"
             <a href="#sessions" onClick={() => setIsMobileMenuOpen(false)}>{t.sessions}</a>
             <a href="#about" onClick={() => setIsMobileMenuOpen(false)}>{t.about}</a>
             <a href="#book" onClick={() => setIsMobileMenuOpen(false)}>{t.book}</a>
-            <a href="#blog" onClick={() => setIsMobileMenuOpen(false)}>{t.blog}</a>
+            {FEATURE_BLOG_ENABLED && <a href="#blog" onClick={() => setIsMobileMenuOpen(false)}>{t.blog}</a>}
             <a href="#testimonials" onClick={() => setIsMobileMenuOpen(false)}>{t.reviews}</a>
             <a href="#faq" onClick={() => setIsMobileMenuOpen(false)}>{t.faq}</a>
             <Separator />
@@ -1107,7 +1107,7 @@ const Footer = ({ lang, onOpenLegal }: { lang: "EN" | "DE", onOpenLegal: (type: 
               <li><a href="#about" className="text-muted-foreground hover:text-primary transition-colors">{nav.about}</a></li>
               <li><a href="#book" className="text-muted-foreground hover:text-primary transition-colors">{nav.book}</a></li>
               <li><a href="#testimonials" className="text-muted-foreground hover:text-primary transition-colors">{nav.reviews}</a></li>
-              <li><a href="#blog" className="text-muted-foreground hover:text-primary transition-colors">{nav.blog}</a></li>
+              {FEATURE_BLOG_ENABLED && <li><a href="#blog" className="text-muted-foreground hover:text-primary transition-colors">{nav.blog}</a></li>}
               <li><a href="#faq" className="text-muted-foreground hover:text-primary transition-colors">{nav.faq}</a></li>
             </ul>
           </div>
@@ -1315,6 +1315,10 @@ export default function App() {
       return;
     }
 
+    // The Blog section (and the posts it would link to) is hidden behind
+    // FEATURE_BLOG_ENABLED, so there's nothing to look up or scroll to yet.
+    if (!FEATURE_BLOG_ENABLED) return;
+
     // Find a blog post that matches this service's category
     const q = query(
       collection(db, "blogs"), 
@@ -1346,7 +1350,7 @@ export default function App() {
         <OngoingSessionsSection lang={lang} />
         <AboutSection lang={lang} />
         <BookSection lang={lang} />
-        <BlogSection lang={lang} />
+        {FEATURE_BLOG_ENABLED && <BlogSection lang={lang} />}
         <TestimonialsSection lang={lang} />
         <FAQSection lang={lang} />
       </main>

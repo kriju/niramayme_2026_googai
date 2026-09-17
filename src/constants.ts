@@ -3,6 +3,13 @@ import { Heart, Sparkles, Brain, Zap, ShieldCheck, Moon, Users } from "lucide-re
 export const GOOGLE_CALENDAR_URL = "https://calendar.google.com/calendar/appointments/schedules/AcZssZ0bFjK2E2xI3wiT55LqPigmiOHHDxGTghizdBbhy4MSdbw1p6CRUsxVk8gZYqJTnMgoKOAcJjZO?gv=true";
 export const GOOGLE_REVIEW_URL = "https://www.google.com/search?q=Niramay+Ostfildern+reviews";
 
+// Feature flags
+// The Blog section is still under active development. It's hidden by default so the
+// rest of the site can go live without it. To work on it, set
+// VITE_FEATURE_BLOG_ENABLED=true in a .env.local file (or as a Vercel Preview env var)
+// and it'll show up again in that environment only.
+export const FEATURE_BLOG_ENABLED = import.meta.env.VITE_FEATURE_BLOG_ENABLED === "true";
+
 export const TRANSLATIONS = {
   EN: {
     nav: {
