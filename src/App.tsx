@@ -96,12 +96,19 @@ const LeaveReviewModal = ({ lang }: { lang: "EN" | "DE" }) => {
     e.preventDefault();
     setLoading(true);
     try {
-      await addDoc(collection(db, "reviews"), {
+      const docRef = await addDoc(collection(db, "reviews"), {
         ...formData,
         createdAt: serverTimestamp(),
         lang,
-        approved: false, // Reviews are moderated — an admin approves in the Firebase console before this shows publicly
+        approved: false, // Reviews are moderated — an admin approves via the emailed link (or the Firebase console) before this shows publicly
       });
+      // Best-effort admin notification email with Approve/Reject links.
+      // The review itself is already saved above regardless of whether this succeeds.
+      fetch("/api/notify-review", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reviewId: docRef.id }),
+      }).catch((err) => console.error("Failed to notify admin of new review:", err));
       setOpen(false);
       setFormData({ name: "", rating: 5, content: "", category: "Mental Clarity", role: "" });
     } catch (error) {
