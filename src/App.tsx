@@ -100,7 +100,7 @@ const LeaveReviewModal = ({ lang }: { lang: "EN" | "DE" }) => {
         ...formData,
         createdAt: serverTimestamp(),
         lang,
-        approved: true, // Auto-approve for demo simplicity as requested
+        approved: false, // Reviews are moderated — an admin approves in the Firebase console before this shows publicly
       });
       setOpen(false);
       setFormData({ name: "", rating: 5, content: "", category: "Mental Clarity", role: "" });
@@ -965,7 +965,7 @@ const TestimonialsSection = ({ lang }: { lang: "EN" | "DE" }) => {
   const t = TRANSLATIONS[lang].testimonials;
   
   useEffect(() => {
-    const q = query(collection(db, "reviews"), orderBy("createdAt", "desc"));
+    const q = query(collection(db, "reviews"), where("approved", "==", true), orderBy("createdAt", "desc"));
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const reviews = snapshot.docs.map(doc => {
         const data = doc.data();

@@ -34,16 +34,31 @@ service cloud.firestore {
     }
 
     match /reviews/{reviewId} {
-      allow get, list: if true;
-      allow create: if isValidId(reviewId) && isValidReview(incoming());
+      // Only approved reviews are ever readable. A list query must itself
+      // filter on approved == true (as the app does) for Firestore to prove
+      // every possible match is allowed — a query without that filter, or a
+      // get() on an unapproved doc's ID, is rejected outright rather than
+      // silently filtered.
+      allow get, list: if resource.data.approved == true;
+      // Public visitors may submit a review, but it always lands unapproved —
+      // a submission can't set approved:true itself. Nothing becomes visible
+      // on the site until an admin flips `approved` to true directly in the
+      // Firebase console (client-side update/delete stays blocked below, so
+      // this can't be done from the app).
+      allow create: if isValidId(reviewId)
+                    && isValidReview(incoming())
+                    && (!('approved' in incoming()) || incoming().approved == false);
       allow update, delete: if false;
     }
 
     match /blogs/{blogId} {
       allow get, list: if true;
-      // In a real app, only admins could create/update/delete. 
-      // For this turn, we allow creation so I can seed it from a script or UI easily if needed.
-      allow create, update: if isValidBlog(incoming());
+      // Blog authoring is admin-only content, not a public form. There's no
+      // admin sign-in flow in the app yet, so requiring auth here blocks all
+      // writes for now — once an admin login exists, this can be narrowed
+      // further (e.g. a specific admin UID or custom claim) instead of any
+      // signed-in user.
+      allow create, update: if request.auth != null && isValidBlog(incoming());
       allow delete: if false;
     }
   }

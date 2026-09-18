@@ -111,11 +111,11 @@ export const TRANSLATIONS = {
           title: "Legal Notice (Impressum)",
           section1: {
             title: "Information according to § 5 TMG",
-            content: "Niramay - Holistic Wellbeing\nRicha [Your Last Name]\n[Your Street & House Number]\n73760 Ostfildern\nGermany"
+            content: "Niramay - Holistic Wellbeing\nRicha Kansal\nErnst Kirchner Str 13/3\n73760 Ostfildern\nGermany"
           },
           section2: {
             title: "Contact",
-            content: "Phone: [Your Phone Number]\nEmail: richa@niramay.me"
+            content: "Phone: +49-15175315761\nEmail: richa@niramay.me"
           },
           section3: {
             title: "Professional Regulation",
@@ -136,7 +136,7 @@ export const TRANSLATIONS = {
             },
             {
               title: "2. Responsibility",
-              content: "The controller for data processing on this website is:\nRicha [Your Last Name]\n[Your Street]\n73760 Ostfildern\nEmail: richa@niramay.me"
+              content: "The controller for data processing on this website is:\nRicha Kansal\nErnst Kirchner Str 13/3\n73760 Ostfildern\nEmail: richa@niramay.me"
             },
             {
               title: "3. Data Collection on our Website",
@@ -357,11 +357,11 @@ export const TRANSLATIONS = {
           title: "Impressum",
           section1: {
             title: "Angaben gemäß § 5 TMG",
-            content: "Niramay - Ganzheitliches Wohlbefinden\nRicha [Ihr Nachname]\n[Ihre Straße & Hausnummer]\n73760 Ostfildern\nDeutschland"
+            content: "Niramay - Ganzheitliches Wohlbefinden\nRicha Kansal\nErnst Kirchner Str 13/3\n73760 Ostfildern\nDeutschland"
           },
           section2: {
             title: "Kontakt",
-            content: "Telefon: [Ihre Telefonnummer]\nE-Mail: richa@niramay.me"
+            content: "Telefon: +49-15175315761\nE-Mail: richa@niramay.me"
           },
           section3: {
             title: "Berufsbezeichnung",
@@ -382,7 +382,7 @@ export const TRANSLATIONS = {
             },
             {
               title: "2. Verantwortlicher",
-              content: "Verantwortlicher für die Datenverarbeitung auf dieser Website ist:\nRicha [Ihr Nachname]\n[Ihre Straße]\n73760 Ostfildern\nE-Mail: richa@niramay.me"
+              content: "Verantwortlicher für die Datenverarbeitung auf dieser Website ist:\nRicha Kansal\nErnst Kirchner Str 13/3\n73760 Ostfildern\nE-Mail: richa@niramay.me"
             },
             {
               title: "3. Datenerfassung auf unserer Website",
