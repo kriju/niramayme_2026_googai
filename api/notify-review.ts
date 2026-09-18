@@ -1,8 +1,8 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import nodemailer from "nodemailer";
-import { getAdminDb } from "./_lib/firebaseAdmin";
-import { makeReviewToken } from "./_lib/reviewToken";
-import { escapeHtml, getSiteUrl } from "./_lib/util";
+import { getAdminDb } from "./_lib/firebaseAdmin.js";
+import { makeReviewToken } from "./_lib/reviewToken.js";
+import { escapeHtml, getSiteUrl } from "./_lib/util.js";
 
 // Called by the browser right after a review is saved to Firestore (see
 // LeaveReviewModal in src/App.tsx). It re-fetches the review server-side by

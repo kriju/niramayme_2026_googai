@@ -1,8 +1,8 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { FieldValue } from "firebase-admin/firestore";
-import { getAdminDb } from "./_lib/firebaseAdmin";
-import { verifyReviewToken } from "./_lib/reviewToken";
-import { escapeHtml } from "./_lib/util";
+import { getAdminDb } from "./_lib/firebaseAdmin.js";
+import { verifyReviewToken } from "./_lib/reviewToken.js";
+import { escapeHtml } from "./_lib/util.js";
 
 // The link an admin clicks from the notification email. Deliberately a
 // plain GET so it works as an ordinary link with no JavaScript required —
