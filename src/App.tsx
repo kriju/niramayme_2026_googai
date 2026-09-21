@@ -745,8 +745,8 @@ const ServicesSection = ({ lang, onLearnMore }: { lang: "EN" | "DE", onLearnMore
         </div>
 
         <Tabs defaultValue="all" className="w-full">
-          <div className="flex justify-center mb-12">
-            <TabsList className="bg-white border rounded-full p-1 h-14">
+          <div className="flex justify-start md:justify-center mb-12 overflow-x-auto no-scrollbar">
+            <TabsList className="bg-white border rounded-full p-1 h-14 shrink-0">
               <TabsTrigger value="all" className="rounded-full px-8 h-full data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">{t.tabs.all}</TabsTrigger>
               <TabsTrigger value="Physical Wellness" className="rounded-full px-8 h-full data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">{t.tabs.physical}</TabsTrigger>
               <TabsTrigger value="Mental Clarity" className="rounded-full px-8 h-full data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">{t.tabs.mental}</TabsTrigger>
@@ -1267,7 +1267,7 @@ const LegalModal = ({ type, open, setOpen, lang }: { type: "impressum" | "privac
 const BookSection = ({ lang }: { lang: "EN" | "DE" }) => {
   const t = TRANSLATIONS[lang].book;
   return (
-    <section id="book" className="py-24 bg-[#FAF9F6]">
+    <section id="book" className="py-24 bg-[#FAF9F6] overflow-hidden">
       <div className="container mx-auto px-6">
         <div className="flex flex-col lg:flex-row items-center gap-16">
           <motion.div 
