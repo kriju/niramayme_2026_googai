@@ -18,7 +18,8 @@ import {
   Star,
   Plus,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Flower2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { db } from "./lib/firebase";
@@ -918,13 +919,11 @@ const AboutSection = ({ lang }: { lang: "EN" | "DE" }) => {
       <div className="container mx-auto px-6">
         <div className="grid md:grid-cols-2 gap-16 items-center">
           <div className="relative">
-            <div className="aspect-square rounded-[3rem] overflow-hidden shadow-2xl">
-              <img 
-                src="https://picsum.photos/seed/healer/800/800" 
-                alt="Richa - Certified Therapist" 
-                className="w-full h-full object-cover"
-                referrerPolicy="no-referrer"
-              />
+            <div className="aspect-square rounded-[3rem] overflow-hidden shadow-2xl bg-gradient-to-br from-primary/15 via-primary/5 to-stone-100 flex flex-col items-center justify-center gap-4">
+              <Flower2 className="w-20 h-20 text-primary/40" strokeWidth={1.25} />
+              <p className="text-sm font-medium text-primary/50 tracking-wide uppercase">
+                {lang === "EN" ? "Photo coming soon" : "Foto folgt in Kürze"}
+              </p>
             </div>
             <div className="absolute -top-10 -right-10 w-40 h-40 bg-primary/10 rounded-full animate-pulse" />
             <div className="absolute -bottom-10 -left-10 w-60 h-60 bg-primary/5 rounded-full" />
@@ -947,18 +946,6 @@ const AboutSection = ({ lang }: { lang: "EN" | "DE" }) => {
                 </div>
               ))}
             </div>
-
-            <Dialog>
-              <DialogTrigger render={<Button size="lg" className="rounded-full px-8 h-14">{t.cta}</Button>} />
-              <DialogContent className="sm:max-w-[700px]">
-                <DialogHeader>
-                  <DialogTitle>{t.cta}</DialogTitle>
-                </DialogHeader>
-                <div className="aspect-video bg-stone-100 rounded-xl flex items-center justify-center">
-                  <p className="text-muted-foreground italic">{t.videoPlaceholder}</p>
-                </div>
-              </DialogContent>
-            </Dialog>
           </div>
         </div>
       </div>
@@ -1299,9 +1286,13 @@ const BookSection = ({ lang }: { lang: "EN" | "DE" }) => {
             className="lg:w-1/2 relative"
           >
             <div className="relative z-10 rounded-2xl overflow-hidden shadow-[20px_30px_60px_-12px_rgba(0,0,0,0.5)] group bg-stone-900 aspect-[2/3] max-w-sm mx-auto border-r-4 border-stone-800">
-              <img 
-                src="/bookcover1.svg" 
-                alt="Journey from Body to Bliss Book" 
+              <img
+                src="/bookcover.webp"
+                alt="Journey from Body to Bliss Book"
+                width={900}
+                height={1350}
+                loading="lazy"
+                decoding="async"
                 className="w-full h-full object-contain transition-transform duration-1000 group-hover:scale-105"
                 referrerPolicy="no-referrer"
               />
@@ -1356,13 +1347,8 @@ const BookSection = ({ lang }: { lang: "EN" | "DE" }) => {
             </p>
 
             <div className="flex items-center gap-4 mb-10">
-              <div className="w-14 h-14 rounded-full bg-stone-200 overflow-hidden border-2 border-white shadow-sm">
-                <img 
-                  src="https://picsum.photos/seed/richa/200/200" 
-                  alt={t.author} 
-                  className="w-full h-full object-cover"
-                  referrerPolicy="no-referrer"
-                />
+              <div className="w-14 h-14 rounded-full bg-gradient-to-br from-primary/25 to-primary/10 border-2 border-white shadow-sm flex items-center justify-center text-primary font-serif font-bold">
+                RK
               </div>
               <div>
                 <p className="font-bold text-stone-800">{t.author}</p>
@@ -1392,6 +1378,13 @@ export default function App() {
   const [lang, setLang] = useState<"EN" | "DE">("EN");
   const [selectedBlog, setSelectedBlog] = useState<any>(null);
   const [legalModal, setLegalModal] = useState<"impressum" | "privacy" | null>(null);
+
+  useEffect(() => {
+    document.documentElement.lang = lang.toLowerCase();
+    document.title = lang === "EN"
+      ? "Niramay Wellbeing — Yoga, Reiki & Holistic Therapy in Ostfildern"
+      : "Niramay Wellbeing — Yoga, Reiki & Ganzheitliche Therapie in Ostfildern";
+  }, [lang]);
 
   const handleServiceLearnMore = async (service: any) => {
     if (service.link && service.openInModal) {
