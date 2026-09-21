@@ -567,7 +567,6 @@ const Navbar = ({ lang, setLang }: { lang: "EN" | "DE", setLang: (l: "EN" | "DE"
         <div className="hidden md:flex items-center gap-8">
           <a href="#services" className="text-sm font-medium hover:text-primary transition-colors">{t.services}</a>
           <a href="#sessions" className="text-sm font-medium hover:text-primary transition-colors">{t.sessions}</a>
-          <a href="#astrology" className="text-sm font-medium hover:text-primary transition-colors">{t.astrology}</a>
           <a href="#about" className="text-sm font-medium hover:text-primary transition-colors">{t.about}</a>
           <a href="#book" className="text-sm font-medium hover:text-primary transition-colors">{t.book}</a>
           {FEATURE_BLOG_ENABLED && <a href="#blog" className="text-sm font-medium hover:text-primary transition-colors">{t.blog}</a>}
@@ -600,7 +599,6 @@ const Navbar = ({ lang, setLang }: { lang: "EN" | "DE", setLang: (l: "EN" | "DE"
           >
             <a href="#services" onClick={() => setIsMobileMenuOpen(false)}>{t.services}</a>
             <a href="#sessions" onClick={() => setIsMobileMenuOpen(false)}>{t.sessions}</a>
-            <a href="#astrology" onClick={() => setIsMobileMenuOpen(false)}>{t.astrology}</a>
             <a href="#about" onClick={() => setIsMobileMenuOpen(false)}>{t.about}</a>
             <a href="#book" onClick={() => setIsMobileMenuOpen(false)}>{t.book}</a>
             {FEATURE_BLOG_ENABLED && <a href="#blog" onClick={() => setIsMobileMenuOpen(false)}>{t.blog}</a>}
@@ -735,6 +733,7 @@ const ServiceCard = ({ service, index, lang, onLearnMore }: { service: any, inde
 
 const ServicesSection = ({ lang, onLearnMore }: { lang: "EN" | "DE", onLearnMore?: (s: any) => void }) => {
   const t = TRANSLATIONS[lang].services;
+  const ta = TRANSLATIONS[lang].astrology;
   return (
     <section id="services" className="py-24 bg-stone-50/50">
       <div className="container mx-auto px-6">
@@ -752,6 +751,7 @@ const ServicesSection = ({ lang, onLearnMore }: { lang: "EN" | "DE", onLearnMore
               <TabsTrigger value="Physical Wellness" className="rounded-full px-8 h-full data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">{t.tabs.physical}</TabsTrigger>
               <TabsTrigger value="Mental Clarity" className="rounded-full px-8 h-full data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">{t.tabs.mental}</TabsTrigger>
               <TabsTrigger value="Spiritual Healing" className="rounded-full px-8 h-full data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">{t.tabs.spiritual}</TabsTrigger>
+              <TabsTrigger value="astrology" className="rounded-full px-8 h-full data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">{t.tabs.astrology}</TabsTrigger>
             </TabsList>
           </div>
 
@@ -767,6 +767,80 @@ const ServicesSection = ({ lang, onLearnMore }: { lang: "EN" | "DE", onLearnMore
               ))}
             </TabsContent>
           ))}
+          <TabsContent value="astrology" className="overflow-hidden">
+            <div className="text-center max-w-3xl mx-auto mb-20">
+              <Badge variant="secondary" className="mb-6 px-4 py-1 rounded-full text-primary font-medium">
+                {ta.badge}
+              </Badge>
+              <h3 className="text-3xl md:text-4xl font-serif font-bold mb-4">{ta.title}</h3>
+              <p className="text-xl md:text-2xl font-serif italic text-primary/80 mb-6">{ta.subtitle}</p>
+              <p className="text-sm font-medium uppercase tracking-wider text-primary/60 mb-8">{ta.traditionNote}</p>
+              <p className="text-muted-foreground text-lg leading-relaxed mb-4">{ta.intro1}</p>
+              <p className="text-muted-foreground text-lg leading-relaxed">{ta.intro2}</p>
+            </div>
+
+            <div className="mb-20">
+              <h4 className="text-2xl md:text-3xl font-serif font-bold text-center mb-10">{ta.exploreTitle}</h4>
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {ta.exploreItems.map((item, idx) => (
+                  <motion.div
+                    key={idx}
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: idx * 0.08 }}
+                  >
+                    <Card className="h-full border-none shadow-sm bg-white">
+                      <CardHeader>
+                        <CardTitle className="text-lg font-serif leading-snug">{item.title}</CardTitle>
+                        <CardDescription className="leading-relaxed">{item.description}</CardDescription>
+                      </CardHeader>
+                    </Card>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-16 items-start mb-16">
+              <div>
+                <h4 className="text-2xl md:text-3xl font-serif font-bold mb-8">{ta.whoTitle}</h4>
+                <ul className="space-y-4">
+                  {ta.whoItems.map((item, idx) => (
+                    <li key={idx} className="flex items-start gap-3">
+                      <CheckCircle2 className="w-5 h-5 text-primary mt-1 shrink-0" />
+                      <span className="text-muted-foreground leading-relaxed">{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              <div>
+                <h4 className="text-2xl md:text-3xl font-serif font-bold mb-8">{ta.howTitle}</h4>
+                <div className="space-y-6">
+                  {ta.howSteps.map((step, idx) => (
+                    <div key={idx} className="flex gap-4">
+                      <div className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold shrink-0">
+                        {idx + 1}
+                      </div>
+                      <div>
+                        <p className="font-bold mb-1">{step.title}</p>
+                        <p className="text-muted-foreground text-sm leading-relaxed">{step.description}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="text-center">
+              <BookingModal lang={lang}>
+                <Button size="lg" className="rounded-full px-10 h-16 text-lg gap-3 shadow-xl hover:shadow-primary/20 transition-all">
+                  <Sparkles className="w-5 h-5" />
+                  {ta.cta}
+                </Button>
+              </BookingModal>
+            </div>
+          </TabsContent>
         </Tabs>
       </div>
     </section>
@@ -824,88 +898,6 @@ const OngoingSessionsSection = ({ lang }: { lang: "EN" | "DE" }) => {
               </motion.div>
             );
           })}
-        </div>
-      </div>
-    </section>
-  );
-};
-
-const AstrologySection = ({ lang }: { lang: "EN" | "DE" }) => {
-  const t = TRANSLATIONS[lang].astrology;
-  return (
-    <section id="astrology" className="py-24 bg-stone-50/50 overflow-hidden">
-      <div className="container mx-auto px-6">
-        <div className="text-center max-w-3xl mx-auto mb-16">
-          <Badge variant="secondary" className="mb-6 px-4 py-1 rounded-full text-primary font-medium">
-            {t.badge}
-          </Badge>
-          <h2 className="text-4xl md:text-5xl font-serif font-bold mb-4">{t.title}</h2>
-          <p className="text-xl md:text-2xl font-serif italic text-primary/80 mb-6">{t.subtitle}</p>
-          <p className="text-sm font-medium uppercase tracking-wider text-primary/60 mb-8">{t.traditionNote}</p>
-          <p className="text-muted-foreground text-lg leading-relaxed mb-4">{t.intro1}</p>
-          <p className="text-muted-foreground text-lg leading-relaxed">{t.intro2}</p>
-        </div>
-
-        <div className="mb-20">
-          <h3 className="text-2xl md:text-3xl font-serif font-bold text-center mb-10">{t.exploreTitle}</h3>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {t.exploreItems.map((item, idx) => (
-              <motion.div
-                key={idx}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: idx * 0.08 }}
-              >
-                <Card className="h-full border-none shadow-sm bg-white">
-                  <CardHeader>
-                    <CardTitle className="text-lg font-serif leading-snug">{item.title}</CardTitle>
-                    <CardDescription className="leading-relaxed">{item.description}</CardDescription>
-                  </CardHeader>
-                </Card>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-
-        <div className="grid md:grid-cols-2 gap-16 items-start mb-16">
-          <div>
-            <h3 className="text-2xl md:text-3xl font-serif font-bold mb-8">{t.whoTitle}</h3>
-            <ul className="space-y-4">
-              {t.whoItems.map((item, idx) => (
-                <li key={idx} className="flex items-start gap-3">
-                  <CheckCircle2 className="w-5 h-5 text-primary mt-1 shrink-0" />
-                  <span className="text-muted-foreground leading-relaxed">{item}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <div>
-            <h3 className="text-2xl md:text-3xl font-serif font-bold mb-8">{t.howTitle}</h3>
-            <div className="space-y-6">
-              {t.howSteps.map((step, idx) => (
-                <div key={idx} className="flex gap-4">
-                  <div className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold shrink-0">
-                    {idx + 1}
-                  </div>
-                  <div>
-                    <p className="font-bold mb-1">{step.title}</p>
-                    <p className="text-muted-foreground text-sm leading-relaxed">{step.description}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        <div className="text-center">
-          <BookingModal lang={lang}>
-            <Button size="lg" className="rounded-full px-10 h-16 text-lg gap-3 shadow-xl hover:shadow-primary/20 transition-all">
-              <Sparkles className="w-5 h-5" />
-              {t.cta}
-            </Button>
-          </BookingModal>
         </div>
       </div>
     </section>
@@ -1182,7 +1174,6 @@ const Footer = ({ lang, onOpenLegal }: { lang: "EN" | "DE", onOpenLegal: (type: 
             <h4 className="font-bold mb-6">{t.quickLinks}</h4>
             <ul className="space-y-4">
               <li><a href="#services" className="text-muted-foreground hover:text-primary transition-colors">{nav.services}</a></li>
-              <li><a href="#astrology" className="text-muted-foreground hover:text-primary transition-colors">{nav.astrology}</a></li>
               <li><a href="#about" className="text-muted-foreground hover:text-primary transition-colors">{nav.about}</a></li>
               <li><a href="#book" className="text-muted-foreground hover:text-primary transition-colors">{nav.book}</a></li>
               <li><a href="#testimonials" className="text-muted-foreground hover:text-primary transition-colors">{nav.reviews}</a></li>
@@ -1433,7 +1424,6 @@ export default function App() {
         <Hero lang={lang} />
         <ServicesSection lang={lang} onLearnMore={handleServiceLearnMore} />
         <OngoingSessionsSection lang={lang} />
-        <AstrologySection lang={lang} />
         <AboutSection lang={lang} />
         <BookSection lang={lang} />
         {FEATURE_BLOG_ENABLED && <BlogSection lang={lang} />}
