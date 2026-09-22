@@ -1,4 +1,4 @@
-import { Heart, Sparkles, Brain, Zap, ShieldCheck, Moon, Users } from "lucide-react";
+import { Heart, Sparkles, Brain, Zap, ShieldCheck, Moon, Users, Star } from "lucide-react";
 
 export const GOOGLE_CALENDAR_URL = "https://calendar.google.com/calendar/appointments/schedules/AcZssZ0bFjK2E2xI3wiT55LqPigmiOHHDxGTghizdBbhy4MSdbw1p6CRUsxVk8gZYqJTnMgoKOAcJjZO?gv=true";
 export const GOOGLE_REVIEW_URL = "https://www.google.com/search?q=Niramay+Ostfildern+reviews";
@@ -36,13 +36,6 @@ export const TRANSLATIONS = {
     services: {
       title: "Outcome-Based Healing",
       description: "We don't just offer sessions; we offer solutions for your physical, mental, and spiritual well-being.",
-      tabs: {
-        all: "All Services",
-        physical: "Physical",
-        mental: "Mental",
-        spiritual: "Spiritual",
-        astrology: "Astrology",
-      },
       outcomeLabel: "The Outcome",
       learnMore: "Learn More",
     },
@@ -291,13 +284,6 @@ export const TRANSLATIONS = {
     services: {
       title: "Ergebnisorientierte Heilung",
       description: "Wir bieten nicht nur Sitzungen an; wir bieten Lösungen für Ihr körperliches, geistiges und spirituelles Wohlbefinden.",
-      tabs: {
-        all: "Alle Dienste",
-        physical: "Körperlich",
-        mental: "Geistig",
-        spiritual: "Spirituell",
-        astrology: "Astrologie",
-      },
       outcomeLabel: "Das Ergebnis",
       learnMore: "Mehr erfahren",
     },
@@ -604,6 +590,22 @@ export const SERVICES = [
       title: "Rückführung in vergangene Leben",
       description: "Erforschen Sie Ihre unterbewussten Erinnerungen, um aktuelle Lebensmuster zu verstehen und spirituelle Heilung zu finden.",
       outcome: "Gewinnen Sie tiefe Einblicke in die Reise Ihrer Seele und lösen Sie karmische Blockaden.",
+    }
+  },
+  {
+    id: "astrology",
+    icon: Star,
+    color: "bg-stone-100",
+    category: "Vedic Astrology",
+    EN: {
+      title: "Vedic Astrology & Kundali Reading",
+      description: "1:1 birth-chart guidance rooted in Vedic Astrology (Jyotish) to help you understand your core nature, decode repeating life patterns, and navigate major transitions with clarity.",
+      outcome: "Gain a personalized roadmap for your career, relationships, and next chapter, grounded in your unique birth chart.",
+    },
+    DE: {
+      title: "Vedische Astrologie & Kundali-Lesung",
+      description: "1:1 Beratung auf Basis Ihres Geburtshoroskops, verwurzelt in der vedischen Astrologie (Jyotish), für ein tieferes Verständnis Ihrer Natur, wiederkehrender Lebensmuster und wichtiger Übergangsphasen.",
+      outcome: "Erhalten Sie einen persönlichen Fahrplan für Karriere, Beziehungen und Ihr nächstes Lebenskapitel, basierend auf Ihrem individuellen Geburtshoroskop.",
     }
   },
   {
