@@ -23,17 +23,15 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { db } from "./lib/firebase";
-import { 
-  collection, 
-  onSnapshot, 
-  query, 
-  orderBy, 
-  addDoc, 
-  serverTimestamp, 
-  Timestamp, 
-  limit,
-  where,
-  getDocs
+import {
+  collection,
+  onSnapshot,
+  query,
+  orderBy,
+  addDoc,
+  serverTimestamp,
+  Timestamp,
+  where
 } from "firebase/firestore";
 import { 
   Card, 
@@ -43,7 +41,6 @@ import {
   CardTitle,
   CardFooter
 } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
@@ -731,9 +728,97 @@ const ServiceCard = ({ service, index, lang, onLearnMore }: { service: any, inde
   );
 };
 
+const ServiceDetailModal = ({ service, lang, open, onOpenChange }: { service: any, lang: "EN" | "DE", open: boolean, onOpenChange: (o: boolean) => void }) => {
+  if (!service) return null;
+  const t = TRANSLATIONS[lang].services;
+  const nav = TRANSLATIONS[lang].nav;
+  const ta = TRANSLATIONS[lang].astrology;
+  const content = service[lang];
+  const isAstrology = service.id === "astrology";
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent initialFocus={false} className="sm:max-w-2xl max-h-[85vh] overflow-y-auto">
+        <DialogHeader>
+          <div className={`w-12 h-12 ${service.color} rounded-xl flex items-center justify-center mb-4`}>
+            <service.icon className="w-6 h-6 text-primary" />
+          </div>
+          <DialogTitle className="text-2xl md:text-3xl font-serif">{content.title}</DialogTitle>
+          <p className="font-medium text-primary/70">{service.category}</p>
+        </DialogHeader>
+
+        <div className="space-y-6 mt-2">
+          <p className="text-muted-foreground leading-relaxed">{content.description}</p>
+          <div className="bg-stone-50 p-4 rounded-xl border border-stone-100">
+            <p className="text-xs font-bold uppercase tracking-wider text-primary/50 mb-2">{t.outcomeLabel}</p>
+            <p className="text-sm font-medium">{content.outcome}</p>
+          </div>
+
+          {isAstrology && (
+            <div className="space-y-10 pt-4 border-t border-stone-100">
+              <p className="text-sm font-medium uppercase tracking-wider text-primary/60">{ta.traditionNote}</p>
+              <p className="text-muted-foreground leading-relaxed">{ta.intro1}</p>
+              <p className="text-muted-foreground leading-relaxed">{ta.intro2}</p>
+
+              <div>
+                <h4 className="text-xl font-serif font-bold mb-6">{ta.exploreTitle}</h4>
+                <div className="grid sm:grid-cols-2 gap-4">
+                  {ta.exploreItems.map((item, idx) => (
+                    <div key={idx} className="bg-stone-50 p-4 rounded-xl border border-stone-100">
+                      <p className="font-bold text-sm mb-1">{item.title}</p>
+                      <p className="text-muted-foreground text-sm leading-relaxed">{item.description}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <h4 className="text-xl font-serif font-bold mb-4">{ta.whoTitle}</h4>
+                <ul className="space-y-3">
+                  {ta.whoItems.map((item, idx) => (
+                    <li key={idx} className="flex items-start gap-3">
+                      <CheckCircle2 className="w-5 h-5 text-primary mt-0.5 shrink-0" />
+                      <span className="text-muted-foreground text-sm leading-relaxed">{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              <div>
+                <h4 className="text-xl font-serif font-bold mb-4">{ta.howTitle}</h4>
+                <div className="space-y-4">
+                  {ta.howSteps.map((step, idx) => (
+                    <div key={idx} className="flex gap-4">
+                      <div className="w-7 h-7 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-sm shrink-0">
+                        {idx + 1}
+                      </div>
+                      <div>
+                        <p className="font-bold text-sm mb-1">{step.title}</p>
+                        <p className="text-muted-foreground text-sm leading-relaxed">{step.description}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div className="pt-2">
+            <BookingModal lang={lang}>
+              <Button size="lg" className="rounded-full px-8 gap-2 w-full sm:w-auto">
+                <Sparkles className="w-4 h-4" />
+                {isAstrology ? ta.cta : nav.bookNow}
+              </Button>
+            </BookingModal>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
 const ServicesSection = ({ lang, onLearnMore }: { lang: "EN" | "DE", onLearnMore?: (s: any) => void }) => {
   const t = TRANSLATIONS[lang].services;
-  const ta = TRANSLATIONS[lang].astrology;
   return (
     <section id="services" className="py-24 bg-stone-50/50">
       <div className="container mx-auto px-6">
@@ -744,104 +829,11 @@ const ServicesSection = ({ lang, onLearnMore }: { lang: "EN" | "DE", onLearnMore
           </p>
         </div>
 
-        <Tabs defaultValue="all" className="w-full">
-          <div className="flex justify-start md:justify-center mb-12 overflow-x-auto no-scrollbar">
-            <TabsList className="bg-white border rounded-full p-1 h-14 shrink-0">
-              <TabsTrigger value="all" className="rounded-full px-8 h-full data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">{t.tabs.all}</TabsTrigger>
-              <TabsTrigger value="Physical Wellness" className="rounded-full px-8 h-full data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">{t.tabs.physical}</TabsTrigger>
-              <TabsTrigger value="Mental Clarity" className="rounded-full px-8 h-full data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">{t.tabs.mental}</TabsTrigger>
-              <TabsTrigger value="Spiritual Healing" className="rounded-full px-8 h-full data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">{t.tabs.spiritual}</TabsTrigger>
-              <TabsTrigger value="astrology" className="rounded-full px-8 h-full data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">{t.tabs.astrology}</TabsTrigger>
-            </TabsList>
-          </div>
-
-          <TabsContent value="all" className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {SERVICES.map((service, idx) => (
-              <ServiceCard key={service.id} service={service} index={idx} lang={lang} onLearnMore={onLearnMore} />
-            ))}
-          </TabsContent>
-          {["Physical Wellness", "Mental Clarity", "Spiritual Healing"].map(cat => (
-            <TabsContent key={cat} value={cat} className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {SERVICES.filter(s => s.category === cat).map((service, idx) => (
-                <ServiceCard key={service.id} service={service} index={idx} lang={lang} onLearnMore={onLearnMore} />
-              ))}
-            </TabsContent>
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {SERVICES.map((service, idx) => (
+            <ServiceCard key={service.id} service={service} index={idx} lang={lang} onLearnMore={onLearnMore} />
           ))}
-          <TabsContent value="astrology" className="overflow-hidden">
-            <div className="text-center max-w-3xl mx-auto mb-20">
-              <Badge variant="secondary" className="mb-6 px-4 py-1 rounded-full text-primary font-medium">
-                {ta.badge}
-              </Badge>
-              <h3 className="text-3xl md:text-4xl font-serif font-bold mb-4">{ta.title}</h3>
-              <p className="text-xl md:text-2xl font-serif italic text-primary/80 mb-6">{ta.subtitle}</p>
-              <p className="text-sm font-medium uppercase tracking-wider text-primary/60 mb-8">{ta.traditionNote}</p>
-              <p className="text-muted-foreground text-lg leading-relaxed mb-4">{ta.intro1}</p>
-              <p className="text-muted-foreground text-lg leading-relaxed">{ta.intro2}</p>
-            </div>
-
-            <div className="mb-20">
-              <h4 className="text-2xl md:text-3xl font-serif font-bold text-center mb-10">{ta.exploreTitle}</h4>
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {ta.exploreItems.map((item, idx) => (
-                  <motion.div
-                    key={idx}
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ delay: idx * 0.08 }}
-                  >
-                    <Card className="h-full border-none shadow-sm bg-white">
-                      <CardHeader>
-                        <CardTitle className="text-lg font-serif leading-snug">{item.title}</CardTitle>
-                        <CardDescription className="leading-relaxed">{item.description}</CardDescription>
-                      </CardHeader>
-                    </Card>
-                  </motion.div>
-                ))}
-              </div>
-            </div>
-
-            <div className="grid md:grid-cols-2 gap-16 items-start mb-16">
-              <div>
-                <h4 className="text-2xl md:text-3xl font-serif font-bold mb-8">{ta.whoTitle}</h4>
-                <ul className="space-y-4">
-                  {ta.whoItems.map((item, idx) => (
-                    <li key={idx} className="flex items-start gap-3">
-                      <CheckCircle2 className="w-5 h-5 text-primary mt-1 shrink-0" />
-                      <span className="text-muted-foreground leading-relaxed">{item}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              <div>
-                <h4 className="text-2xl md:text-3xl font-serif font-bold mb-8">{ta.howTitle}</h4>
-                <div className="space-y-6">
-                  {ta.howSteps.map((step, idx) => (
-                    <div key={idx} className="flex gap-4">
-                      <div className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold shrink-0">
-                        {idx + 1}
-                      </div>
-                      <div>
-                        <p className="font-bold mb-1">{step.title}</p>
-                        <p className="text-muted-foreground text-sm leading-relaxed">{step.description}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            <div className="text-center">
-              <BookingModal lang={lang}>
-                <Button size="lg" className="rounded-full px-10 h-16 text-lg gap-3 shadow-xl hover:shadow-primary/20 transition-all">
-                  <Sparkles className="w-5 h-5" />
-                  {ta.cta}
-                </Button>
-              </BookingModal>
-            </div>
-          </TabsContent>
-        </Tabs>
+        </div>
       </div>
     </section>
   );
@@ -1368,6 +1360,7 @@ const BookSection = ({ lang }: { lang: "EN" | "DE" }) => {
 export default function App() {
   const [lang, setLang] = useState<"EN" | "DE">("EN");
   const [selectedBlog, setSelectedBlog] = useState<any>(null);
+  const [selectedService, setSelectedService] = useState<any>(null);
   const [legalModal, setLegalModal] = useState<"impressum" | "privacy" | null>(null);
 
   useEffect(() => {
@@ -1377,7 +1370,7 @@ export default function App() {
       : "Niramay Wellbeing — Yoga, Reiki & Ganzheitliche Therapie in Ostfildern";
   }, [lang]);
 
-  const handleServiceLearnMore = async (service: any) => {
+  const handleServiceLearnMore = (service: any) => {
     if (service.link && service.openInModal) {
       setSelectedBlog({
         id: service.id,
@@ -1391,30 +1384,10 @@ export default function App() {
       return;
     }
 
-    // The Blog section (and the posts it would link to) is hidden behind
-    // FEATURE_BLOG_ENABLED, so there's nothing to look up or scroll to yet.
-    if (!FEATURE_BLOG_ENABLED) return;
-
-    // Find a blog post that matches this service's category
-    const q = query(
-      collection(db, "blogs"), 
-      where("category", "==", service.category),
-      where("lang", "==", lang),
-      limit(1)
-    );
-    
-    try {
-      const snap = await getDocs(q);
-      if (!snap.empty) {
-        setSelectedBlog({ id: snap.docs[0].id, ...snap.docs[0].data() });
-      } else {
-        // Fallback to scrolling to blog section if no specific post found
-        document.getElementById('blog')?.scrollIntoView({ behavior: 'smooth' });
-      }
-    } catch (error) {
-      console.error("Error fetching blog for service:", error);
-      document.getElementById('blog')?.scrollIntoView({ behavior: 'smooth' });
-    }
+    // Every other service always has its own description/outcome copy (and,
+    // for astrology, a full detail write-up), so its "Learn More" pop-up
+    // never needs to depend on a blog post existing.
+    setSelectedService(service);
   };
 
   return (
@@ -1432,14 +1405,21 @@ export default function App() {
       </main>
       <Footer lang={lang} onOpenLegal={setLegalModal} />
       
-      <BlogDetailModal 
-        blog={selectedBlog} 
-        open={!!selectedBlog} 
-        onOpenChange={(open) => !open && setSelectedBlog(null)} 
+      <BlogDetailModal
+        blog={selectedBlog}
+        open={!!selectedBlog}
+        onOpenChange={(open) => !open && setSelectedBlog(null)}
         lang={lang}
       />
 
-      <LegalModal 
+      <ServiceDetailModal
+        service={selectedService}
+        open={!!selectedService}
+        onOpenChange={(open) => !open && setSelectedService(null)}
+        lang={lang}
+      />
+
+      <LegalModal
         type={legalModal}
         open={!!legalModal}
         setOpen={(o) => !o && setLegalModal(null)}
