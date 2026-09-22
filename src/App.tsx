@@ -48,7 +48,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { SERVICES, TESTIMONIALS, FAQS, CERTIFICATIONS, TRANSLATIONS, ONGOING_SESSIONS, GOOGLE_CALENDAR_URL, GOOGLE_REVIEW_URL, FEATURE_BLOG_ENABLED } from "./constants";
+import { SERVICES, TESTIMONIALS, FAQS, CERTIFICATIONS, TRANSLATIONS, ONGOING_SESSIONS, EVENTS, GOOGLE_CALENDAR_URL, GOOGLE_REVIEW_URL, FEATURE_BLOG_ENABLED } from "./constants";
 
 const BookingModal = ({ children, lang }: { children: React.ReactNode, lang: "EN" | "DE" }) => {
   const t = TRANSLATIONS[lang].booking;
@@ -568,6 +568,7 @@ const Navbar = ({ lang, setLang }: { lang: "EN" | "DE", setLang: (l: "EN" | "DE"
           <a href="#services" className="text-sm font-medium hover:text-primary transition-colors">{t.services}</a>
           <a href="#sessions" className="text-sm font-medium hover:text-primary transition-colors">{t.sessions}</a>
           <a href="#about" className="text-sm font-medium hover:text-primary transition-colors">{t.about}</a>
+          <a href="#events" className="text-sm font-medium hover:text-primary transition-colors">{t.events}</a>
           <a href="#book" className="text-sm font-medium hover:text-primary transition-colors">{t.book}</a>
           {FEATURE_BLOG_ENABLED && <a href="#blog" className="text-sm font-medium hover:text-primary transition-colors">{t.blog}</a>}
           <a href="#testimonials" className="text-sm font-medium hover:text-primary transition-colors">{t.reviews}</a>
@@ -600,6 +601,7 @@ const Navbar = ({ lang, setLang }: { lang: "EN" | "DE", setLang: (l: "EN" | "DE"
             <a href="#services" onClick={() => setIsMobileMenuOpen(false)}>{t.services}</a>
             <a href="#sessions" onClick={() => setIsMobileMenuOpen(false)}>{t.sessions}</a>
             <a href="#about" onClick={() => setIsMobileMenuOpen(false)}>{t.about}</a>
+            <a href="#events" onClick={() => setIsMobileMenuOpen(false)}>{t.events}</a>
             <a href="#book" onClick={() => setIsMobileMenuOpen(false)}>{t.book}</a>
             {FEATURE_BLOG_ENABLED && <a href="#blog" onClick={() => setIsMobileMenuOpen(false)}>{t.blog}</a>}
             <a href="#testimonials" onClick={() => setIsMobileMenuOpen(false)}>{t.reviews}</a>
@@ -904,6 +906,119 @@ const OngoingSessionsSection = ({ lang }: { lang: "EN" | "DE" }) => {
   );
 };
 
+const EventLightboxModal = ({ index, setIndex, lang }: { index: number | null, setIndex: (i: number | null) => void, lang: "EN" | "DE" }) => {
+  const t = TRANSLATIONS[lang].events;
+  if (index === null) return null;
+  const event = EVENTS[index];
+  const content = event[lang];
+
+  const go = (delta: number) => setIndex((index + delta + EVENTS.length) % EVENTS.length);
+
+  return (
+    <Dialog open={index !== null} onOpenChange={(o) => !o && setIndex(null)}>
+      <DialogContent className="sm:max-w-3xl max-h-[90vh] overflow-y-auto p-0">
+        <div className="relative bg-stone-950 flex items-center justify-center max-h-[60vh] overflow-hidden">
+          <img
+            src={event.image}
+            alt={content.title}
+            className="w-full max-h-[60vh] object-contain"
+            referrerPolicy="no-referrer"
+          />
+          <button
+            onClick={() => go(-1)}
+            aria-label="Previous"
+            className="absolute left-3 top-1/2 -translate-y-1/2 bg-white/10 hover:bg-white/20 text-white rounded-full p-2 backdrop-blur-sm transition-colors"
+          >
+            <ChevronLeft className="w-5 h-5" />
+          </button>
+          <button
+            onClick={() => go(1)}
+            aria-label="Next"
+            className="absolute right-3 top-1/2 -translate-y-1/2 bg-white/10 hover:bg-white/20 text-white rounded-full p-2 backdrop-blur-sm transition-colors"
+          >
+            <ChevronRight className="w-5 h-5" />
+          </button>
+        </div>
+        <div className="p-6">
+          <DialogHeader>
+            <div className="flex items-center gap-3 mb-2">
+              <Badge variant="secondary" className="text-primary">{event.year}</Badge>
+              {event.featured && <Badge className="bg-primary text-primary-foreground">{t.featured}</Badge>}
+            </div>
+            <DialogTitle className="text-2xl font-serif">{content.title}</DialogTitle>
+          </DialogHeader>
+          <div className="flex items-center gap-1.5 text-sm text-muted-foreground mt-2 mb-4">
+            <MapPin className="w-4 h-4 shrink-0" /> {content.location}
+          </div>
+          <p className="text-muted-foreground leading-relaxed">{content.description}</p>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+const EventsSection = ({ lang }: { lang: "EN" | "DE" }) => {
+  const t = TRANSLATIONS[lang].events;
+  const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+
+  return (
+    <section id="events" className="py-24 bg-stone-50/50">
+      <div className="container mx-auto px-6">
+        <div className="text-center max-w-3xl mx-auto mb-16">
+          <h2 className="text-4xl md:text-5xl font-serif font-bold mb-6">{t.title}</h2>
+          <p className="text-muted-foreground text-lg">{t.description}</p>
+        </div>
+
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {EVENTS.map((event, idx) => {
+            const content = event[lang];
+            return (
+              <motion.button
+                key={event.id}
+                type="button"
+                onClick={() => setSelectedIndex(idx)}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: (idx % 3) * 0.08 }}
+                className={`group text-left rounded-2xl overflow-hidden bg-white border shadow-sm hover:shadow-xl transition-all duration-300 relative ${event.featured ? "border-primary/40 ring-2 ring-primary/20" : "border-stone-100"}`}
+              >
+                <div className="aspect-[4/3] overflow-hidden">
+                  <img
+                    src={event.image}
+                    alt={content.title}
+                    loading="lazy"
+                    decoding="async"
+                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                    referrerPolicy="no-referrer"
+                  />
+                </div>
+                {event.featured && (
+                  <Badge className="absolute top-3 left-3 bg-primary text-primary-foreground border-none shadow-md">
+                    {t.featured}
+                  </Badge>
+                )}
+                <div className="p-5">
+                  <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-primary/60 mb-2">
+                    <Calendar className="w-3.5 h-3.5" /> {event.year}
+                  </div>
+                  <h3 className="font-serif text-lg font-bold mb-1 leading-snug line-clamp-2">{content.title}</h3>
+                  <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                    <MapPin className="w-3.5 h-3.5 shrink-0" />
+                    <span className="line-clamp-1">{content.location}</span>
+                  </div>
+                </div>
+              </motion.button>
+            );
+          })}
+        </div>
+      </div>
+
+      <EventLightboxModal index={selectedIndex} setIndex={setSelectedIndex} lang={lang} />
+    </section>
+  );
+};
+
 const AboutSection = ({ lang }: { lang: "EN" | "DE" }) => {
   const t = TRANSLATIONS[lang].about;
   return (
@@ -1175,6 +1290,7 @@ const Footer = ({ lang, onOpenLegal }: { lang: "EN" | "DE", onOpenLegal: (type: 
             <ul className="space-y-4">
               <li><a href="#services" className="text-muted-foreground hover:text-primary transition-colors">{nav.services}</a></li>
               <li><a href="#about" className="text-muted-foreground hover:text-primary transition-colors">{nav.about}</a></li>
+              <li><a href="#events" className="text-muted-foreground hover:text-primary transition-colors">{nav.events}</a></li>
               <li><a href="#book" className="text-muted-foreground hover:text-primary transition-colors">{nav.book}</a></li>
               <li><a href="#testimonials" className="text-muted-foreground hover:text-primary transition-colors">{nav.reviews}</a></li>
               {FEATURE_BLOG_ENABLED && <li><a href="#blog" className="text-muted-foreground hover:text-primary transition-colors">{nav.blog}</a></li>}
@@ -1425,6 +1541,7 @@ export default function App() {
         <ServicesSection lang={lang} onLearnMore={handleServiceLearnMore} />
         <OngoingSessionsSection lang={lang} />
         <AboutSection lang={lang} />
+        <EventsSection lang={lang} />
         <BookSection lang={lang} />
         {FEATURE_BLOG_ENABLED && <BlogSection lang={lang} />}
         <TestimonialsSection lang={lang} />

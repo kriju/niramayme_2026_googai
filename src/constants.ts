@@ -15,6 +15,7 @@ export const TRANSLATIONS = {
     nav: {
       services: "Services",
       about: "About",
+      events: "Events",
       reviews: "Reviews",
       blog: "Blog",
       faq: "FAQ",
@@ -51,6 +52,11 @@ export const TRANSLATIONS = {
       p2: "Based in Ostfildern, I provide a safe, nurturing space for you to explore your inner world and emerge stronger, clearer, and more at peace.",
       cta: "Watch My Philosophy",
       videoPlaceholder: "[Video Bio Placeholder]",
+    },
+    events: {
+      title: "Moments From Our Journey",
+      description: "A look back at the workshops, community classes, and International Yoga Day celebrations Richa & Riju have led since 2018.",
+      featured: "Featured",
     },
     testimonials: {
       title: "Real Stories of Transformation",
@@ -149,6 +155,10 @@ export const TRANSLATIONS = {
             {
               title: "5. Your Rights",
               content: "You have the right to receive information about the origin, recipient, and purpose of your stored personal data at any time free of charge. You also have the right to request the correction, blocking, or deletion of this data."
+            },
+            {
+              title: "6. Event & Workshop Photography",
+              content: "We occasionally take photographs at our workshops, classes, and community events (e.g. International Yoga Day) to share on this website and our social media channels. We select images that favor group or candid shots over close-ups of individuals, and we obtain consent from clearly identifiable attendees where practicable. If you appear in a photo on this site and would like it removed, please contact us at richa@niramay.me and we will take it down promptly."
             }
           ]
         }
@@ -260,6 +270,7 @@ export const TRANSLATIONS = {
     nav: {
       services: "Dienstleistungen",
       about: "Über mich",
+      events: "Veranstaltungen",
       reviews: "Bewertungen",
       blog: "Blog",
       faq: "FAQ",
@@ -296,6 +307,11 @@ export const TRANSLATIONS = {
       p2: "In Ostfildern ansässig, biete ich einen sicheren, nährenden Raum, in dem Sie Ihre innere Welt erkunden und stärker, klarer und friedvoller hervorgehen können.",
       cta: "Meine Philosophie ansehen",
       videoPlaceholder: "[Video Bio Platzhalter]",
+    },
+    events: {
+      title: "Momente unserer Reise",
+      description: "Ein Rückblick auf die Workshops, Gemeinschaftskurse und Internationalen Yoga-Tag-Feiern, die Richa & Riju seit 2018 geleitet haben.",
+      featured: "Ausgewählt",
     },
     testimonials: {
       title: "Echte Geschichten der Transformation",
@@ -395,6 +411,10 @@ export const TRANSLATIONS = {
             {
               title: "5. Ihre Rechte",
               content: "Sie haben jederzeit das Recht, unentgeltlich Auskunft über Herkunft, Empfänger und Zweck Ihrer gespeicherten personenbezogenen Daten zu erhalten. Sie haben außerdem ein Recht, die Berichtigung, Sperrung oder Löschung dieser Daten zu verlangen."
+            },
+            {
+              title: "6. Foto- und Videoaufnahmen bei Veranstaltungen",
+              content: "Wir fertigen gelegentlich Fotos bei unseren Workshops, Kursen und Gemeinschaftsveranstaltungen (z. B. Internationaler Tag des Yoga) an, um diese auf dieser Website und in unseren Social-Media-Kanälen zu teilen. Wir bevorzugen dabei Gruppen- und Spontanaufnahmen gegenüber Nahaufnahmen einzelner Personen und holen, soweit praktikabel, die Einwilligung deutlich erkennbarer Teilnehmer:innen ein. Falls Sie auf einem Foto dieser Website zu erkennen sind und dessen Entfernung wünschen, kontaktieren Sie uns bitte unter richa@niramay.me — wir nehmen es umgehend herunter."
             }
           ]
         }
@@ -787,4 +807,161 @@ export const ONGOING_SESSIONS = [
       price: "45 € / Workshop"
     }
   }
+];
+
+// Curated set of past-event photos, shown in the "Moments From Our Journey" section
+// to build trust by showing Richa & Riju actually teaching. Kept as a small, hand-picked
+// list (not user/admin uploaded) — see EventsSection in App.tsx.
+export const EVENTS = [
+  {
+    id: "singapore-kids-2018",
+    image: "/events/08-kids-seaside-workshop-singapore-2018.webp",
+    year: "2018",
+    EN: {
+      title: "Kids Yoga Seaside Workshop",
+      location: "Singapore",
+      description: "Richa led a playful outdoor yoga workshop for children along the waterfront.",
+    },
+    DE: {
+      title: "Kinder-Yoga-Workshop am Meer",
+      location: "Singapur",
+      description: "Richa leitete einen spielerischen Yoga-Workshop für Kinder direkt am Wasser.",
+    }
+  },
+  {
+    id: "singapore-iyd-2019",
+    image: "/events/09-iyd-2019-singapore.webp",
+    year: "2019",
+    EN: {
+      title: "International Day of Yoga",
+      location: "Chong Pang, Singapore",
+      description: "A community yoga session for people of all ages, held in celebration of International Yoga Day.",
+    },
+    DE: {
+      title: "Internationaler Tag des Yoga",
+      location: "Chong Pang, Singapur",
+      description: "Eine Gemeinschafts-Yoga-Sitzung für Menschen jeden Alters anlässlich des Internationalen Yoga-Tages.",
+    }
+  },
+  {
+    id: "certification-2020",
+    image: "/events/10-rijus-certification-course-2020.webp",
+    year: "2020",
+    EN: {
+      title: "Yoga Teacher Certification Course",
+      location: "Riju leading a practice demo",
+      description: "Riju guiding fellow trainees through an asana demonstration during his yoga certification training.",
+    },
+    DE: {
+      title: "Yogalehrer-Zertifizierungskurs",
+      location: "Riju bei einer Übungsdemonstration",
+      description: "Riju führt Mitauszubildende während seiner Yoga-Ausbildung durch eine Asana-Demonstration.",
+    }
+  },
+  {
+    id: "todtnau-2022",
+    image: "/events/03-iyd-2022-todtnau.webp",
+    year: "2022",
+    EN: {
+      title: "International Day of Yoga",
+      location: "Todtnau, Germany",
+      description: "An outdoor group session set against the Black Forest hills.",
+    },
+    DE: {
+      title: "Internationaler Tag des Yoga",
+      location: "Todtnau, Deutschland",
+      description: "Eine Gruppensitzung im Freien vor der Kulisse des Schwarzwalds.",
+    }
+  },
+  {
+    id: "stuttgart-vaihingen-2023",
+    image: "/events/04-iyd-2023-vaihingen-park-stuttgart.webp",
+    year: "2023",
+    EN: {
+      title: "International Day of Yoga",
+      location: "Stadtpark Vaihingen, Stuttgart",
+      description: "A public park gathering with 50 rounds of Sun Salutation, open to the whole community.",
+    },
+    DE: {
+      title: "Internationaler Tag des Yoga",
+      location: "Stadtpark Vaihingen, Stuttgart",
+      description: "Ein öffentliches Treffen im Park mit 50 Runden Sonnengruß, offen für die gesamte Gemeinschaft.",
+    }
+  },
+  {
+    id: "stuttgart-berliner-platz-2024",
+    image: "/events/05-iyd-2024-berliner-platz-stuttgart.webp",
+    year: "2024",
+    EN: {
+      title: "10th International Day of Yoga",
+      location: "Berliner Platz, Stuttgart",
+      description: "Hosted with the Consulate General of India, Munich, and several Indian community associations in Stuttgart.",
+    },
+    DE: {
+      title: "10. Internationaler Tag des Yoga",
+      location: "Berliner Platz, Stuttgart",
+      description: "Ausgerichtet mit dem Generalkonsulat von Indien, München, und mehreren indischen Gemeinschaftsvereinen in Stuttgart.",
+    }
+  },
+  {
+    id: "ruit-yoga-concept-2025",
+    image: "/events/01-ruit-presentation-the-yoga-concept.webp",
+    year: "2025",
+    EN: {
+      title: "\"The Yoga Concept\" Talk",
+      location: "Ruit, Ostfildern",
+      description: "A talk on holistic well-being, held as part of the International Weeks Against Racism.",
+    },
+    DE: {
+      title: "Vortrag „The Yoga Concept\"",
+      location: "Ruit, Ostfildern",
+      description: "Ein Vortrag über ganzheitliches Wohlbefinden im Rahmen der Internationalen Wochen gegen Rassismus.",
+    }
+  },
+  {
+    id: "scharnhausenpark-2025",
+    image: "/events/07-iyd-2025-scharnhausenpark-ostfildern.webp",
+    year: "2025",
+    featured: true,
+    EN: {
+      title: "International Day of Yoga — Chair Yoga",
+      location: "Bürgertreff Scharnhausenpark, Ostfildern",
+      description: "Richa presenting a Chair Yoga session, drawing on her certifications in holistic wellbeing coaching and healing.",
+    },
+    DE: {
+      title: "Internationaler Tag des Yoga — Stuhl-Yoga",
+      location: "Bürgertreff Scharnhausenpark, Ostfildern",
+      description: "Richa stellt eine Stuhl-Yoga-Sitzung vor, gestützt auf ihre Zertifizierungen im ganzheitlichen Wellbeing-Coaching und in der Heilarbeit.",
+    }
+  },
+  {
+    id: "kemnat-2026",
+    image: "/events/06-iyd-2026-kemnat-festhalle-ostfildern.webp",
+    year: "2026",
+    EN: {
+      title: "International Yoga Day 2026",
+      location: "Kemnat Festhalle, Ostfildern",
+      description: "Hosted by Niramay Wohlbefinden Verein, with the full team leading poses, talks, and a closing ceremony.",
+    },
+    DE: {
+      title: "Internationaler Yoga-Tag 2026",
+      location: "Kemnat Festhalle, Ostfildern",
+      description: "Ausgerichtet vom Niramay Wohlbefinden Verein, mit dem gesamten Team bei Übungen, Vorträgen und einer Abschlusszeremonie.",
+    }
+  },
+  {
+    id: "ruit-weekly",
+    image: "/events/02-ruit-weekly-sunday-session.webp",
+    year: "Ongoing",
+    EN: {
+      title: "Weekly Sunday Session",
+      location: "Ruit Treffpunkt, Ostfildern",
+      description: "Our regular Sunday evening class — join us for a consistent weekly practice.",
+    },
+    DE: {
+      title: "Wöchentliche Sonntagssitzung",
+      location: "Ruit Treffpunkt, Ostfildern",
+      description: "Unser regelmäßiger Sonntagabend-Kurs — machen Sie mit bei einer festen wöchentlichen Praxis.",
+    }
+  },
 ];
