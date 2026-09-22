@@ -85,7 +85,9 @@ export const TRANSLATIONS = {
     sessions: {
       title: "Ongoing Sessions",
       description: "Join our community sessions and workshops designed for consistent growth and healing.",
-      bookBtn: "Reserve Spot",
+      bookBtn: "Join via WhatsApp",
+      contactNote: "Reserve your spot via WhatsApp or email us at richa@niramay.me",
+      by: "by",
     },
     booking: {
       title: "Book Your Session",
@@ -334,7 +336,9 @@ export const TRANSLATIONS = {
     sessions: {
       title: "Laufende Sitzungen",
       description: "Nehmen Sie an unseren Gemeinschaftssitzungen und Workshops teil, die auf stetiges Wachstum und Heilung ausgelegt sind.",
-      bookBtn: "Platz reservieren",
+      bookBtn: "Über WhatsApp beitreten",
+      contactNote: "Reservieren Sie Ihren Platz über WhatsApp oder schreiben Sie uns eine E-Mail an richa@niramay.me",
+      by: "von",
     },
     booking: {
       title: "Ihre Sitzung buchen",
@@ -750,63 +754,71 @@ export const CERTIFICATIONS = [
 
 export const ONGOING_SESSIONS = [
   {
-    id: "back-yoga",
+    id: "active-yoga",
     EN: {
-      title: "Strengthen Your Back",
-      time: "Mondays, 18:00 - 19:00",
-      description: "Yoga specifically designed to improve spinal health and core stability.",
-      price: "€15 / session"
+      title: "Active Yoga",
+      time: "Sundays, 08:30",
+      location: "Bürgertreff Scharnhauserpark, Ostfildern",
+      instructor: "Riju",
+      description: "Yoga session for strength and an immunity boost, for everyone.",
     },
     DE: {
-      title: "Rücken stärken",
-      time: "Montags, 18:00 - 19:00",
-      description: "Yoga, das speziell zur Verbesserung der Wirbelsäulengesundheit und Rumpfstabilität entwickelt wurde.",
-      price: "15 € / Sitzung"
+      title: "Active Yoga",
+      time: "Sonntags, 08:30 Uhr",
+      location: "Bürgertreff Scharnhauserpark, Ostfildern",
+      instructor: "Riju",
+      description: "Yoga-Sitzung zur Stärkung und Steigerung der Immunität, für alle.",
     }
   },
   {
-    id: "group-yoga",
+    id: "sonntag-yoga",
     EN: {
-      title: "Group Yoga Session",
-      time: "Wednesdays, 09:00 - 10:30",
-      description: "A balanced flow for all levels focusing on breath and alignment.",
-      price: "€12 / session"
+      title: "Sonntag Yoga",
+      time: "Sundays, 19:00",
+      location: "Treffpunkt Ruit, Ostfildern",
+      instructor: "Riju",
+      description: "Yoga session for everyone to build immunity and relax body and mind in the evening.",
     },
     DE: {
-      title: "Gruppen-Yoga-Sitzung",
-      time: "Mittwochs, 09:00 - 10:30",
-      description: "Ein ausgewogener Flow für alle Niveaus, der sich auf Atem und Ausrichtung konzentriert.",
-      price: "12 € / Sitzung"
+      title: "Sonntag Yoga",
+      time: "Sonntags, 19:00 Uhr",
+      location: "Treffpunkt Ruit, Ostfildern",
+      instructor: "Riju",
+      description: "Yoga-Sitzung für alle, um am Abend die Immunität zu stärken und Körper und Geist zu entspannen.",
     }
   },
   {
-    id: "dance-therapy",
+    id: "chair-yoga",
     EN: {
-      title: "Dance Therapy Session",
-      time: "Fridays, 17:30 - 19:00",
-      description: "Expressive movement to release emotional tension and find joy.",
-      price: "€20 / session"
+      title: "Chair Yoga",
+      time: "Wednesdays, 10:00",
+      location: "Bürgertreff Scharnhauserpark, Ostfildern",
+      instructor: "Richa",
+      description: "Yoga session for everyone who wants to skip the yoga mat — build immunity and relax body and mind.",
     },
     DE: {
-      title: "Tanztherapie-Sitzung",
-      time: "Freitags, 17:30 - 19:00",
-      description: "Expressive Bewegung, um emotionale Spannungen zu lösen und Freude zu finden.",
-      price: "20 € / Sitzung"
+      title: "Stuhl-Yoga",
+      time: "Mittwochs, 10:00 Uhr",
+      location: "Bürgertreff Scharnhauserpark, Ostfildern",
+      instructor: "Richa",
+      description: "Yoga-Sitzung für alle, die auf die Yogamatte verzichten möchten — zur Stärkung der Immunität und Entspannung von Körper und Geist.",
     }
   },
   {
-    id: "mindfulness",
+    id: "bollywood-dance",
     EN: {
-      title: "Stress Reduction Workshop",
-      time: "Monthly (Check for dates)",
-      description: "Intensive workshop on mindfulness and stress management techniques.",
-      price: "€45 / workshop"
+      title: "Bollywood Dance Therapy",
+      time: "Sundays, 18:00",
+      location: "Treffpunkt Ruit, Ostfildern",
+      instructor: "Richa",
+      description: "Learn dance moves every Sunday and recharge your mood and body.",
     },
     DE: {
-      title: "Stressabbau-Workshop",
-      time: "Monatlich (Termine prüfen)",
-      description: "Intensiv-Workshop zu Achtsamkeit und Stressmanagement-Techniken.",
-      price: "45 € / Workshop"
+      title: "Bollywood-Tanztherapie",
+      time: "Sonntags, 18:00 Uhr",
+      location: "Treffpunkt Ruit, Ostfildern",
+      instructor: "Richa",
+      description: "Lernen Sie jeden Sonntag Tanzbewegungen und tanken Sie neue Energie für Körper und Stimmung.",
     }
   }
 ];
