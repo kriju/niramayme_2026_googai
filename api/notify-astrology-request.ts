@@ -60,6 +60,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       subject: kind === "submitted"
         ? `New astrology chart request — ${refCode}`
         : `Payment claimed for astrology request — ${refCode}`,
+      text: renderAdminEmailText({ refCode, kind, request, formattedDate, isEmailContact }),
       html: renderAdminEmailHtml({ refCode, kind, request, formattedDate, isEmailContact }),
     });
 
@@ -73,6 +74,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         subject: kind === "submitted"
           ? (lang === "DE" ? `Wir haben Ihre Geburtsdaten erhalten — ${refCode}` : `We've received your birth details — ${refCode}`)
           : (lang === "DE" ? `Zahlung erhalten — ${refCode}` : `Payment received — ${refCode}`),
+        text: renderCustomerEmailText({ refCode, kind, lang, name: request.name }),
         html: renderCustomerEmailHtml({ refCode, kind, lang, name: request.name }),
       });
     }
@@ -82,6 +84,84 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     console.error("notify-astrology-request failed:", error);
     return res.status(500).json({ error: "Failed to send notification" });
   }
+}
+
+// A plain-text alternative alongside the HTML body — sending HTML-only mail
+// is itself a common spam-filter signal, on top of the payment/money
+// content these emails naturally contain.
+function renderAdminEmailText(params: {
+  refCode: string;
+  kind: NotifyKind;
+  request: Record<string, any>;
+  formattedDate: string;
+  isEmailContact: boolean;
+}) {
+  const { refCode, kind, request, formattedDate, isEmailContact } = params;
+  const lines = [
+    kind === "submitted" ? "New astrology chart request" : "Payment claimed for an astrology request",
+    `Submitted ${formattedDate} (Europe/Berlin) — ref ${refCode} — language: ${request.lang}`,
+    "",
+    `Name: ${request.name}`,
+    `Place of birth: ${request.placeOfBirth}`,
+    `Date of birth: ${request.dateOfBirth}`,
+    `Time of birth: ${request.timeOfBirth}`,
+    `Contact: ${request.contact}${isEmailContact ? "" : " (not an email — reply via WhatsApp)"}`,
+    `Payment claimed: ${request.paymentClaimed ? "Yes" : "No"}`,
+    "",
+    `Look for ${refCode} in the payment note (PayPal/UPI remark or bank transfer reference) to match this request to the incoming payment.`,
+  ];
+  return lines.join("\n");
+}
+
+function renderCustomerEmailText(params: { refCode: string; kind: NotifyKind; lang: "EN" | "DE"; name: string }) {
+  const { refCode, kind, lang, name } = params;
+  const greeting = lang === "DE" ? `Hallo ${name},` : `Hi ${name},`;
+
+  if (kind === "submitted") {
+    return lang === "DE"
+      ? [
+          greeting,
+          "",
+          "vielen Dank für Ihre Geburtsdaten für Ihre vedische Astrologie-Lesung. Ihr Referenzcode ist:",
+          "",
+          refCode,
+          "",
+          "Bitte geben Sie diesen Code bei Ihrer Zahlung (20 EUR oder 2000 INR) als Verwendungszweck an, wie auf unserer Website beschrieben. Sobald Ihre Zahlung eingegangen ist, bestätigen wir Ihren Termin innerhalb von 24–48 Stunden.",
+          "",
+          "Bei Fragen antworten Sie einfach auf diese E-Mail oder schreiben Sie uns über WhatsApp.",
+          "",
+          "Herzliche Grüße,\nRicha",
+        ].join("\n")
+      : [
+          greeting,
+          "",
+          "Thank you for sharing your birth details for your Vedic Astrology reading. Your reference code is:",
+          "",
+          refCode,
+          "",
+          "Please include this code as the note/reference on your payment (20 EUR or 2000 INR), as shown on our website. Once your payment is received, we'll confirm your appointment within 24–48 hours.",
+          "",
+          "If you have any questions, just reply to this email or message us on WhatsApp.",
+          "",
+          "Warmly,\nRicha",
+        ].join("\n");
+  }
+
+  return lang === "DE"
+    ? [
+        greeting,
+        "",
+        `vielen Dank, wir haben Ihre Zahlungsmeldung für Referenz ${refCode} erhalten. Wir bestätigen Ihren Termin innerhalb von 24–48 Stunden, sobald die Zahlung auf unserer Seite verifiziert ist.`,
+        "",
+        "Herzliche Grüße,\nRicha",
+      ].join("\n")
+    : [
+        greeting,
+        "",
+        `Thank you, we've received your payment claim for reference ${refCode}. We'll confirm your appointment within 24–48 hours once the payment is verified on our end.`,
+        "",
+        "Warmly,\nRicha",
+      ].join("\n");
 }
 
 function renderAdminEmailHtml(params: {
