@@ -14,7 +14,6 @@ import {
   MapPin,
   Sparkles,
   Clock,
-  Euro,
   Star,
   Plus,
   ChevronLeft,
@@ -872,7 +871,7 @@ const ServicesSection = ({ lang, onLearnMore }: { lang: "EN" | "DE", onLearnMore
   );
 };
 
-const OngoingSessionsSection = ({ lang, onBook }: { lang: "EN" | "DE", onBook: (ctx?: BookingContext) => void }) => {
+const OngoingSessionsSection = ({ lang }: { lang: "EN" | "DE" }) => {
   const t = TRANSLATIONS[lang].sessions;
   return (
     <section id="sessions" className="py-24 bg-white">
@@ -895,38 +894,35 @@ const OngoingSessionsSection = ({ lang, onBook }: { lang: "EN" | "DE", onBook: (
                 viewport={{ once: true }}
                 transition={{ delay: idx * 0.1 }}
               >
-                <Card className="h-full border border-stone-100 shadow-sm hover:shadow-md transition-all bg-stone-50/30">
+                <Card className="h-full border border-stone-100 shadow-sm hover:shadow-md transition-all bg-stone-50/30 flex flex-col">
                   <CardHeader>
                     <CardTitle className="text-xl font-serif">{content.title}</CardTitle>
                     <div className="flex items-center gap-2 text-primary font-medium text-sm mt-2">
                       <Clock className="w-4 h-4" />
                       {content.time}
                     </div>
+                    <div className="flex items-center gap-2 text-muted-foreground text-sm mt-1">
+                      <MapPin className="w-4 h-4" />
+                      {content.location}
+                    </div>
                   </CardHeader>
-                  <CardContent>
-                    <p className="text-muted-foreground text-sm mb-6 leading-relaxed">
+                  <CardContent className="flex flex-col flex-1">
+                    <p className="text-muted-foreground text-sm mb-2 leading-relaxed">
                       {content.description}
                     </p>
-                    <div className="flex items-center justify-between mt-auto">
-                      <div className="flex items-center gap-1 font-bold text-stone-900">
-                        <Euro className="w-4 h-4" />
-                        {content.price.replace("€", "").replace(" €", "")}
-                      </div>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="rounded-full"
-                        onClick={() => onBook({
-                          title: content.title,
-                          subtitle: content.description,
-                          meta: [
-                            { icon: Clock, label: content.time },
-                            { icon: Euro, label: content.price },
-                          ],
-                        })}
+                    <p className="text-stone-500 text-xs mb-6">
+                      {t.by} {content.instructor}
+                    </p>
+                    <div className="mt-auto">
+                      <a
+                        href={`https://wa.me/4915175315761?text=${encodeURIComponent(`Hi, I'm interested in joining "${content.title}" (${content.time}).`)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
                       >
-                        {t.bookBtn}
-                      </Button>
+                        <Button size="sm" variant="outline" className="rounded-full w-full">
+                          {t.bookBtn}
+                        </Button>
+                      </a>
                     </div>
                   </CardContent>
                 </Card>
@@ -934,6 +930,9 @@ const OngoingSessionsSection = ({ lang, onBook }: { lang: "EN" | "DE", onBook: (
             );
           })}
         </div>
+        <p className="text-center text-muted-foreground text-sm mt-10">
+          {t.contactNote}
+        </p>
       </div>
     </section>
   );
@@ -1555,7 +1554,7 @@ export default function App() {
       <main>
         <Hero lang={lang} onBook={openBooking} />
         <ServicesSection lang={lang} onLearnMore={handleServiceLearnMore} />
-        <OngoingSessionsSection lang={lang} onBook={openBooking} />
+        <OngoingSessionsSection lang={lang} />
         <AboutSection lang={lang} />
         <EventsSection lang={lang} />
         <BookSection lang={lang} />
