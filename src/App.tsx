@@ -46,25 +46,50 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { SERVICES, TESTIMONIALS, FAQS, CERTIFICATIONS, TRANSLATIONS, ONGOING_SESSIONS, EVENTS, GOOGLE_CALENDAR_URL, GOOGLE_REVIEW_URL, FEATURE_BLOG_ENABLED } from "./constants";
 
-const BookingModal = ({ children, lang }: { children: React.ReactNode, lang: "EN" | "DE" }) => {
+// A single booking dialog, controlled from the App root (see the other
+// ...DetailModal components below for the same lift-state-up pattern).
+// Every "Book" trigger across the site hands it a BookingContext describing
+// exactly what's being booked, so the dialog never shows a bare, unlabeled
+// calendar no matter which service/session/CTA the visitor came from.
+type BookingMeta = { icon: React.ComponentType<{ className?: string }>; label: string };
+type BookingContext = { title?: string; subtitle?: string; meta?: BookingMeta[] };
+
+const BookingDialog = ({ context, lang, open, onOpenChange }: { context: BookingContext | null, lang: "EN" | "DE", open: boolean, onOpenChange: (o: boolean) => void }) => {
   const t = TRANSLATIONS[lang].booking;
+  const title = context?.title || t.title;
+  const subtitle = context?.subtitle || t.calendlyDesc;
+  const meta: BookingMeta[] = context?.meta || [
+    { icon: Sparkles, label: `${t.discoveryLabel} · ${t.discoveryValue}` },
+    { icon: Clock, label: `${t.availabilityLabel} · ${t.availabilityValue}` },
+  ];
+
   return (
-    <Dialog>
-      <DialogTrigger render={children} />
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[900px] h-[90vh] flex flex-col p-0 overflow-hidden">
-        <DialogHeader className="p-6 pb-0">
-          <DialogTitle className="text-3xl font-serif">{t.title}</DialogTitle>
+        <DialogHeader className="p-6 pb-4 border-b border-stone-100 space-y-2">
+          <DialogTitle className="text-2xl md:text-3xl font-serif">{title}</DialogTitle>
+          {subtitle && <p className="text-sm text-muted-foreground">{subtitle}</p>}
+          {meta.length > 0 && (
+            <div className="flex flex-wrap gap-2 pt-1">
+              {meta.map((m, i) => (
+                <span key={i} className="inline-flex items-center gap-1.5 text-xs font-medium text-primary bg-primary/5 border border-primary/10 rounded-full px-3 py-1">
+                  <m.icon className="w-3.5 h-3.5" />
+                  {m.label}
+                </span>
+              ))}
+            </div>
+          )}
         </DialogHeader>
-        <div className="flex-1 w-full h-full min-h-0 mt-4 relative">
-          <iframe 
-            src={GOOGLE_CALENDAR_URL} 
+        <div className="flex-1 w-full h-full min-h-0 relative">
+          <iframe
+            src={GOOGLE_CALENDAR_URL}
             className="w-full h-full border-0"
             title="Google Calendar Appointment Scheduling"
           />
           <div className="absolute bottom-4 right-4">
-            <a 
-              href={GOOGLE_CALENDAR_URL.replace('?gv=true', '')} 
-              target="_blank" 
+            <a
+              href={GOOGLE_CALENDAR_URL.replace('?gv=true', '')}
+              target="_blank"
               rel="noopener noreferrer"
               className="text-xs text-muted-foreground hover:text-primary underline bg-background/80 backdrop-blur-sm px-2 py-1 rounded"
             >
@@ -541,7 +566,7 @@ const BlogSection = ({ lang }: { lang: "EN" | "DE" }) => {
   );
 };
 
-const Navbar = ({ lang, setLang }: { lang: "EN" | "DE", setLang: (l: "EN" | "DE") => void }) => {
+const Navbar = ({ lang, setLang, onBook }: { lang: "EN" | "DE", setLang: (l: "EN" | "DE") => void, onBook: (ctx?: BookingContext) => void }) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const t = TRANSLATIONS[lang].nav;
@@ -575,9 +600,7 @@ const Navbar = ({ lang, setLang }: { lang: "EN" | "DE", setLang: (l: "EN" | "DE"
               <Globe className="w-4 h-4" />
               {lang}
             </Button>
-            <BookingModal lang={lang}>
-              <Button size="sm" className="rounded-full px-6">{t.bookNow}</Button>
-            </BookingModal>
+            <Button size="sm" className="rounded-full px-6" onClick={() => onBook()}>{t.bookNow}</Button>
           </div>
         </div>
 
@@ -608,9 +631,7 @@ const Navbar = ({ lang, setLang }: { lang: "EN" | "DE", setLang: (l: "EN" | "DE"
                 <Globe className="w-4 h-4" />
                 {t.switchLang}
               </Button>
-              <BookingModal lang={lang}>
-                <Button className="rounded-full">{t.bookNow}</Button>
-              </BookingModal>
+              <Button className="rounded-full" onClick={() => { setIsMobileMenuOpen(false); onBook(); }}>{t.bookNow}</Button>
             </div>
           </motion.div>
         )}
@@ -619,7 +640,7 @@ const Navbar = ({ lang, setLang }: { lang: "EN" | "DE", setLang: (l: "EN" | "DE"
   );
 };
 
-const Hero = ({ lang }: { lang: "EN" | "DE" }) => {
+const Hero = ({ lang, onBook }: { lang: "EN" | "DE", onBook: (ctx?: BookingContext) => void }) => {
   const t = TRANSLATIONS[lang].hero;
   return (
     <section className="relative min-h-screen flex items-center pt-20 overflow-hidden">
@@ -644,11 +665,9 @@ const Hero = ({ lang }: { lang: "EN" | "DE" }) => {
             {t.description}
           </p>
           <div className="flex flex-wrap gap-4">
-            <BookingModal lang={lang}>
-              <Button size="lg" className="rounded-full px-8 gap-2 h-14 text-lg">
-                {t.ctaPrimary} <ArrowRight className="w-5 h-5" />
-              </Button>
-            </BookingModal>
+            <Button size="lg" className="rounded-full px-8 gap-2 h-14 text-lg" onClick={() => onBook({ title: t.ctaPrimary })}>
+              {t.ctaPrimary} <ArrowRight className="w-5 h-5" />
+            </Button>
             <a href="#services">
               <Button size="lg" variant="outline" className="rounded-full px-8 h-14 text-lg">
                 {t.ctaSecondary}
@@ -729,7 +748,7 @@ const ServiceCard = ({ service, index, lang, onLearnMore }: { service: any, inde
   );
 };
 
-const ServiceDetailModal = ({ service, lang, open, onOpenChange }: { service: any, lang: "EN" | "DE", open: boolean, onOpenChange: (o: boolean) => void }) => {
+const ServiceDetailModal = ({ service, lang, open, onOpenChange, onBook }: { service: any, lang: "EN" | "DE", open: boolean, onOpenChange: (o: boolean) => void, onBook: (ctx?: BookingContext) => void }) => {
   if (!service) return null;
   const t = TRANSLATIONS[lang].services;
   const nav = TRANSLATIONS[lang].nav;
@@ -805,12 +824,24 @@ const ServiceDetailModal = ({ service, lang, open, onOpenChange }: { service: an
           )}
 
           <div className="pt-2">
-            <BookingModal lang={lang}>
-              <Button size="lg" className="rounded-full px-8 gap-2 w-full sm:w-auto">
-                <Sparkles className="w-4 h-4" />
-                {isAstrology ? ta.cta : nav.bookNow}
-              </Button>
-            </BookingModal>
+            <Button
+              size="lg"
+              className="rounded-full px-8 gap-2 w-full sm:w-auto"
+              onClick={() => {
+                // Close the detail dialog first so the booking dialog never
+                // stacks on top of it (two Dialogs open at once = fragile
+                // focus/backdrop behavior).
+                onOpenChange(false);
+                onBook({
+                  title: content.title,
+                  subtitle: content.outcome,
+                  meta: [{ icon: service.icon, label: service.category }],
+                });
+              }}
+            >
+              <Sparkles className="w-4 h-4" />
+              {isAstrology ? ta.cta : nav.bookNow}
+            </Button>
           </div>
         </div>
       </DialogContent>
@@ -1487,6 +1518,8 @@ export default function App() {
   const [selectedBlog, setSelectedBlog] = useState<any>(null);
   const [selectedService, setSelectedService] = useState<any>(null);
   const [legalModal, setLegalModal] = useState<"impressum" | "privacy" | null>(null);
+  const [bookingContext, setBookingContext] = useState<BookingContext | null>(null);
+  const openBooking = (ctx: BookingContext = {}) => setBookingContext(ctx);
 
   useEffect(() => {
     document.documentElement.lang = lang.toLowerCase();
@@ -1517,9 +1550,9 @@ export default function App() {
 
   return (
     <div className="min-h-screen selection:bg-primary/20">
-      <Navbar lang={lang} setLang={setLang} />
+      <Navbar lang={lang} setLang={setLang} onBook={openBooking} />
       <main>
-        <Hero lang={lang} />
+        <Hero lang={lang} onBook={openBooking} />
         <ServicesSection lang={lang} onLearnMore={handleServiceLearnMore} />
         <OngoingSessionsSection lang={lang} />
         <AboutSection lang={lang} />
@@ -1543,12 +1576,20 @@ export default function App() {
         open={!!selectedService}
         onOpenChange={(open) => !open && setSelectedService(null)}
         lang={lang}
+        onBook={openBooking}
       />
 
       <LegalModal
         type={legalModal}
         open={!!legalModal}
         setOpen={(o) => !o && setLegalModal(null)}
+        lang={lang}
+      />
+
+      <BookingDialog
+        context={bookingContext}
+        open={!!bookingContext}
+        onOpenChange={(open) => !open && setBookingContext(null)}
         lang={lang}
       />
     </div>
