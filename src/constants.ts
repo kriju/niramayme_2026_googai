@@ -37,7 +37,7 @@ export const TRANSLATIONS = {
       title: "Outcome-Based Healing",
       description: "We don't just offer sessions; we offer solutions for your physical, mental, and spiritual well-being.",
       outcomeLabel: "The Outcome",
-      learnMore: "Learn More",
+      learnMore: "Learn more & Book",
     },
     about: {
       title: "Meet Your Healer",
@@ -337,7 +337,7 @@ export const TRANSLATIONS = {
       title: "Ergebnisorientierte Heilung",
       description: "Wir bieten nicht nur Sitzungen an; wir bieten Lösungen für Ihr körperliches, geistiges und spirituelles Wohlbefinden.",
       outcomeLabel: "Das Ergebnis",
-      learnMore: "Mehr erfahren",
+      learnMore: "Mehr erfahren & buchen",
     },
     about: {
       title: "Lernen Sie Ihre Therapeutin kennen",
