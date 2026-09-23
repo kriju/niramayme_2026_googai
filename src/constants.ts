@@ -154,6 +154,10 @@ export const TRANSLATIONS = {
             {
               title: "6. Event & Workshop Photography",
               content: "We occasionally take photographs at our workshops, classes, and community events (e.g. International Yoga Day) to share on this website and our social media channels. We select images that favor group or candid shots over close-ups of individuals, and we obtain consent from clearly identifiable attendees where practicable. If you appear in a photo on this site and would like it removed, please contact us at richa@niramay.me and we will take it down promptly."
+            },
+            {
+              title: "7. Vedic Astrology Chart Requests",
+              content: "If you request a Vedic Astrology reading, we collect your name, place of birth, date of birth, time of birth, and an email address or WhatsApp number through our booking form (or, if you contact us directly, via email or WhatsApp) solely to prepare your birth chart and coordinate your session. This data is stored only for as long as needed to prepare your chart and deliver your session, and is not shared with third parties. You must actively confirm your consent before this data is submitted, and you may withdraw consent and request deletion of this data at any time by contacting richa@niramay.me."
             }
           ]
         }
@@ -234,7 +238,11 @@ export const TRANSLATIONS = {
       howSteps: [
         {
           title: "Submit Your Details",
-          description: "Complete the booking form with your exact birth date, birth time, and birth city, along with the primary areas of life you want to focus on.",
+          description: "Share your exact date, time, and place of birth through our secure form.",
+        },
+        {
+          title: "Secure Your Slot",
+          description: "Pay the session fee in advance to confirm your request and begin chart preparation.",
         },
         {
           title: "Chart Preparation",
@@ -250,6 +258,48 @@ export const TRANSLATIONS = {
         },
       ],
       cta: "Book Your Reading",
+    },
+    astrologyIntake: {
+      step1Title: "Your Birth Details",
+      step2Title: "Complete Your Payment",
+      fields: {
+        name: "Full Name",
+        placeOfBirth: "Place of Birth",
+        placeOfBirthPlaceholder: "City, Country",
+        dateOfBirth: "Date of Birth",
+        timeOfBirth: "Time of Birth",
+        timeOfBirthHint: "Local time at your birth place, as exact as you have it.",
+        contact: "Email or WhatsApp Number",
+        contactHint: "We'll send your confirmation and appointment details here.",
+      },
+      consentPrefix: "I agree to Niramay storing these details to prepare my chart, per the",
+      consentLinkLabel: "Privacy Policy",
+      continueBtn: "Continue to Payment",
+      backBtn: "Back",
+      submitting: "Submitting...",
+      submitError: "Something went wrong sending your details. Please try again.",
+      refCodeLabel: "Your reference code",
+      refCodeNote: "Include this in your payment note so we can match it to your request quickly.",
+      priceLabel: "Price",
+      priceValue: "20 EUR or 2000 INR",
+      paymentEURTitle: "Pay in EUR",
+      paypalLabel: "PayPal",
+      paypalNote: "Usually confirmed within hours.",
+      bankLabel: "Bank Transfer",
+      bankNote: "SEPA transfers can take 1–2 business days to confirm.",
+      paymentINRTitle: "Pay in INR",
+      upiLabel: "UPI",
+      upiNote: "Usually confirmed within hours.",
+      paidBtn: "I've Paid",
+      paidSubmitting: "Confirming...",
+      paidError: "Couldn't confirm your payment claim. Please try again, or message us on WhatsApp.",
+      confirmationTitle: "Thank you!",
+      confirmationBody: "We've noted your payment claim and will confirm your appointment slot within 24–48 hours.",
+      confirmationSentTo: "Confirmation will be sent to:",
+      whatsappFallbackTitle: "Prefer WhatsApp instead?",
+      whatsappFallbackBtn: "Message us on WhatsApp",
+      whatsappTemplate: "Hi Richa, I'd like to book a Vedic Astrology reading.\nName:\nPlace of Birth:\nDate of Birth:\nTime of Birth:",
+      closeBtn: "Close",
     },
     book: {
       title: "Journey from Body to Bliss",
@@ -405,6 +455,10 @@ export const TRANSLATIONS = {
             {
               title: "6. Foto- und Videoaufnahmen bei Veranstaltungen",
               content: "Wir fertigen gelegentlich Fotos bei unseren Workshops, Kursen und Gemeinschaftsveranstaltungen (z. B. Internationaler Tag des Yoga) an, um diese auf dieser Website und in unseren Social-Media-Kanälen zu teilen. Wir bevorzugen dabei Gruppen- und Spontanaufnahmen gegenüber Nahaufnahmen einzelner Personen und holen, soweit praktikabel, die Einwilligung deutlich erkennbarer Teilnehmer:innen ein. Falls Sie auf einem Foto dieser Website zu erkennen sind und dessen Entfernung wünschen, kontaktieren Sie uns bitte unter richa@niramay.me — wir nehmen es umgehend herunter."
+            },
+            {
+              title: "7. Anfragen für vedische Astrologie-Horoskope",
+              content: "Wenn Sie eine vedische Astrologie-Lesung anfragen, erfassen wir über unser Buchungsformular (oder, falls Sie uns direkt kontaktieren, per E-Mail oder WhatsApp) Ihren Namen, Geburtsort, Ihr Geburtsdatum, Ihre Geburtszeit sowie eine E-Mail-Adresse oder WhatsApp-Nummer, ausschließlich zur Erstellung Ihres Geburtshoroskops und zur Koordination Ihrer Sitzung. Diese Daten werden nur so lange gespeichert, wie es für die Vorbereitung Ihres Horoskops und die Durchführung Ihrer Sitzung erforderlich ist, und nicht an Dritte weitergegeben. Sie müssen Ihre Einwilligung vor dem Absenden dieser Daten aktiv bestätigen; Sie können Ihre Einwilligung jederzeit widerrufen und die Löschung dieser Daten verlangen, indem Sie uns unter richa@niramay.me kontaktieren."
             }
           ]
         }
@@ -486,7 +540,11 @@ export const TRANSLATIONS = {
       howSteps: [
         {
           title: "Angaben übermitteln",
-          description: "Füllen Sie das Buchungsformular mit Ihrem genauen Geburtsdatum, Ihrer Geburtszeit und Ihrem Geburtsort aus, sowie den wichtigsten Lebensbereichen, auf die Sie sich konzentrieren möchten.",
+          description: "Teilen Sie Ihr genaues Geburtsdatum, Ihre Geburtszeit und Ihren Geburtsort über unser sicheres Formular mit.",
+        },
+        {
+          title: "Platz sichern",
+          description: "Bezahlen Sie die Sitzungsgebühr im Voraus, um Ihre Anfrage zu bestätigen und die Horoskop-Vorbereitung zu starten.",
         },
         {
           title: "Horoskop-Vorbereitung",
@@ -502,6 +560,48 @@ export const TRANSLATIONS = {
         },
       ],
       cta: "Termin für Ihre Lesung buchen",
+    },
+    astrologyIntake: {
+      step1Title: "Ihre Geburtsdaten",
+      step2Title: "Zahlung abschließen",
+      fields: {
+        name: "Vollständiger Name",
+        placeOfBirth: "Geburtsort",
+        placeOfBirthPlaceholder: "Stadt, Land",
+        dateOfBirth: "Geburtsdatum",
+        timeOfBirth: "Geburtszeit",
+        timeOfBirthHint: "Ortszeit am Geburtsort, so genau wie möglich.",
+        contact: "E-Mail oder WhatsApp-Nummer",
+        contactHint: "Hierhin senden wir Ihre Bestätigung und Termindetails.",
+      },
+      consentPrefix: "Ich stimme zu, dass Niramay diese Angaben zur Vorbereitung meines Horoskops speichert, gemäß der",
+      consentLinkLabel: "Datenschutzerklärung",
+      continueBtn: "Weiter zur Zahlung",
+      backBtn: "Zurück",
+      submitting: "Wird gesendet...",
+      submitError: "Beim Senden Ihrer Angaben ist etwas schiefgelaufen. Bitte versuchen Sie es erneut.",
+      refCodeLabel: "Ihr Referenzcode",
+      refCodeNote: "Geben Sie diesen bei Ihrer Zahlung als Verwendungszweck an, damit wir sie schnell zuordnen können.",
+      priceLabel: "Preis",
+      priceValue: "20 EUR oder 2000 INR",
+      paymentEURTitle: "Zahlung in EUR",
+      paypalLabel: "PayPal",
+      paypalNote: "Meist innerhalb weniger Stunden bestätigt.",
+      bankLabel: "Banküberweisung",
+      bankNote: "SEPA-Überweisungen können 1–2 Werktage zur Bestätigung benötigen.",
+      paymentINRTitle: "Zahlung in INR",
+      upiLabel: "UPI",
+      upiNote: "Meist innerhalb weniger Stunden bestätigt.",
+      paidBtn: "Ich habe bezahlt",
+      paidSubmitting: "Wird bestätigt...",
+      paidError: "Ihre Zahlungsmeldung konnte nicht bestätigt werden. Bitte versuchen Sie es erneut oder schreiben Sie uns über WhatsApp.",
+      confirmationTitle: "Vielen Dank!",
+      confirmationBody: "Wir haben Ihre Zahlungsmeldung erhalten und bestätigen Ihren Termin innerhalb von 24–48 Stunden.",
+      confirmationSentTo: "Die Bestätigung geht an:",
+      whatsappFallbackTitle: "Lieber über WhatsApp?",
+      whatsappFallbackBtn: "Über WhatsApp schreiben",
+      whatsappTemplate: "Hallo Richa, ich möchte eine vedische Astrologie-Lesung buchen.\nName:\nGeburtsort:\nGeburtsdatum:\nGeburtszeit:",
+      closeBtn: "Schließen",
     },
     book: {
       title: "Reise vom Körper zur Glückseligkeit",

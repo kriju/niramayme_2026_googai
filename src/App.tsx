@@ -28,6 +28,8 @@ import {
   query,
   orderBy,
   addDoc,
+  updateDoc,
+  doc,
   serverTimestamp,
   Timestamp,
   where
@@ -97,6 +99,260 @@ const BookingDialog = ({ context, lang, open, onOpenChange }: { context: Booking
             </a>
           </div>
         </div>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+// The Vedic Astrology tile's own intake flow: it replaces self-serve
+// calendar booking with (1) collecting the birth details a chart actually
+// needs, with an explicit consent checkbox, then (2) advance-payment
+// instructions keyed to a reference code, so the visitor and Richa share
+// one canonical, receipted record instead of coordinating over email/
+// WhatsApp with no paper trail. See firestore.rules for what's enforced
+// server-side (the client can create a request and flip its own
+// paymentClaimed flag, nothing else).
+const ASTROLOGY_WHATSAPP_NUMBER = "4915175315761";
+
+type AstrologyStep = "details" | "payment" | "done";
+type AstrologyForm = { name: string; placeOfBirth: string; dateOfBirth: string; timeOfBirth: string; contact: string; consent: boolean };
+const EMPTY_ASTROLOGY_FORM: AstrologyForm = { name: "", placeOfBirth: "", dateOfBirth: "", timeOfBirth: "", contact: "", consent: false };
+
+const AstrologyIntakeModal = ({ lang, open, onOpenChange, onOpenPrivacy }: { lang: "EN" | "DE", open: boolean, onOpenChange: (o: boolean) => void, onOpenPrivacy: () => void }) => {
+  const t = TRANSLATIONS[lang].astrologyIntake;
+  const [step, setStep] = useState<AstrologyStep>("details");
+  const [form, setForm] = useState<AstrologyForm>(EMPTY_ASTROLOGY_FORM);
+  const [requestId, setRequestId] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [paying, setPaying] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Short human-quotable code derived from the Firestore doc ID, shown to
+  // the visitor and re-derived server-side (see api/notify-astrology-request.ts)
+  // from the same ID — never stored separately, so the two can't drift.
+  const refCode = requestId ? `AST-${requestId.slice(-6).toUpperCase()}` : "";
+  const isValid = Boolean(form.name.trim() && form.placeOfBirth.trim() && form.dateOfBirth && form.timeOfBirth && form.contact.trim() && form.consent);
+  const whatsappHref = `https://wa.me/${ASTROLOGY_WHATSAPP_NUMBER}?text=${encodeURIComponent(t.whatsappTemplate)}`;
+
+  const resetAndClose = () => {
+    onOpenChange(false);
+    // Delay the reset past the close animation so the dialog doesn't
+    // visibly snap back to step 1 while it's still fading out.
+    setTimeout(() => {
+      setStep("details");
+      setForm(EMPTY_ASTROLOGY_FORM);
+      setRequestId(null);
+      setError(null);
+    }, 300);
+  };
+
+  const handleSubmitDetails = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!isValid || submitting) return;
+    setSubmitting(true);
+    setError(null);
+    try {
+      const docRef = await addDoc(collection(db, "astrologyRequests"), {
+        name: form.name.trim(),
+        placeOfBirth: form.placeOfBirth.trim(),
+        dateOfBirth: form.dateOfBirth,
+        timeOfBirth: form.timeOfBirth,
+        contact: form.contact.trim(),
+        consentAccepted: true,
+        lang,
+        createdAt: serverTimestamp(),
+        paymentClaimed: false,
+      });
+      setRequestId(docRef.id);
+      setStep("payment");
+      // Best-effort admin notification — the request is already saved above
+      // regardless of whether this succeeds.
+      fetch("/api/notify-astrology-request", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ requestId: docRef.id, kind: "submitted" }),
+      }).catch(err => console.error("Failed to notify admin of new astrology request:", err));
+    } catch (err) {
+      console.error("Error submitting astrology request:", err);
+      setError(t.submitError);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handlePaid = async () => {
+    if (!requestId || paying) return;
+    setPaying(true);
+    setError(null);
+    try {
+      await updateDoc(doc(db, "astrologyRequests", requestId), { paymentClaimed: true });
+      setStep("done");
+      fetch("/api/notify-astrology-request", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ requestId, kind: "payment_claimed" }),
+      }).catch(err => console.error("Failed to notify admin of astrology payment claim:", err));
+    } catch (err) {
+      console.error("Error confirming astrology payment claim:", err);
+      setError(t.paidError);
+    } finally {
+      setPaying(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={(o) => !o && resetAndClose()}>
+      <DialogContent className="sm:max-w-lg max-h-[85vh] overflow-y-auto">
+        {step === "details" && (
+          <>
+            <DialogHeader>
+              <DialogTitle className="text-2xl font-serif">{t.step1Title}</DialogTitle>
+            </DialogHeader>
+            <form onSubmit={handleSubmitDetails} className="grid gap-4 py-2">
+              <div className="grid gap-2">
+                <label className="text-sm font-medium">{t.fields.name}</label>
+                <input
+                  required
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  value={form.name}
+                  onChange={e => setForm({ ...form, name: e.target.value })}
+                />
+              </div>
+              <div className="grid gap-2">
+                <label className="text-sm font-medium">{t.fields.placeOfBirth}</label>
+                <input
+                  required
+                  placeholder={t.fields.placeOfBirthPlaceholder}
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  value={form.placeOfBirth}
+                  onChange={e => setForm({ ...form, placeOfBirth: e.target.value })}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="grid gap-2">
+                  <label className="text-sm font-medium">{t.fields.dateOfBirth}</label>
+                  <input
+                    required
+                    type="date"
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                    value={form.dateOfBirth}
+                    onChange={e => setForm({ ...form, dateOfBirth: e.target.value })}
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <label className="text-sm font-medium">{t.fields.timeOfBirth}</label>
+                  <input
+                    required
+                    type="time"
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                    value={form.timeOfBirth}
+                    onChange={e => setForm({ ...form, timeOfBirth: e.target.value })}
+                  />
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground -mt-2">{t.fields.timeOfBirthHint}</p>
+              <div className="grid gap-2">
+                <label className="text-sm font-medium">{t.fields.contact}</label>
+                <input
+                  required
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  value={form.contact}
+                  onChange={e => setForm({ ...form, contact: e.target.value })}
+                />
+                <p className="text-xs text-muted-foreground">{t.fields.contactHint}</p>
+              </div>
+              <label className="flex items-start gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  required
+                  className="mt-1 h-4 w-4 shrink-0"
+                  checked={form.consent}
+                  onChange={e => setForm({ ...form, consent: e.target.checked })}
+                />
+                <span>
+                  {t.consentPrefix}{" "}
+                  <button type="button" onClick={onOpenPrivacy} className="underline underline-offset-2 hover:text-primary">
+                    {t.consentLinkLabel}
+                  </button>.
+                </span>
+              </label>
+              {error && <p className="text-sm text-red-600">{error}</p>}
+              <Button type="submit" size="lg" className="rounded-full w-full" disabled={!isValid || submitting}>
+                {submitting ? t.submitting : t.continueBtn}
+              </Button>
+              <a href={whatsappHref} target="_blank" rel="noopener noreferrer" className="text-center text-sm text-muted-foreground hover:text-primary underline underline-offset-2">
+                {t.whatsappFallbackTitle} — {t.whatsappFallbackBtn}
+              </a>
+            </form>
+          </>
+        )}
+
+        {step === "payment" && (
+          <>
+            <DialogHeader>
+              <DialogTitle className="text-2xl font-serif">{t.step2Title}</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-5 py-2">
+              <div className="bg-stone-50 p-4 rounded-xl border border-stone-100 text-center">
+                <p className="text-xs uppercase tracking-wider text-muted-foreground mb-1">{t.refCodeLabel}</p>
+                <p className="text-2xl font-bold font-mono tracking-wide">{refCode}</p>
+                <p className="text-xs text-muted-foreground mt-1">{t.refCodeNote}</p>
+              </div>
+              <div>
+                <p className="text-xs font-bold uppercase tracking-wider text-primary/50 mb-1">{t.priceLabel}</p>
+                <p className="text-lg font-semibold">{t.priceValue}</p>
+              </div>
+              <div className="grid sm:grid-cols-2 gap-4">
+                <div className="p-4 rounded-xl border border-stone-100 space-y-2">
+                  <p className="font-bold text-sm">{t.paymentEURTitle}</p>
+                  <p className="text-sm">{t.paypalLabel}: <span className="font-mono">richa@niramay.me</span></p>
+                  <p className="text-xs text-muted-foreground">{t.paypalNote}</p>
+                  <Separator className="my-2" />
+                  <p className="text-sm">{t.bankLabel}</p>
+                  <p className="text-xs font-mono">IBAN: DE08 1001 1001 2721 9373 31</p>
+                  <p className="text-xs font-mono">BIC: NTSBDEB1XXX</p>
+                  <p className="text-xs text-muted-foreground">{t.bankNote}</p>
+                </div>
+                <div className="p-4 rounded-xl border border-stone-100 space-y-2">
+                  <p className="font-bold text-sm">{t.paymentINRTitle}</p>
+                  <p className="text-sm">{t.upiLabel}: <span className="font-mono">richa944@icici</span></p>
+                  <p className="text-xs text-muted-foreground">{t.upiNote}</p>
+                </div>
+              </div>
+              {error && <p className="text-sm text-red-600">{error}</p>}
+              <div className="flex gap-3">
+                {/* Going back and resubmitting creates a second Firestore
+                    doc rather than editing this one — the security rules
+                    only allow flipping paymentClaimed, not editing details,
+                    so a harmless duplicate (Richa sees two emails, same
+                    name/DOB) is the simplest correct behavior for v1. */}
+                <Button variant="outline" className="rounded-full" onClick={() => setStep("details")}>{t.backBtn}</Button>
+                <Button size="lg" className="rounded-full flex-1" onClick={handlePaid} disabled={paying}>
+                  {paying ? t.paidSubmitting : t.paidBtn}
+                </Button>
+              </div>
+            </div>
+          </>
+        )}
+
+        {step === "done" && (
+          <>
+            <DialogHeader>
+              <DialogTitle className="text-2xl font-serif">{t.confirmationTitle}</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-2">
+              <div className="flex items-start gap-3">
+                <CheckCircle2 className="w-6 h-6 text-primary shrink-0 mt-0.5" />
+                <p className="text-muted-foreground">{t.confirmationBody}</p>
+              </div>
+              <p className="text-sm">
+                <span className="text-muted-foreground">{t.confirmationSentTo}</span>{" "}
+                <span className="font-medium">{form.contact}</span>
+              </p>
+              <Button className="rounded-full w-full" onClick={resetAndClose}>{t.closeBtn}</Button>
+            </div>
+          </>
+        )}
       </DialogContent>
     </Dialog>
   );
@@ -748,7 +1004,7 @@ const ServiceCard = ({ service, index, lang, onLearnMore }: { service: any, inde
   );
 };
 
-const ServiceDetailModal = ({ service, lang, open, onOpenChange, onBook }: { service: any, lang: "EN" | "DE", open: boolean, onOpenChange: (o: boolean) => void, onBook: (ctx?: BookingContext) => void }) => {
+const ServiceDetailModal = ({ service, lang, open, onOpenChange, onBook, onBookAstrology }: { service: any, lang: "EN" | "DE", open: boolean, onOpenChange: (o: boolean) => void, onBook: (ctx?: BookingContext) => void, onBookAstrology: () => void }) => {
   if (!service) return null;
   const t = TRANSLATIONS[lang].services;
   const nav = TRANSLATIONS[lang].nav;
@@ -828,15 +1084,22 @@ const ServiceDetailModal = ({ service, lang, open, onOpenChange, onBook }: { ser
               size="lg"
               className="rounded-full px-8 gap-2 w-full sm:w-auto"
               onClick={() => {
-                // Close the detail dialog first so the booking dialog never
-                // stacks on top of it (two Dialogs open at once = fragile
-                // focus/backdrop behavior).
+                // Close the detail dialog first so the booking/intake dialog
+                // never stacks on top of it (two Dialogs open at once =
+                // fragile focus/backdrop behavior).
                 onOpenChange(false);
-                onBook({
-                  title: content.title,
-                  subtitle: content.outcome,
-                  meta: [{ icon: service.icon, label: service.category }],
-                });
+                if (isAstrology) {
+                  // Astrology doesn't use the self-serve calendar: an
+                  // appointment can't be offered until birth details and
+                  // advance payment are in, so it gets its own intake flow.
+                  onBookAstrology();
+                } else {
+                  onBook({
+                    title: content.title,
+                    subtitle: content.outcome,
+                    meta: [{ icon: service.icon, label: service.category }],
+                  });
+                }
               }}
             >
               <Sparkles className="w-4 h-4" />
@@ -1520,6 +1783,7 @@ export default function App() {
   const [legalModal, setLegalModal] = useState<"impressum" | "privacy" | null>(null);
   const [bookingContext, setBookingContext] = useState<BookingContext | null>(null);
   const openBooking = (ctx: BookingContext = {}) => setBookingContext(ctx);
+  const [astrologyIntakeOpen, setAstrologyIntakeOpen] = useState(false);
 
   useEffect(() => {
     document.documentElement.lang = lang.toLowerCase();
@@ -1577,6 +1841,7 @@ export default function App() {
         onOpenChange={(open) => !open && setSelectedService(null)}
         lang={lang}
         onBook={openBooking}
+        onBookAstrology={() => setAstrologyIntakeOpen(true)}
       />
 
       <LegalModal
@@ -1591,6 +1856,13 @@ export default function App() {
         open={!!bookingContext}
         onOpenChange={(open) => !open && setBookingContext(null)}
         lang={lang}
+      />
+
+      <AstrologyIntakeModal
+        lang={lang}
+        open={astrologyIntakeOpen}
+        onOpenChange={setAstrologyIntakeOpen}
+        onOpenPrivacy={() => setLegalModal("privacy")}
       />
     </div>
   );
