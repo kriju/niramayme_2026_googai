@@ -33,6 +33,25 @@ service cloud.firestore {
           && data.createdAt is timestamp;
     }
 
+    // Astrology intake helper — holds birth details + a contact, so it's
+    // never client-readable (see match block below); only validated on the
+    // way in.
+    function isValidAstrologyRequest(data) {
+      return data.keys().hasAll(['name', 'placeOfBirth', 'dateOfBirth', 'timeOfBirth', 'contact', 'consentAccepted', 'lang', 'createdAt', 'paymentClaimed'])
+          && data.keys().size() <= 9
+          && data.name is string && data.name.size() > 0 && data.name.size() <= 100
+          && data.placeOfBirth is string && data.placeOfBirth.size() > 0 && data.placeOfBirth.size() <= 200
+          && data.dateOfBirth is string && data.dateOfBirth.size() > 0 && data.dateOfBirth.size() <= 20
+          && data.timeOfBirth is string && data.timeOfBirth.size() > 0 && data.timeOfBirth.size() <= 20
+          && data.contact is string && data.contact.size() > 0 && data.contact.size() <= 200
+          // Consent must be an explicit, affirmative true on the way in —
+          // never inferred from the mere act of submitting the form.
+          && data.consentAccepted == true
+          && data.lang in ['EN', 'DE']
+          && data.createdAt is timestamp
+          && data.paymentClaimed == false;
+    }
+
     match /reviews/{reviewId} {
       // Only approved reviews are ever readable. A list query must itself
       // filter on approved == true (as the app does) for Firestore to prove
@@ -59,6 +78,22 @@ service cloud.firestore {
       // further (e.g. a specific admin UID or custom claim) instead of any
       // signed-in user.
       allow create, update: if request.auth != null && isValidBlog(incoming());
+      allow delete: if false;
+    }
+
+    match /astrologyRequests/{requestId} {
+      // Never client-readable — this holds names, birth details and a
+      // contact address/number. The admin reads it via the Firebase console
+      // or the server-side notify endpoint (which uses the admin SDK and so
+      // bypasses these rules entirely).
+      allow get, list: if false;
+      allow create: if isValidId(requestId) && isValidAstrologyRequest(incoming());
+      // The only client-side mutation allowed is the visitor flipping their
+      // own "I've paid" flag once, from false to true — nothing else about
+      // the submission can be changed after the fact.
+      allow update: if existing().paymentClaimed == false
+                    && incoming().paymentClaimed == true
+                    && incoming().diff(existing()).affectedKeys().hasOnly(['paymentClaimed']);
       allow delete: if false;
     }
   }
