@@ -18,7 +18,7 @@ import {
   Plus,
   ChevronLeft,
   ChevronRight,
-  Flower2
+  Heart
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { db } from "./lib/firebase";
@@ -46,7 +46,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { SERVICES, TESTIMONIALS, FAQS, CERTIFICATIONS, TRANSLATIONS, ONGOING_SESSIONS, EVENTS, GOOGLE_CALENDAR_URL, GOOGLE_REVIEW_URL, FEATURE_BLOG_ENABLED } from "./constants";
+import { SERVICES, TESTIMONIALS, FAQS, HEALER_CERTIFICATIONS, HEALER_IMAGES, TRANSLATIONS, ONGOING_SESSIONS, EVENTS, GOOGLE_CALENDAR_URL, GOOGLE_REVIEW_URL, FEATURE_BLOG_ENABLED } from "./constants";
 
 // A single booking dialog, controlled from the App root (see the other
 // ...DetailModal components below for the same lift-state-up pattern).
@@ -1314,42 +1314,113 @@ const EventsSection = ({ lang }: { lang: "EN" | "DE" }) => {
   );
 };
 
+type HealerBio = { name: string; title: string; p1: string; p2: string };
+
+const HealerProfile = ({
+  lang,
+  content,
+  certifications,
+  image,
+  reverse,
+}: {
+  lang: "EN" | "DE";
+  content: HealerBio;
+  certifications: (typeof HEALER_CERTIFICATIONS)["richa"];
+  image: string;
+  reverse?: boolean;
+}) => {
+  return (
+    <div className="grid md:grid-cols-2 gap-12 md:gap-16 items-center">
+      <motion.div
+        initial={{ opacity: 0, x: reverse ? 30 : -30 }}
+        whileInView={{ opacity: 1, x: 0 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.6 }}
+        className={`relative ${reverse ? "md:order-2" : ""}`}
+      >
+        <div className="aspect-[4/5] rounded-[3rem] overflow-hidden shadow-2xl">
+          <img
+            src={image}
+            alt={content.name}
+            loading="lazy"
+            decoding="async"
+            className="w-full h-full object-cover"
+          />
+        </div>
+        <div className="absolute -top-8 -right-8 w-32 h-32 bg-primary/10 rounded-full -z-10" />
+        <div className="absolute -bottom-8 -left-8 w-48 h-48 bg-primary/5 rounded-full -z-10" />
+      </motion.div>
+
+      <motion.div
+        initial={{ opacity: 0, x: reverse ? -30 : 30 }}
+        whileInView={{ opacity: 1, x: 0 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.6, delay: 0.1 }}
+      >
+        <p className="text-sm font-bold uppercase tracking-wider text-primary/70 mb-2">{content.title}</p>
+        <h3 className="text-3xl md:text-4xl font-serif font-bold mb-6">{content.name}</h3>
+        <p className="text-lg text-muted-foreground mb-5 leading-relaxed">{content.p1}</p>
+        <p className="text-lg text-muted-foreground mb-8 leading-relaxed">{content.p2}</p>
+
+        <div className="flex flex-wrap gap-3">
+          {certifications.map((cert, idx) => (
+            <div key={idx} className="flex items-center gap-2.5 px-4 py-3 bg-stone-50 rounded-xl border border-stone-100">
+              <cert.icon className="w-5 h-5 text-primary shrink-0" />
+              <span className="text-sm font-medium whitespace-nowrap">{cert[lang].name}</span>
+            </div>
+          ))}
+        </div>
+      </motion.div>
+    </div>
+  );
+};
+
 const AboutSection = ({ lang }: { lang: "EN" | "DE" }) => {
   const t = TRANSLATIONS[lang].about;
   return (
     <section id="about" className="py-24 overflow-hidden">
       <div className="container mx-auto px-6">
-        <div className="grid md:grid-cols-2 gap-16 items-center">
-          <div className="relative">
-            <div className="aspect-square rounded-[3rem] overflow-hidden shadow-2xl bg-gradient-to-br from-primary/15 via-primary/5 to-stone-100 flex flex-col items-center justify-center gap-4">
-              <Flower2 className="w-20 h-20 text-primary/40" strokeWidth={1.25} />
-              <p className="text-sm font-medium text-primary/50 tracking-wide uppercase">
-                {lang === "EN" ? "Photo coming soon" : "Foto folgt in Kürze"}
-              </p>
-            </div>
-            <div className="absolute -top-10 -right-10 w-40 h-40 bg-primary/10 rounded-full animate-pulse" />
-            <div className="absolute -bottom-10 -left-10 w-60 h-60 bg-primary/5 rounded-full" />
-          </div>
-
-          <div>
-            <h2 className="text-4xl md:text-5xl font-serif font-bold mb-8">{t.title}</h2>
-            <p className="text-lg text-muted-foreground mb-6 leading-relaxed">
-              {t.p1}
-            </p>
-            <p className="text-lg text-muted-foreground mb-10 leading-relaxed">
-              {t.p2}
-            </p>
-            
-            <div className="grid grid-cols-2 gap-4 mb-10">
-              {CERTIFICATIONS.map((cert, idx) => (
-                <div key={idx} className="flex items-center gap-3 p-3 bg-stone-50 rounded-xl border border-stone-100">
-                  <cert.icon className="w-5 h-5 text-primary" />
-                  <span className="text-sm font-medium">{cert[lang].name}</span>
-                </div>
-              ))}
-            </div>
-          </div>
+        <div className="text-center max-w-3xl mx-auto mb-20">
+          <h2 className="text-4xl md:text-5xl font-serif font-bold mb-6">{t.title}</h2>
+          <p className="text-muted-foreground text-lg">{t.description}</p>
         </div>
+
+        <div className="space-y-24">
+          <HealerProfile
+            lang={lang}
+            content={t.richa}
+            certifications={HEALER_CERTIFICATIONS.richa}
+            image={HEALER_IMAGES.richa}
+          />
+          <HealerProfile
+            lang={lang}
+            content={t.riju}
+            certifications={HEALER_CERTIFICATIONS.riju}
+            image={HEALER_IMAGES.riju}
+            reverse
+          />
+        </div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+          className="mt-24 relative rounded-[2.5rem] overflow-hidden shadow-2xl max-w-4xl mx-auto"
+        >
+          <img
+            src={HEALER_IMAGES.together}
+            alt={t.together}
+            loading="lazy"
+            decoding="async"
+            className="w-full h-[320px] md:h-[420px] object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-transparent" />
+          <div className="absolute bottom-0 left-0 right-0 p-6 md:p-8 flex items-end gap-3">
+            <Heart className="w-5 h-5 text-white/90 shrink-0 mb-1 fill-white/20" />
+            <p className="text-white text-base md:text-lg font-medium leading-snug">{t.together}</p>
+          </div>
+        </motion.div>
       </div>
     </section>
   );

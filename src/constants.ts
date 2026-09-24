@@ -1,4 +1,4 @@
-import { Heart, Sparkles, Brain, Zap, ShieldCheck, Moon, Users, Star } from "lucide-react";
+import { Heart, Sparkles, Brain, Zap, ShieldCheck, Moon, Users, Star, GraduationCap, Award, History } from "lucide-react";
 
 export const GOOGLE_CALENDAR_URL = "https://calendar.google.com/calendar/appointments/schedules/AcZssZ0bFjK2E2xI3wiT55LqPigmiOHHDxGTghizdBbhy4MSdbw1p6CRUsxVk8gZYqJTnMgoKOAcJjZO?gv=true";
 export const GOOGLE_REVIEW_URL = "https://www.google.com/search?q=Niramay+Ostfildern+reviews";
@@ -14,7 +14,7 @@ export const TRANSLATIONS = {
   EN: {
     nav: {
       services: "Services",
-      about: "About",
+      about: "About Us",
       events: "Events",
       reviews: "Reviews",
       blog: "Blog",
@@ -40,11 +40,21 @@ export const TRANSLATIONS = {
       learnMore: "Learn more & Book",
     },
     about: {
-      title: "Meet Your Healer",
-      p1: "I am Richa, a certified therapist dedicated to helping individuals unlock their true potential. My approach combines the ancient practices of Yoga and Reiki with the modern psychological frameworks of NLP and Hypnotherapy.",
-      p2: "Based in Ostfildern, I provide a safe, nurturing space for you to explore your inner world and emerge stronger, clearer, and more at peace.",
-      cta: "Watch My Philosophy",
-      videoPlaceholder: "[Video Bio Placeholder]",
+      title: "Meet Your Healers",
+      description: "Two teachers, one path — the husband-and-wife team behind every session, workshop, and Yoga Day celebration at Niramay.",
+      richa: {
+        name: "Richa Kansal",
+        title: "Co-Founder & Certified Therapist",
+        p1: "I am Richa, a certified therapist dedicated to helping individuals unlock their true potential. My approach combines the ancient practices of Yoga and Reiki with the modern psychological frameworks of NLP and Hypnotherapy.",
+        p2: "Based in Ostfildern, I provide a safe, nurturing space for you to explore your inner world and emerge stronger, clearer, and more at peace.",
+      },
+      riju: {
+        name: "Riju Kansal",
+        title: "Co-Founder, Yoga Trainer & Yoga Therapist",
+        p1: "I am Riju, Niramay's co-founder and a certified yoga trainer and yoga therapist, trained through S-VYASA and Vyasa Yoga Singapore. I work alongside my wife, Richa, bringing a steady, disciplined presence to our teacher trainings and ongoing group sessions.",
+        p2: "My approach centers on consistency over intensity — helping students build practices that hold up in daily life, not just on the mat. Based in Ostfildern, I'm committed to making authentic, therapeutic yoga accessible to everyone who walks through Niramay's door.",
+      },
+      together: "Teaching side by side since 2018 — pictured at International Day of Yoga, hosted with the Consulate General of India, Munich.",
     },
     events: {
       title: "Moments From Our Journey",
@@ -314,7 +324,7 @@ export const TRANSLATIONS = {
   DE: {
     nav: {
       services: "Dienstleistungen",
-      about: "Über mich",
+      about: "Über uns",
       events: "Veranstaltungen",
       reviews: "Bewertungen",
       blog: "Blog",
@@ -340,11 +350,21 @@ export const TRANSLATIONS = {
       learnMore: "Mehr erfahren & buchen",
     },
     about: {
-      title: "Lernen Sie Ihre Therapeutin kennen",
-      p1: "Ich bin Richa, eine zertifizierte Therapeutin, die sich darauf spezialisiert hat, Menschen dabei zu helfen, ihr wahres Potenzial zu entfalten. Mein Ansatz kombiniert die alten Praktiken von Yoga und Reiki mit den modernen psychologischen Rahmenbedingungen von NLP und Hypnotherapie.",
-      p2: "In Ostfildern ansässig, biete ich einen sicheren, nährenden Raum, in dem Sie Ihre innere Welt erkunden und stärker, klarer und friedvoller hervorgehen können.",
-      cta: "Meine Philosophie ansehen",
-      videoPlaceholder: "[Video Bio Platzhalter]",
+      title: "Lernen Sie Ihre Therapeuten kennen",
+      description: "Zwei Lehrende, ein gemeinsamer Weg — das Ehepaar hinter jeder Sitzung, jedem Workshop und jeder Yoga-Tag-Feier bei Niramay.",
+      richa: {
+        name: "Richa Kansal",
+        title: "Mitgründerin & zertifizierte Therapeutin",
+        p1: "Ich bin Richa, eine zertifizierte Therapeutin, die sich darauf spezialisiert hat, Menschen dabei zu helfen, ihr wahres Potenzial zu entfalten. Mein Ansatz kombiniert die alten Praktiken von Yoga und Reiki mit den modernen psychologischen Rahmenbedingungen von NLP und Hypnotherapie.",
+        p2: "In Ostfildern ansässig, biete ich einen sicheren, nährenden Raum, in dem Sie Ihre innere Welt erkunden und stärker, klarer und friedvoller hervorgehen können.",
+      },
+      riju: {
+        name: "Riju Kansal",
+        title: "Mitgründer, Yogalehrer & Yogatherapeut",
+        p1: "Ich bin Riju, Mitgründer von Niramay sowie zertifizierter Yogalehrer und Yogatherapeut, ausgebildet bei S-VYASA und Vyasa Yoga Singapur. Gemeinsam mit meiner Frau Richa leite ich unsere Yogalehrer-Ausbildungen und laufenden Gruppensitzungen mit ruhiger, disziplinierter Präsenz.",
+        p2: "Mein Ansatz setzt auf Beständigkeit statt Intensität — ich helfe meinen Schülern, Praktiken zu entwickeln, die auch im Alltag Bestand haben, nicht nur auf der Matte. Von Ostfildern aus setze ich mich dafür ein, authentisches, therapeutisches Yoga für jeden zugänglich zu machen, der zu Niramay kommt.",
+      },
+      together: "Seit 2018 gemeinsam unterrichtend — hier beim Internationalen Tag des Yoga, ausgerichtet mit dem Generalkonsulat von Indien, München.",
     },
     events: {
       title: "Momente unserer Reise",
@@ -829,28 +849,75 @@ export const FAQS = [
   },
 ];
 
-export const CERTIFICATIONS = [
-  { 
-    icon: ShieldCheck,
-    EN: { name: "Yoga Alliance Certified" },
-    DE: { name: "Yoga Alliance Zertifiziert" }
-  },
-  { 
-    icon: ShieldCheck,
-    EN: { name: "Certified NLP Practitioner" },
-    DE: { name: "Zertifizierter NLP-Praktiker" }
-  },
-  { 
-    icon: ShieldCheck,
-    EN: { name: "Master Reiki Healer" },
-    DE: { name: "Reiki-Meister-Heiler" }
-  },
-  { 
-    icon: ShieldCheck,
-    EN: { name: "Hypnotherapist" },
-    DE: { name: "Hypnotherapeut" }
-  },
-];
+// Per-person credential badges shown on the "Meet Your Healers" cards.
+export const HEALER_CERTIFICATIONS = {
+  richa: [
+    {
+      icon: ShieldCheck,
+      EN: { name: "Yoga Alliance Certified" },
+      DE: { name: "Yoga Alliance Zertifiziert" }
+    },
+    {
+      icon: Brain,
+      EN: { name: "Certified NLP Practitioner" },
+      DE: { name: "Zertifizierter NLP-Praktiker" }
+    },
+    {
+      icon: Sparkles,
+      EN: { name: "Master Reiki Healer" },
+      DE: { name: "Reiki-Meister-Heiler" }
+    },
+    {
+      icon: Moon,
+      EN: { name: "Hypnotherapist" },
+      DE: { name: "Hypnotherapeut" }
+    },
+    {
+      icon: History,
+      EN: { name: "Certified Past Life Regression Therapist" },
+      DE: { name: "Zertifizierte Rückführungstherapeutin" }
+    },
+    {
+      icon: Star,
+      EN: { name: "Spiritual Astrology Consultant" },
+      DE: { name: "Spirituelle Astrologie-Beraterin" }
+    },
+    {
+      icon: GraduationCap,
+      EN: { name: "S-VYASA Certified" },
+      DE: { name: "S-VYASA-zertifiziert" }
+    },
+  ],
+  riju: [
+    {
+      icon: GraduationCap,
+      EN: { name: "S-VYASA Certified" },
+      DE: { name: "S-VYASA-zertifiziert" }
+    },
+    {
+      icon: Heart,
+      EN: { name: "Certified Yoga Therapist" },
+      DE: { name: "Zertifizierter Yogatherapeut" }
+    },
+    {
+      icon: Award,
+      EN: { name: "Vyasa Yoga Singapore Trained" },
+      DE: { name: "Ausgebildet bei Vyasa Yoga Singapur" }
+    },
+    {
+      icon: ShieldCheck,
+      EN: { name: "Yoga Alliance Certified" },
+      DE: { name: "Yoga Alliance Zertifiziert" }
+    },
+  ],
+};
+
+// Portrait + shared "together" photos for the "Meet Your Healers" section.
+export const HEALER_IMAGES = {
+  richa: "/about/richa-portrait.webp",
+  riju: "/about/riju-portrait.webp",
+  together: "/about/richa-riju-together.webp",
+};
 
 export const ONGOING_SESSIONS = [
   {
