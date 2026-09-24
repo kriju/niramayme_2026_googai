@@ -1,4 +1,4 @@
-import { Heart, Sparkles, Brain, Zap, ShieldCheck, Moon, Users, Star, GraduationCap, Award } from "lucide-react";
+import { Heart, Sparkles, Brain, Zap, ShieldCheck, Moon, Users, Star, GraduationCap, Award, History } from "lucide-react";
 
 export const GOOGLE_CALENDAR_URL = "https://calendar.google.com/calendar/appointments/schedules/AcZssZ0bFjK2E2xI3wiT55LqPigmiOHHDxGTghizdBbhy4MSdbw1p6CRUsxVk8gZYqJTnMgoKOAcJjZO?gv=true";
 export const GOOGLE_REVIEW_URL = "https://www.google.com/search?q=Niramay+Ostfildern+reviews";
@@ -872,6 +872,21 @@ export const HEALER_CERTIFICATIONS = {
       EN: { name: "Hypnotherapist" },
       DE: { name: "Hypnotherapeut" }
     },
+    {
+      icon: History,
+      EN: { name: "Certified Past Life Regression Therapist" },
+      DE: { name: "Zertifizierte Rückführungstherapeutin" }
+    },
+    {
+      icon: Star,
+      EN: { name: "Spiritual Astrology Consultant" },
+      DE: { name: "Spirituelle Astrologie-Beraterin" }
+    },
+    {
+      icon: GraduationCap,
+      EN: { name: "S-VYASA Certified" },
+      DE: { name: "S-VYASA-zertifiziert" }
+    },
   ],
   riju: [
     {
@@ -880,7 +895,7 @@ export const HEALER_CERTIFICATIONS = {
       DE: { name: "S-VYASA-zertifiziert" }
     },
     {
-      icon: ShieldCheck,
+      icon: Heart,
       EN: { name: "Certified Yoga Therapist" },
       DE: { name: "Zertifizierter Yogatherapeut" }
     },
@@ -888,6 +903,11 @@ export const HEALER_CERTIFICATIONS = {
       icon: Award,
       EN: { name: "Vyasa Yoga Singapore Trained" },
       DE: { name: "Ausgebildet bei Vyasa Yoga Singapur" }
+    },
+    {
+      icon: ShieldCheck,
+      EN: { name: "Yoga Alliance Certified" },
+      DE: { name: "Yoga Alliance Zertifiziert" }
     },
   ],
 };
