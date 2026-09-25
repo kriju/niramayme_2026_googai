@@ -20,6 +20,7 @@ export const TRANSLATIONS = {
       blog: "Blog",
       faq: "FAQ",
       sessions: "Sessions",
+      courses: "Courses",
       bookNow: "Book Now",
       book: "My Book",
       switchLang: "Switch to German",
@@ -88,6 +89,14 @@ export const TRANSLATIONS = {
       bookBtn: "Join via WhatsApp",
       contactNote: "Reserve your spot via WhatsApp or email us at richa@niramay.me",
       by: "by",
+    },
+    courses: {
+      title: "Courses",
+      description: "Structured, multi-week courses and workshops taught by Richa & Riju — currently offered through VHS Ostfildern, with more course partners to come.",
+      by: "by",
+      registerVia: "Register via",
+      courseNo: "Course No.",
+      contactNote: "Questions about a course? Reach out via WhatsApp or email us at richa@niramay.me",
     },
     booking: {
       title: "Book Your Session",
@@ -320,6 +329,7 @@ export const TRANSLATIONS = {
       blog: "Blog",
       faq: "FAQ",
       sessions: "Sitzungen",
+      courses: "Kurse",
       bookNow: "Jetzt buchen",
       book: "Mein Buch",
       switchLang: "Auf Englisch wechseln",
@@ -389,6 +399,14 @@ export const TRANSLATIONS = {
       bookBtn: "Über WhatsApp beitreten",
       contactNote: "Reservieren Sie Ihren Platz über WhatsApp oder schreiben Sie uns eine E-Mail an richa@niramay.me",
       by: "von",
+    },
+    courses: {
+      title: "Kurse",
+      description: "Mehrwöchige Kurse und Workshops von Richa & Riju – aktuell über die VHS Ostfildern buchbar, weitere Kurspartner folgen.",
+      by: "von",
+      registerVia: "Anmelden über",
+      courseNo: "Kursnr.",
+      contactNote: "Fragen zu einem Kurs? Schreiben Sie uns über WhatsApp oder per E-Mail an richa@niramay.me",
     },
     booking: {
       title: "Ihre Sitzung buchen",
@@ -919,6 +937,175 @@ export const ONGOING_SESSIONS = [
       location: "Treffpunkt Ruit, Ostfildern",
       instructor: "Richa",
       description: "Lernen Sie jeden Sonntag Tanzbewegungen und tanken Sie neue Energie für Körper und Stimmung.",
+    }
+  }
+];
+
+// Structured, multi-week courses and workshops. Unlike ONGOING_SESSIONS (which
+// people join directly by messaging Richa/Riju), each of these is administered
+// by an external `provider` who owns registration and the course number — so
+// cards link out to the provider instead of offering a direct WhatsApp booking.
+// A future Niramay-run course can simply omit `provider`/`kursnr`/`registrationUrl`
+// and CoursesSection falls back to the WhatsApp booking flow (see App.tsx).
+export const COURSES = [
+  {
+    id: "yoga-kids",
+    provider: "VHS Ostfildern",
+    kursnr: "262-301111",
+    registrationUrl: "https://vhs-ostfildern.de",
+    EN: {
+      title: "Yoga Kids",
+      time: "Fridays, 16:30–17:15",
+      location: "Stadthaus Scharnhauser Park, R. 2.13",
+      instructor: "Richa",
+      description: "A playful yoga class for children ages 7–11 to move, breathe, and unwind after school.",
+    },
+    DE: {
+      title: "Yoga Kids",
+      time: "Freitags, 16:30–17:15 Uhr",
+      location: "Stadthaus Scharnhauser Park, R. 2.13",
+      instructor: "Richa",
+      description: "Spielerisches Yoga für Kinder von 7 bis 11 Jahren – bewegen, atmen und nach der Schule entspannen.",
+    }
+  },
+  {
+    id: "teen-yoga",
+    provider: "VHS Ostfildern",
+    kursnr: "262-301112",
+    registrationUrl: "https://vhs-ostfildern.de",
+    EN: {
+      title: "Teen Yoga",
+      time: "Tuesdays, 17:00–18:00",
+      location: "An der Halle, Nellingen, R. 18/19",
+      instructor: "Richa",
+      description: "A pressure-free space for 12–14 year olds to unwind from school stress and build flexibility.",
+    },
+    DE: {
+      title: "Teen Yoga",
+      time: "Dienstags, 17:00–18:00 Uhr",
+      location: "An der Halle, Nellingen, R. 18/19",
+      instructor: "Richa",
+      description: "Ein druckfreier Raum für 12- bis 14-Jährige, um vom Schulstress abzuschalten und beweglicher zu werden.",
+    }
+  },
+  {
+    id: "yin-yoga",
+    provider: "VHS Ostfildern",
+    kursnr: "262-301113",
+    registrationUrl: "https://vhs-ostfildern.de",
+    EN: {
+      title: "Yin Yoga",
+      time: "Thursdays, 17:00",
+      location: "An der Halle, Nellingen, R. 18/19",
+      instructor: "Richa",
+      description: "Slow down, hold space, and recharge — a restorative practice to find calm and renewed energy.",
+    },
+    DE: {
+      title: "Yin-Yoga",
+      time: "Donnerstags, 17:00 Uhr",
+      location: "An der Halle, Nellingen, R. 18/19",
+      instructor: "Richa",
+      description: "Zur Ruhe kommen und neue Energie tanken – eine regenerative Praxis für mehr Gelassenheit.",
+    }
+  },
+  {
+    id: "stuhlyoga",
+    provider: "VHS Ostfildern",
+    kursnr: "262-301114",
+    registrationUrl: "https://vhs-ostfildern.de",
+    EN: {
+      title: "Chair Yoga (VHS)",
+      time: "Mondays, 16:45–17:30",
+      location: "An der Halle, Nellingen, R. 18/19",
+      instructor: "Richa",
+      description: "Gentle movement and breathing for anyone who'd rather skip the floor — no mat needed.",
+    },
+    DE: {
+      title: "Stuhlyoga",
+      time: "Montags, 16:45–17:30 Uhr",
+      location: "An der Halle, Nellingen, R. 18/19",
+      instructor: "Richa",
+      description: "Sanfte Bewegung und Atmung für alle ohne Bodenkontakt – bewegen, atmen, wohlfühlen.",
+    }
+  },
+  {
+    id: "bollywood-dance-workshop",
+    provider: "VHS Ostfildern",
+    kursnr: "262-301115",
+    registrationUrl: "https://vhs-ostfildern.de",
+    EN: {
+      title: "Indian Bollywood Dance",
+      time: "Sat, Oct 10, 11:00–12:30",
+      location: "An der Halle, Nellingen – Ballettsaal",
+      instructor: "Richa & Riju",
+      description: "Fun & Energetic — a one-off Saturday of upbeat choreography, open to every level.",
+    },
+    DE: {
+      title: "Indian Bollywood Dance",
+      time: "Sa, 10.10., 11:00–12:30 Uhr",
+      location: "An der Halle, Nellingen – Ballettsaal",
+      instructor: "Richa & Riju",
+      description: "Fun & Energetic – ein Samstag voller mitreißender Choreos, für jedes Niveau geeignet.",
+    }
+  },
+  {
+    id: "surya-namaskar-seminar",
+    provider: "VHS Ostfildern",
+    kursnr: "262-301116",
+    registrationUrl: "https://vhs-ostfildern.de",
+    EN: {
+      title: "Surya Namaskar Seminar",
+      time: "Sat, Oct 17, 10:00",
+      location: "An der Halle, Nellingen, R. 17",
+      instructor: "Riju",
+      description: "The Power of the Sun Salutation — a focused Saturday workshop, no prior experience needed.",
+    },
+    DE: {
+      title: "Yoga-Seminar: Surya Namaskar",
+      time: "Sa, 17.10., 10:00 Uhr",
+      location: "An der Halle, Nellingen, R. 17",
+      instructor: "Riju",
+      description: "Die Kraft des Sonnengrußes – ein kompakter Samstags-Workshop, keine Vorkenntnisse nötig.",
+    }
+  },
+  {
+    id: "patanjali-seminar",
+    provider: "VHS Ostfildern",
+    kursnr: "262-301117",
+    registrationUrl: "https://vhs-ostfildern.de",
+    EN: {
+      title: "The 8 Limbs of Yoga (Patanjali)",
+      time: "Sat, Nov 14, 10:00",
+      location: "An der Halle, Nellingen, R. 17",
+      instructor: "Riju",
+      description: "An introduction to Patanjali's eight-limbed path — yoga philosophy made practical.",
+    },
+    DE: {
+      title: "Yoga-Seminar: Die 8 Glieder des Yoga",
+      time: "Sa, 14.11., 10:00 Uhr",
+      location: "An der Halle, Nellingen, R. 17",
+      instructor: "Riju",
+      description: "Eine Einführung in die acht Glieder des Yoga nach Patanjali – Philosophie für den Alltag.",
+    }
+  },
+  {
+    id: "pranayama-seminar",
+    provider: "VHS Ostfildern",
+    kursnr: "262-301118",
+    registrationUrl: "https://vhs-ostfildern.de",
+    EN: {
+      title: "Pranayama Seminar",
+      time: "Sat, Jan 23, 10:00",
+      location: "An der Halle, Nellingen, R. 17",
+      instructor: "Riju",
+      description: "The Power of the Breath — breathing techniques to calm the mind and boost energy.",
+    },
+    DE: {
+      title: "Yoga-Seminar: Pranayama",
+      time: "Sa, 23.01., 10:00 Uhr",
+      location: "An der Halle, Nellingen, R. 17",
+      instructor: "Riju",
+      description: "Die Kraft des Atems – Atemtechniken zur Beruhigung des Geistes und für neue Energie.",
     }
   }
 ];

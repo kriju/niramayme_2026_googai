@@ -18,7 +18,8 @@ import {
   Plus,
   ChevronLeft,
   ChevronRight,
-  Flower2
+  Flower2,
+  ExternalLink
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { db } from "./lib/firebase";
@@ -46,7 +47,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { SERVICES, TESTIMONIALS, FAQS, CERTIFICATIONS, TRANSLATIONS, ONGOING_SESSIONS, EVENTS, GOOGLE_CALENDAR_URL, GOOGLE_REVIEW_URL, FEATURE_BLOG_ENABLED } from "./constants";
+import { SERVICES, TESTIMONIALS, FAQS, CERTIFICATIONS, TRANSLATIONS, ONGOING_SESSIONS, COURSES, EVENTS, GOOGLE_CALENDAR_URL, GOOGLE_REVIEW_URL, FEATURE_BLOG_ENABLED } from "./constants";
 
 // A single booking dialog, controlled from the App root (see the other
 // ...DetailModal components below for the same lift-state-up pattern).
@@ -844,6 +845,7 @@ const Navbar = ({ lang, setLang, onBook }: { lang: "EN" | "DE", setLang: (l: "EN
         <div className="hidden md:flex items-center gap-8">
           <a href="#services" className="text-sm font-medium hover:text-primary transition-colors">{t.services}</a>
           <a href="#sessions" className="text-sm font-medium hover:text-primary transition-colors">{t.sessions}</a>
+          <a href="#courses" className="text-sm font-medium hover:text-primary transition-colors">{t.courses}</a>
           <a href="#about" className="text-sm font-medium hover:text-primary transition-colors">{t.about}</a>
           <a href="#events" className="text-sm font-medium hover:text-primary transition-colors">{t.events}</a>
           <a href="#book" className="text-sm font-medium hover:text-primary transition-colors">{t.book}</a>
@@ -875,6 +877,7 @@ const Navbar = ({ lang, setLang, onBook }: { lang: "EN" | "DE", setLang: (l: "EN
           >
             <a href="#services" onClick={() => setIsMobileMenuOpen(false)}>{t.services}</a>
             <a href="#sessions" onClick={() => setIsMobileMenuOpen(false)}>{t.sessions}</a>
+            <a href="#courses" onClick={() => setIsMobileMenuOpen(false)}>{t.courses}</a>
             <a href="#about" onClick={() => setIsMobileMenuOpen(false)}>{t.about}</a>
             <a href="#events" onClick={() => setIsMobileMenuOpen(false)}>{t.events}</a>
             <a href="#book" onClick={() => setIsMobileMenuOpen(false)}>{t.book}</a>
@@ -1186,6 +1189,100 @@ const OngoingSessionsSection = ({ lang }: { lang: "EN" | "DE" }) => {
                           {t.bookBtn}
                         </Button>
                       </a>
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            );
+          })}
+        </div>
+        <p className="text-center text-muted-foreground text-sm mt-10">
+          {t.contactNote}
+        </p>
+      </div>
+    </section>
+  );
+};
+
+// Generic "Courses" section: multi-week courses and workshops. Each entry may
+// carry a `provider` (e.g. VHS Ostfildern) who owns registration/the course
+// number, in which case the card links out to them instead of a direct
+// WhatsApp booking. A course without a `provider` (a future Niramay-run
+// course) falls back to the same WhatsApp flow as OngoingSessionsSection.
+const CoursesSection = ({ lang }: { lang: "EN" | "DE" }) => {
+  const t = TRANSLATIONS[lang].courses;
+  const sessionsT = TRANSLATIONS[lang].sessions;
+  return (
+    <section id="courses" className="py-24 bg-stone-50/50">
+      <div className="container mx-auto px-6">
+        <div className="text-center max-w-3xl mx-auto mb-16">
+          <h2 className="text-4xl md:text-5xl font-serif font-bold mb-6">{t.title}</h2>
+          <p className="text-muted-foreground text-lg">
+            {t.description}
+          </p>
+        </div>
+
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+          {COURSES.map((course, idx) => {
+            const content = course[lang];
+            return (
+              <motion.div
+                key={course.id}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: idx * 0.06 }}
+              >
+                <Card className="h-full border border-stone-100 shadow-sm hover:shadow-md transition-all bg-white flex flex-col">
+                  <CardHeader>
+                    {course.provider && (
+                      <Badge variant="secondary" className="w-fit text-primary mb-1">
+                        {course.provider}
+                      </Badge>
+                    )}
+                    <CardTitle className="text-xl font-serif">{content.title}</CardTitle>
+                    <div className="flex items-center gap-2 text-primary font-medium text-sm mt-2">
+                      <Clock className="w-4 h-4" />
+                      {content.time}
+                    </div>
+                    <div className="flex items-center gap-2 text-muted-foreground text-sm mt-1">
+                      <MapPin className="w-4 h-4" />
+                      {content.location}
+                    </div>
+                  </CardHeader>
+                  <CardContent className="flex flex-col flex-1">
+                    <p className="text-muted-foreground text-sm mb-2 leading-relaxed">
+                      {content.description}
+                    </p>
+                    <p className="text-stone-500 text-xs mb-6">
+                      {t.by} {content.instructor}
+                    </p>
+                    <div className="mt-auto space-y-2">
+                      {course.provider && course.registrationUrl ? (
+                        <>
+                          <a href={course.registrationUrl} target="_blank" rel="noopener noreferrer">
+                            <Button size="sm" variant="outline" className="rounded-full w-full gap-1.5">
+                              {t.registerVia} {course.provider}
+                              <ExternalLink className="w-3.5 h-3.5" />
+                            </Button>
+                          </a>
+                          {course.kursnr && (
+                            <p className="text-center text-stone-400 text-xs">
+                              {t.courseNo} {course.kursnr}
+                            </p>
+                          )}
+                        </>
+                      ) : (
+                        <a
+                          href={`https://wa.me/4915175315761?text=${encodeURIComponent(`Hi, I'm interested in the "${content.title}" course (${content.time}).`)}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          <Button size="sm" variant="outline" className="rounded-full w-full">
+                            {sessionsT.bookBtn}
+                          </Button>
+                        </a>
+                      )}
                     </div>
                   </CardContent>
                 </Card>
@@ -1819,6 +1916,7 @@ export default function App() {
         <Hero lang={lang} onBook={openBooking} />
         <ServicesSection lang={lang} onLearnMore={handleServiceLearnMore} />
         <OngoingSessionsSection lang={lang} />
+        <CoursesSection lang={lang} />
         <AboutSection lang={lang} />
         <EventsSection lang={lang} />
         <BookSection lang={lang} />
