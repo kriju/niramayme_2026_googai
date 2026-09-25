@@ -952,7 +952,7 @@ export const COURSES = [
     id: "yoga-kids",
     provider: "VHS Ostfildern",
     kursnr: "262-301111",
-    registrationUrl: "https://vhs-ostfildern.de",
+    registrationUrl: "https://vhs-ostfildern.de/programm/kw/bereich/kursdetails/kurs/262-301111/",
     EN: {
       title: "Yoga Kids",
       time: "Fridays, 16:30–17:15",
@@ -972,7 +972,7 @@ export const COURSES = [
     id: "teen-yoga",
     provider: "VHS Ostfildern",
     kursnr: "262-301112",
-    registrationUrl: "https://vhs-ostfildern.de",
+    registrationUrl: "https://vhs-ostfildern.de/programm/kw/bereich/kursdetails/kurs/262-301112/",
     EN: {
       title: "Teen Yoga",
       time: "Tuesdays, 17:00–18:00",
@@ -992,7 +992,7 @@ export const COURSES = [
     id: "yin-yoga",
     provider: "VHS Ostfildern",
     kursnr: "262-301113",
-    registrationUrl: "https://vhs-ostfildern.de",
+    registrationUrl: "https://vhs-ostfildern.de/programm/kw/bereich/kursdetails/kurs/262-301113/",
     EN: {
       title: "Yin Yoga",
       time: "Thursdays, 17:00",
@@ -1012,9 +1012,9 @@ export const COURSES = [
     id: "stuhlyoga",
     provider: "VHS Ostfildern",
     kursnr: "262-301114",
-    registrationUrl: "https://vhs-ostfildern.de",
+    registrationUrl: "https://vhs-ostfildern.de/programm/kw/bereich/kursdetails/kurs/262-301114/",
     EN: {
-      title: "Chair Yoga (VHS)",
+      title: "Chair Yoga",
       time: "Mondays, 16:45–17:30",
       location: "An der Halle, Nellingen, R. 18/19",
       instructor: "Richa",
@@ -1032,7 +1032,7 @@ export const COURSES = [
     id: "bollywood-dance-workshop",
     provider: "VHS Ostfildern",
     kursnr: "262-301115",
-    registrationUrl: "https://vhs-ostfildern.de",
+    registrationUrl: "https://vhs-ostfildern.de/programm/kw/bereich/kursdetails/kurs/262-301115/",
     EN: {
       title: "Indian Bollywood Dance",
       time: "Sat, Oct 10, 11:00–12:30",
@@ -1052,7 +1052,7 @@ export const COURSES = [
     id: "surya-namaskar-seminar",
     provider: "VHS Ostfildern",
     kursnr: "262-301116",
-    registrationUrl: "https://vhs-ostfildern.de",
+    registrationUrl: "https://vhs-ostfildern.de/programm/kw/bereich/kursdetails/kurs/262-301116/",
     EN: {
       title: "Surya Namaskar Seminar",
       time: "Sat, Oct 17, 10:00",
@@ -1072,7 +1072,7 @@ export const COURSES = [
     id: "patanjali-seminar",
     provider: "VHS Ostfildern",
     kursnr: "262-301117",
-    registrationUrl: "https://vhs-ostfildern.de",
+    registrationUrl: "https://vhs-ostfildern.de/programm/kw/bereich/kursdetails/kurs/262-301117/",
     EN: {
       title: "The 8 Limbs of Yoga (Patanjali)",
       time: "Sat, Nov 14, 10:00",
@@ -1092,7 +1092,7 @@ export const COURSES = [
     id: "pranayama-seminar",
     provider: "VHS Ostfildern",
     kursnr: "262-301118",
-    registrationUrl: "https://vhs-ostfildern.de",
+    registrationUrl: "https://vhs-ostfildern.de/programm/kw/bereich/kursdetails/kurs/262-301118/",
     EN: {
       title: "Pranayama Seminar",
       time: "Sat, Jan 23, 10:00",
