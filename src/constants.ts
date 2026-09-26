@@ -40,6 +40,12 @@ export const TRANSLATIONS = {
       outcomeLabel: "The Outcome",
       learnMore: "Learn more & Book",
     },
+    servicePage: {
+      home: "Home",
+      breadcrumbServices: "Services",
+      otherServicesTitle: "Explore Other Services",
+      whatsappCta: "Or message us on WhatsApp",
+    },
     about: {
       title: "Meet Your Healers",
       description: "Two teachers, one path — the husband-and-wife team behind every session, workshop, and Yoga Day celebration at Niramay.",
@@ -358,6 +364,12 @@ export const TRANSLATIONS = {
       description: "Wir bieten nicht nur Sitzungen an; wir bieten Lösungen für Ihr körperliches, geistiges und spirituelles Wohlbefinden.",
       outcomeLabel: "Das Ergebnis",
       learnMore: "Mehr erfahren & buchen",
+    },
+    servicePage: {
+      home: "Startseite",
+      breadcrumbServices: "Leistungen",
+      otherServicesTitle: "Weitere Angebote entdecken",
+      whatsappCta: "Oder schreiben Sie uns auf WhatsApp",
     },
     about: {
       title: "Lernen Sie Ihre Therapeuten kennen",
