@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { BrowserRouter, Routes, Route, Link, Navigate, Outlet, useParams, useOutletContext } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Link, Navigate, Outlet, useParams, useOutletContext, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "motion/react";
 import { 
   Menu, 
@@ -118,6 +118,31 @@ function useSeo({ title, description, canonical }: { title: string; description:
     }
     link.setAttribute("href", canonical);
   }, [title, description, canonical]);
+}
+
+// Now that sections live across real routes instead of one page, plain
+// browser history no longer handles navigation on its own: react-router
+// doesn't scroll to top on a route change (unlike a full page load), and a
+// "#services"-style link only works if the target section is on the
+// current page. This runs once at the layout level and re-derives the
+// right scroll behavior from the URL on every navigation: jump to the
+// hash's element if there is one (giving nav/footer section links a real
+// target regardless of which route they're clicked from), else reset to
+// the top (so navigating between two service pages doesn't leave you
+// stranded at whatever scroll offset the previous page was at).
+function ScrollManager() {
+  const location = useLocation();
+  useEffect(() => {
+    const raf = requestAnimationFrame(() => {
+      if (location.hash) {
+        document.getElementById(location.hash.slice(1))?.scrollIntoView({ behavior: "smooth", block: "start" });
+      } else {
+        window.scrollTo(0, 0);
+      }
+    });
+    return () => cancelAnimationFrame(raf);
+  }, [location.pathname, location.hash]);
+  return null;
 }
 
 type LayoutContext = {
@@ -908,21 +933,21 @@ const Navbar = ({ lang, setLang, onBook }: { lang: "EN" | "DE", setLang: (l: "EN
   return (
     <nav className={`fixed top-0 w-full z-50 transition-all duration-300 ${isScrolled ? "bg-background/80 backdrop-blur-md border-b py-3" : "bg-transparent py-6"}`}>
       <div className="container mx-auto px-6 flex justify-between items-center">
-        <div className="flex items-center gap-2">
+        <Link to="/" className="flex items-center gap-2">
           <img src="/logo.svg" alt="Niramay Logo" className="w-10 h-10 object-contain" referrerPolicy="no-referrer" />
           <span className="font-serif text-2xl font-bold tracking-tight">Niramay</span>
-        </div>
+        </Link>
 
         <div className="hidden md:flex items-center gap-8">
-          <a href="#services" className="text-sm font-medium hover:text-primary transition-colors">{t.services}</a>
-          <a href="#sessions" className="text-sm font-medium hover:text-primary transition-colors">{t.sessions}</a>
-          <a href="#courses" className="text-sm font-medium hover:text-primary transition-colors">{t.courses}</a>
-          <a href="#about" className="text-sm font-medium hover:text-primary transition-colors">{t.about}</a>
-          <a href="#events" className="text-sm font-medium hover:text-primary transition-colors">{t.events}</a>
-          <a href="#book" className="text-sm font-medium hover:text-primary transition-colors">{t.book}</a>
-          {FEATURE_BLOG_ENABLED && <a href="#blog" className="text-sm font-medium hover:text-primary transition-colors">{t.blog}</a>}
-          <a href="#testimonials" className="text-sm font-medium hover:text-primary transition-colors">{t.reviews}</a>
-          <a href="#faq" className="text-sm font-medium hover:text-primary transition-colors">{t.faq}</a>
+          <Link to="/#services" className="text-sm font-medium hover:text-primary transition-colors">{t.services}</Link>
+          <Link to="/#sessions" className="text-sm font-medium hover:text-primary transition-colors">{t.sessions}</Link>
+          <Link to="/#courses" className="text-sm font-medium hover:text-primary transition-colors">{t.courses}</Link>
+          <Link to="/#about" className="text-sm font-medium hover:text-primary transition-colors">{t.about}</Link>
+          <Link to="/#events" className="text-sm font-medium hover:text-primary transition-colors">{t.events}</Link>
+          <Link to="/#book" className="text-sm font-medium hover:text-primary transition-colors">{t.book}</Link>
+          {FEATURE_BLOG_ENABLED && <Link to="/#blog" className="text-sm font-medium hover:text-primary transition-colors">{t.blog}</Link>}
+          <Link to="/#testimonials" className="text-sm font-medium hover:text-primary transition-colors">{t.reviews}</Link>
+          <Link to="/#faq" className="text-sm font-medium hover:text-primary transition-colors">{t.faq}</Link>
           
           <div className="flex items-center gap-4 ml-4">
             <Button variant="ghost" size="sm" onClick={() => setLang(lang === "EN" ? "DE" : "EN")} className="gap-2">
@@ -946,15 +971,15 @@ const Navbar = ({ lang, setLang, onBook }: { lang: "EN" | "DE", setLang: (l: "EN
             exit={{ opacity: 0, y: -20 }}
             className="absolute top-full left-0 w-full bg-background border-b md:hidden p-6 flex flex-col gap-4"
           >
-            <a href="#services" onClick={() => setIsMobileMenuOpen(false)}>{t.services}</a>
-            <a href="#sessions" onClick={() => setIsMobileMenuOpen(false)}>{t.sessions}</a>
-            <a href="#courses" onClick={() => setIsMobileMenuOpen(false)}>{t.courses}</a>
-            <a href="#about" onClick={() => setIsMobileMenuOpen(false)}>{t.about}</a>
-            <a href="#events" onClick={() => setIsMobileMenuOpen(false)}>{t.events}</a>
-            <a href="#book" onClick={() => setIsMobileMenuOpen(false)}>{t.book}</a>
-            {FEATURE_BLOG_ENABLED && <a href="#blog" onClick={() => setIsMobileMenuOpen(false)}>{t.blog}</a>}
-            <a href="#testimonials" onClick={() => setIsMobileMenuOpen(false)}>{t.reviews}</a>
-            <a href="#faq" onClick={() => setIsMobileMenuOpen(false)}>{t.faq}</a>
+            <Link to="/#services" onClick={() => setIsMobileMenuOpen(false)}>{t.services}</Link>
+            <Link to="/#sessions" onClick={() => setIsMobileMenuOpen(false)}>{t.sessions}</Link>
+            <Link to="/#courses" onClick={() => setIsMobileMenuOpen(false)}>{t.courses}</Link>
+            <Link to="/#about" onClick={() => setIsMobileMenuOpen(false)}>{t.about}</Link>
+            <Link to="/#events" onClick={() => setIsMobileMenuOpen(false)}>{t.events}</Link>
+            <Link to="/#book" onClick={() => setIsMobileMenuOpen(false)}>{t.book}</Link>
+            {FEATURE_BLOG_ENABLED && <Link to="/#blog" onClick={() => setIsMobileMenuOpen(false)}>{t.blog}</Link>}
+            <Link to="/#testimonials" onClick={() => setIsMobileMenuOpen(false)}>{t.reviews}</Link>
+            <Link to="/#faq" onClick={() => setIsMobileMenuOpen(false)}>{t.faq}</Link>
             <Separator />
             <div className="flex justify-between items-center">
               <Button variant="ghost" onClick={() => setLang(lang === "EN" ? "DE" : "EN")} className="gap-2">
@@ -1944,13 +1969,13 @@ const Footer = ({ lang, onOpenLegal }: { lang: "EN" | "DE", onOpenLegal: (type: 
           <div>
             <h4 className="font-bold mb-6">{t.quickLinks}</h4>
             <ul className="space-y-4">
-              <li><a href="#services" className="text-muted-foreground hover:text-primary transition-colors">{nav.services}</a></li>
-              <li><a href="#about" className="text-muted-foreground hover:text-primary transition-colors">{nav.about}</a></li>
-              <li><a href="#events" className="text-muted-foreground hover:text-primary transition-colors">{nav.events}</a></li>
-              <li><a href="#book" className="text-muted-foreground hover:text-primary transition-colors">{nav.book}</a></li>
-              <li><a href="#testimonials" className="text-muted-foreground hover:text-primary transition-colors">{nav.reviews}</a></li>
-              {FEATURE_BLOG_ENABLED && <li><a href="#blog" className="text-muted-foreground hover:text-primary transition-colors">{nav.blog}</a></li>}
-              <li><a href="#faq" className="text-muted-foreground hover:text-primary transition-colors">{nav.faq}</a></li>
+              <li><Link to="/#services" className="text-muted-foreground hover:text-primary transition-colors">{nav.services}</Link></li>
+              <li><Link to="/#about" className="text-muted-foreground hover:text-primary transition-colors">{nav.about}</Link></li>
+              <li><Link to="/#events" className="text-muted-foreground hover:text-primary transition-colors">{nav.events}</Link></li>
+              <li><Link to="/#book" className="text-muted-foreground hover:text-primary transition-colors">{nav.book}</Link></li>
+              <li><Link to="/#testimonials" className="text-muted-foreground hover:text-primary transition-colors">{nav.reviews}</Link></li>
+              {FEATURE_BLOG_ENABLED && <li><Link to="/#blog" className="text-muted-foreground hover:text-primary transition-colors">{nav.blog}</Link></li>}
+              <li><Link to="/#faq" className="text-muted-foreground hover:text-primary transition-colors">{nav.faq}</Link></li>
             </ul>
           </div>
 
@@ -2195,6 +2220,7 @@ const AppLayout = () => {
 
   return (
     <div className="min-h-screen selection:bg-primary/20">
+      <ScrollManager />
       <Navbar lang={lang} setLang={setLang} onBook={openBooking} />
       <Outlet context={{ lang, setLang, onBook: openBooking, onBookAstrology: () => setAstrologyIntakeOpen(true), onOpenLegal: setLegalModal } satisfies LayoutContext} />
       <Footer lang={lang} onOpenLegal={setLegalModal} />
