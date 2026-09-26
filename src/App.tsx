@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { 
   Menu, 
@@ -56,6 +56,35 @@ import { SERVICES, TESTIMONIALS, FAQS, HEALER_CERTIFICATIONS, HEALER_IMAGES, TRA
 // calendar no matter which service/session/CTA the visitor came from.
 type BookingMeta = { icon: React.ComponentType<{ className?: string }>; label: string };
 type BookingContext = { title?: string; subtitle?: string; meta?: BookingMeta[] };
+
+const SITE_URL = "https://www.niramay.me";
+// Shared across the LocalBusiness JSON-LD (App root) and the review/
+// aggregateRating JSON-LD (TestimonialsSection) so structured-data consumers
+// resolve both script tags to the same entity.
+const BUSINESS_JSONLD_ID = `${SITE_URL}/#business`;
+
+// Injects/updates a <script type="application/ld+json"> tag in <head>, keyed
+// by id. Structured data must match what's actually visible on the page (a
+// Google Search Central requirement), so callers should build `data` from
+// the same state a section renders from, and pass null while that data
+// (e.g. approved reviews) hasn't loaded yet rather than emitting a stub.
+function useJsonLd(id: string, data: object | null) {
+  useEffect(() => {
+    if (!data) return;
+    let script = document.getElementById(id) as HTMLScriptElement | null;
+    const created = !script;
+    if (!script) {
+      script = document.createElement("script");
+      script.type = "application/ld+json";
+      script.id = id;
+      document.head.appendChild(script);
+    }
+    script.textContent = JSON.stringify(data);
+    return () => {
+      if (created) script?.remove();
+    };
+  }, [id, data]);
+}
 
 const BookingDialog = ({ context, lang, open, onOpenChange }: { context: BookingContext | null, lang: "EN" | "DE", open: boolean, onOpenChange: (o: boolean) => void }) => {
   const t = TRANSLATIONS[lang].booking;
@@ -1552,8 +1581,40 @@ const TestimonialsSection = ({ lang }: { lang: "EN" | "DE" }) => {
     return () => unsubscribe();
   }, []); // Remove lang from dependency to avoid unnecessary re-triggers, though it works either way
 
-  const allReviews = [...TESTIMONIALS, ...dynamicReviews];
+  const allReviews = useMemo(() => [...TESTIMONIALS, ...dynamicReviews], [dynamicReviews]);
   const filtered = filter === "all" ? allReviews : allReviews.filter(t => t.category === filter);
+
+  const reviewsJsonLd = useMemo(() => {
+    // Only the Firestore-backed reviews go through the site's own moderation
+    // (an admin approves each one — see notify-review.ts), so only those are
+    // genuine, verifiable reviews. TESTIMONIALS in constants.ts are seed/
+    // placeholder copy with no such trail; marking those up as schema.org
+    // Review/AggregateRating data would risk tripping Google's fake-review
+    // structured-data policy, so they're deliberately excluded here even
+    // though they still render on the page like any other testimonial.
+    if (dynamicReviews.length === 0) return null;
+    const ratings = dynamicReviews.map(r => r.rating || 5);
+    const avgRating = ratings.reduce((sum, r) => sum + r, 0) / ratings.length;
+    return {
+      "@context": "https://schema.org",
+      "@type": "HealthAndBeautyBusiness",
+      "@id": BUSINESS_JSONLD_ID,
+      name: "Niramay Wellbeing",
+      aggregateRating: {
+        "@type": "AggregateRating",
+        ratingValue: Number(avgRating.toFixed(1)),
+        reviewCount: dynamicReviews.length,
+        bestRating: 5,
+      },
+      review: dynamicReviews.map(r => ({
+        "@type": "Review",
+        author: { "@type": "Person", name: r.name },
+        reviewRating: { "@type": "Rating", ratingValue: r.rating || 5, bestRating: 5 },
+        reviewBody: (r[lang] || r.EN || r.DE)?.content,
+      })),
+    };
+  }, [dynamicReviews, lang]);
+  useJsonLd("ld-json-reviews", reviewsJsonLd);
 
   return (
     <section id="testimonials" className="py-24 bg-primary text-primary-foreground">
@@ -1686,6 +1747,21 @@ const TestimonialsSection = ({ lang }: { lang: "EN" | "DE" }) => {
 
 const FAQSection = ({ lang }: { lang: "EN" | "DE" }) => {
   const t = TRANSLATIONS[lang].faq;
+
+  const faqJsonLd = useMemo(() => ({
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: FAQS.map(faq => ({
+      "@type": "Question",
+      name: faq[lang].question,
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: faq[lang].answer,
+      },
+    })),
+  }), [lang]);
+  useJsonLd("ld-json-faq", faqJsonLd);
+
   return (
     <section id="faq" className="py-24">
       <div className="container mx-auto px-6 max-w-4xl">
@@ -1959,6 +2035,46 @@ export default function App() {
       ? "Niramay Wellbeing — Yoga, Reiki & Holistic Therapy in Ostfildern"
       : "Niramay Wellbeing — Yoga, Reiki & Ganzheitliche Therapie in Ostfildern";
   }, [lang]);
+
+  const businessJsonLd = useMemo(() => ({
+    "@context": "https://schema.org",
+    "@type": "HealthAndBeautyBusiness",
+    "@id": BUSINESS_JSONLD_ID,
+    name: "Niramay Wellbeing",
+    image: `${SITE_URL}/logo.svg`,
+    url: SITE_URL,
+    telephone: "+49 151 75315761",
+    email: "richa@niramay.me",
+    description: TRANSLATIONS[lang].footer.description,
+    address: {
+      "@type": "PostalAddress",
+      addressLocality: "Ostfildern",
+      addressRegion: "Baden-Württemberg",
+      addressCountry: "DE",
+    },
+    founder: [
+      { "@type": "Person", name: "Richa Kansal", jobTitle: TRANSLATIONS[lang].about.richa.title },
+      { "@type": "Person", name: "Riju Kansal", jobTitle: TRANSLATIONS[lang].about.riju.title },
+    ],
+    sameAs: [
+      "https://www.instagram.com/niramay.me/",
+      "https://www.facebook.com/niramayme/",
+      "https://www.youtube.com/@richaniramayme",
+    ],
+    // Only the sessions Niramay delivers directly — the two "openInModal"
+    // entries just link out to standalone third-party tools, not a service
+    // Niramay itself provides, so they don't belong in this list.
+    makesOffer: SERVICES.filter(s => !s.openInModal).map(s => ({
+      "@type": "Offer",
+      itemOffered: {
+        "@type": "Service",
+        name: s[lang].title,
+        description: s[lang].description,
+        areaServed: "Ostfildern, Germany",
+      },
+    })),
+  }), [lang]);
+  useJsonLd("ld-json-business", businessJsonLd);
 
   const handleServiceLearnMore = (service: any) => {
     if (service.link && service.openInModal) {
