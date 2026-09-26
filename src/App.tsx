@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { BrowserRouter, Routes, Route, Link, Navigate, Outlet, useParams, useOutletContext, useLocation } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Link, Navigate, Outlet, useParams, useOutletContext, useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "motion/react";
 import { 
   Menu, 
@@ -91,7 +91,17 @@ function useJsonLd(id: string, data: object | null) {
 // canonical link in place (they already exist as static defaults in
 // index.html) so each route carries its own accurate metadata instead of
 // every URL sharing the homepage's.
-function useSeo({ title, description, canonical }: { title: string; description: string; canonical: string }) {
+function useSeo({ title, description, canonical, lang, alternates }: {
+  title: string;
+  description: string;
+  canonical: string;
+  // EN/DE alternate URLs for this same page, so Google can offer the
+  // right language version instead of only ever surfacing English. Every
+  // page that has one should pass both, including the English version of
+  // itself (self-referencing hreflang is required, not optional).
+  lang: "EN" | "DE";
+  alternates?: { en: string; de: string };
+}) {
   useEffect(() => {
     document.title = title;
     const setMeta = (selector: string, attr: string, attrValue: string, content: string) => {
@@ -107,17 +117,31 @@ function useSeo({ title, description, canonical }: { title: string; description:
     setMeta('meta[property="og:title"]', "property", "og:title", title);
     setMeta('meta[property="og:description"]', "property", "og:description", description);
     setMeta('meta[property="og:url"]', "property", "og:url", canonical);
+    setMeta('meta[property="og:locale"]', "property", "og:locale", lang === "EN" ? "en_US" : "de_DE");
+    setMeta('meta[property="og:locale:alternate"]', "property", "og:locale:alternate", lang === "EN" ? "de_DE" : "en_US");
     setMeta('meta[name="twitter:title"]', "name", "twitter:title", title);
     setMeta('meta[name="twitter:description"]', "name", "twitter:description", description);
 
-    let link = document.querySelector('link[rel="canonical"]') as HTMLLinkElement | null;
-    if (!link) {
-      link = document.createElement("link");
-      link.setAttribute("rel", "canonical");
-      document.head.appendChild(link);
+    const setLink = (rel: string, href: string, hreflang?: string) => {
+      const selector = hreflang ? `link[rel="${rel}"][hreflang="${hreflang}"]` : `link[rel="${rel}"]`;
+      let link = document.querySelector(selector) as HTMLLinkElement | null;
+      if (!link) {
+        link = document.createElement("link");
+        link.setAttribute("rel", rel);
+        if (hreflang) link.setAttribute("hreflang", hreflang);
+        document.head.appendChild(link);
+      }
+      link.setAttribute("href", href);
+    };
+    setLink("canonical", canonical);
+    if (alternates) {
+      setLink("alternate", alternates.en, "en");
+      setLink("alternate", alternates.de, "de");
+      // English is the un-prefixed, originally-indexed version, so it's the
+      // fallback for a visitor whose language isn't explicitly EN or DE.
+      setLink("alternate", alternates.en, "x-default");
     }
-    link.setAttribute("href", canonical);
-  }, [title, description, canonical]);
+  }, [title, description, canonical, lang, alternates?.en, alternates?.de]);
 }
 
 // Now that sections live across real routes instead of one page, plain
@@ -147,11 +171,17 @@ function ScrollManager() {
 
 type LayoutContext = {
   lang: "EN" | "DE";
-  setLang: (l: "EN" | "DE") => void;
   onBook: (ctx?: BookingContext) => void;
   onBookAstrology: () => void;
   onOpenLegal: (type: "impressum" | "privacy") => void;
 };
+
+// EN pages live unprefixed ("/", "/services/yoga") since that's what was
+// already indexed; DE pages live under "/de" ("/de", "/de/services/yoga").
+// Centralized here since both the router (App) and every internal link
+// that must stay in the current language (Navbar, Footer, ServiceCard,
+// ServicePage's cross-links) need the same mapping.
+const langPrefix = (lang: "EN" | "DE") => (lang === "DE" ? "/de" : "");
 
 const BookingDialog = ({ context, lang, open, onOpenChange }: { context: BookingContext | null, lang: "EN" | "DE", open: boolean, onOpenChange: (o: boolean) => void }) => {
   const t = TRANSLATIONS[lang].booking;
@@ -919,10 +949,11 @@ const BlogSection = ({ lang }: { lang: "EN" | "DE" }) => {
   );
 };
 
-const Navbar = ({ lang, setLang, onBook }: { lang: "EN" | "DE", setLang: (l: "EN" | "DE") => void, onBook: (ctx?: BookingContext) => void }) => {
+const Navbar = ({ lang, onToggleLang, onBook }: { lang: "EN" | "DE", onToggleLang: () => void, onBook: (ctx?: BookingContext) => void }) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const t = TRANSLATIONS[lang].nav;
+  const prefix = langPrefix(lang);
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 20);
@@ -933,24 +964,24 @@ const Navbar = ({ lang, setLang, onBook }: { lang: "EN" | "DE", setLang: (l: "EN
   return (
     <nav className={`fixed top-0 w-full z-50 transition-all duration-300 ${isScrolled ? "bg-background/80 backdrop-blur-md border-b py-3" : "bg-transparent py-6"}`}>
       <div className="container mx-auto px-6 flex justify-between items-center">
-        <Link to="/" className="flex items-center gap-2">
+        <Link to={prefix || "/"} className="flex items-center gap-2">
           <img src="/logo.svg" alt="Niramay Logo" className="w-10 h-10 object-contain" referrerPolicy="no-referrer" />
           <span className="font-serif text-2xl font-bold tracking-tight">Niramay</span>
         </Link>
 
         <div className="hidden md:flex items-center gap-8">
-          <Link to="/#services" className="text-sm font-medium hover:text-primary transition-colors">{t.services}</Link>
-          <Link to="/#sessions" className="text-sm font-medium hover:text-primary transition-colors">{t.sessions}</Link>
-          <Link to="/#courses" className="text-sm font-medium hover:text-primary transition-colors">{t.courses}</Link>
-          <Link to="/#about" className="text-sm font-medium hover:text-primary transition-colors">{t.about}</Link>
-          <Link to="/#events" className="text-sm font-medium hover:text-primary transition-colors">{t.events}</Link>
-          <Link to="/#book" className="text-sm font-medium hover:text-primary transition-colors">{t.book}</Link>
-          {FEATURE_BLOG_ENABLED && <Link to="/#blog" className="text-sm font-medium hover:text-primary transition-colors">{t.blog}</Link>}
-          <Link to="/#testimonials" className="text-sm font-medium hover:text-primary transition-colors">{t.reviews}</Link>
-          <Link to="/#faq" className="text-sm font-medium hover:text-primary transition-colors">{t.faq}</Link>
-          
+          <Link to={`${prefix}/#services`} className="text-sm font-medium hover:text-primary transition-colors">{t.services}</Link>
+          <Link to={`${prefix}/#sessions`} className="text-sm font-medium hover:text-primary transition-colors">{t.sessions}</Link>
+          <Link to={`${prefix}/#courses`} className="text-sm font-medium hover:text-primary transition-colors">{t.courses}</Link>
+          <Link to={`${prefix}/#about`} className="text-sm font-medium hover:text-primary transition-colors">{t.about}</Link>
+          <Link to={`${prefix}/#events`} className="text-sm font-medium hover:text-primary transition-colors">{t.events}</Link>
+          <Link to={`${prefix}/#book`} className="text-sm font-medium hover:text-primary transition-colors">{t.book}</Link>
+          {FEATURE_BLOG_ENABLED && <Link to={`${prefix}/#blog`} className="text-sm font-medium hover:text-primary transition-colors">{t.blog}</Link>}
+          <Link to={`${prefix}/#testimonials`} className="text-sm font-medium hover:text-primary transition-colors">{t.reviews}</Link>
+          <Link to={`${prefix}/#faq`} className="text-sm font-medium hover:text-primary transition-colors">{t.faq}</Link>
+
           <div className="flex items-center gap-4 ml-4">
-            <Button variant="ghost" size="sm" onClick={() => setLang(lang === "EN" ? "DE" : "EN")} className="gap-2">
+            <Button variant="ghost" size="sm" onClick={onToggleLang} className="gap-2">
               <Globe className="w-4 h-4" />
               {lang}
             </Button>
@@ -965,24 +996,24 @@ const Navbar = ({ lang, setLang, onBook }: { lang: "EN" | "DE", setLang: (l: "EN
 
       <AnimatePresence>
         {isMobileMenuOpen && (
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
             className="absolute top-full left-0 w-full bg-background border-b md:hidden p-6 flex flex-col gap-4"
           >
-            <Link to="/#services" onClick={() => setIsMobileMenuOpen(false)}>{t.services}</Link>
-            <Link to="/#sessions" onClick={() => setIsMobileMenuOpen(false)}>{t.sessions}</Link>
-            <Link to="/#courses" onClick={() => setIsMobileMenuOpen(false)}>{t.courses}</Link>
-            <Link to="/#about" onClick={() => setIsMobileMenuOpen(false)}>{t.about}</Link>
-            <Link to="/#events" onClick={() => setIsMobileMenuOpen(false)}>{t.events}</Link>
-            <Link to="/#book" onClick={() => setIsMobileMenuOpen(false)}>{t.book}</Link>
-            {FEATURE_BLOG_ENABLED && <Link to="/#blog" onClick={() => setIsMobileMenuOpen(false)}>{t.blog}</Link>}
-            <Link to="/#testimonials" onClick={() => setIsMobileMenuOpen(false)}>{t.reviews}</Link>
-            <Link to="/#faq" onClick={() => setIsMobileMenuOpen(false)}>{t.faq}</Link>
+            <Link to={`${prefix}/#services`} onClick={() => setIsMobileMenuOpen(false)}>{t.services}</Link>
+            <Link to={`${prefix}/#sessions`} onClick={() => setIsMobileMenuOpen(false)}>{t.sessions}</Link>
+            <Link to={`${prefix}/#courses`} onClick={() => setIsMobileMenuOpen(false)}>{t.courses}</Link>
+            <Link to={`${prefix}/#about`} onClick={() => setIsMobileMenuOpen(false)}>{t.about}</Link>
+            <Link to={`${prefix}/#events`} onClick={() => setIsMobileMenuOpen(false)}>{t.events}</Link>
+            <Link to={`${prefix}/#book`} onClick={() => setIsMobileMenuOpen(false)}>{t.book}</Link>
+            {FEATURE_BLOG_ENABLED && <Link to={`${prefix}/#blog`} onClick={() => setIsMobileMenuOpen(false)}>{t.blog}</Link>}
+            <Link to={`${prefix}/#testimonials`} onClick={() => setIsMobileMenuOpen(false)}>{t.reviews}</Link>
+            <Link to={`${prefix}/#faq`} onClick={() => setIsMobileMenuOpen(false)}>{t.faq}</Link>
             <Separator />
             <div className="flex justify-between items-center">
-              <Button variant="ghost" onClick={() => setLang(lang === "EN" ? "DE" : "EN")} className="gap-2">
+              <Button variant="ghost" onClick={onToggleLang} className="gap-2">
                 <Globe className="w-4 h-4" />
                 {t.switchLang}
               </Button>
@@ -1061,6 +1092,7 @@ const Hero = ({ lang, onBook }: { lang: "EN" | "DE", onBook: (ctx?: BookingConte
 const ServiceCard = ({ service, index, lang, onLearnMore }: { service: any, index: number, lang: "EN" | "DE", onLearnMore?: (s: any) => void, key?: any }) => {
   const t = TRANSLATIONS[lang].services;
   const content = service[lang];
+  const prefix = langPrefix(lang);
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -1097,7 +1129,7 @@ const ServiceCard = ({ service, index, lang, onLearnMore }: { service: any, inde
               </Button>
             </a>
           ) : (
-            <Link to={`/services/${service.id}`} className="inline-block mt-6">
+            <Link to={`${prefix}/services/${service.id}`} className="inline-block mt-6">
               <Button variant="link" className="p-0 h-auto font-bold text-primary group-hover:translate-x-1 transition-transform">
                 {content.linkLabel || t.learnMore} <ArrowRight className="w-4 h-4 ml-2" />
               </Button>
@@ -1126,12 +1158,17 @@ const ServicePage = () => {
   const ta = TRANSLATIONS[lang].astrology;
   const content = service?.[lang];
   const isAstrology = service?.id === "astrology";
-  const canonical = `${SITE_URL}/services/${id}`;
+  const prefix = langPrefix(lang);
+  const canonical = `${SITE_URL}${prefix}/services/${id}`;
+  const enUrl = `${SITE_URL}/services/${id}`;
+  const deUrl = `${SITE_URL}/de/services/${id}`;
 
   useSeo({
     title: content ? `${content.title} — Niramay Wellbeing, Ostfildern` : "Niramay Wellbeing",
     description: content?.description ?? "",
     canonical,
+    lang,
+    alternates: { en: enUrl, de: deUrl },
   });
 
   const serviceJsonLd = useMemo(() => {
@@ -1144,8 +1181,9 @@ const ServicePage = () => {
       areaServed: "Ostfildern, Germany",
       provider: { "@id": BUSINESS_JSONLD_ID },
       url: canonical,
+      inLanguage: lang === "EN" ? "en" : "de",
     };
-  }, [service, content, canonical]);
+  }, [service, content, canonical, lang]);
   useJsonLd("ld-json-service", serviceJsonLd);
 
   const breadcrumbJsonLd = useMemo(() => {
@@ -1154,14 +1192,14 @@ const ServicePage = () => {
       "@context": "https://schema.org",
       "@type": "BreadcrumbList",
       itemListElement: [
-        { "@type": "ListItem", position: 1, name: sp.home, item: `${SITE_URL}/` },
+        { "@type": "ListItem", position: 1, name: sp.home, item: `${SITE_URL}${prefix}/` },
         { "@type": "ListItem", position: 2, name: content.title, item: canonical },
       ],
     };
-  }, [service, content, canonical, sp.home]);
+  }, [service, content, canonical, sp.home, prefix]);
   useJsonLd("ld-json-breadcrumb", breadcrumbJsonLd);
 
-  if (!service || !content) return <Navigate to="/" replace />;
+  if (!service || !content) return <Navigate to={prefix || "/"} replace />;
 
   const otherServices = SERVICES.filter(s => !s.openInModal && s.id !== service.id);
   const handleBook = () => {
@@ -1183,9 +1221,9 @@ const ServicePage = () => {
     <main className="pt-32 pb-24">
       <div className="container mx-auto px-6 max-w-3xl">
         <nav className="flex items-center gap-2 text-sm text-muted-foreground mb-10" aria-label="Breadcrumb">
-          <Link to="/" className="hover:text-primary transition-colors">{sp.home}</Link>
+          <Link to={prefix || "/"} className="hover:text-primary transition-colors">{sp.home}</Link>
           <ChevronRight className="w-3.5 h-3.5" />
-          <Link to="/#services" className="hover:text-primary transition-colors">{sp.breadcrumbServices}</Link>
+          <Link to={`${prefix}/#services`} className="hover:text-primary transition-colors">{sp.breadcrumbServices}</Link>
           <ChevronRight className="w-3.5 h-3.5" />
           <span className="text-foreground font-medium">{content.title}</span>
         </nav>
@@ -1272,7 +1310,7 @@ const ServicePage = () => {
             {otherServices.map(other => (
               <Link
                 key={other.id}
-                to={`/services/${other.id}`}
+                to={`${prefix}/services/${other.id}`}
                 className="flex items-center justify-between gap-3 p-4 rounded-xl border border-stone-100 hover:border-primary/30 hover:bg-stone-50 transition-colors group"
               >
                 <span className="font-medium">{other[lang].title}</span>
@@ -1935,6 +1973,7 @@ const FAQSection = ({ lang }: { lang: "EN" | "DE" }) => {
 const Footer = ({ lang, onOpenLegal }: { lang: "EN" | "DE", onOpenLegal: (type: "impressum" | "privacy") => void }) => {
   const t = TRANSLATIONS[lang].footer;
   const nav = TRANSLATIONS[lang].nav;
+  const prefix = langPrefix(lang);
   return (
     <footer className="bg-stone-50 pt-24 pb-12 border-t">
       <div className="container mx-auto px-6">
@@ -1969,13 +2008,13 @@ const Footer = ({ lang, onOpenLegal }: { lang: "EN" | "DE", onOpenLegal: (type: 
           <div>
             <h4 className="font-bold mb-6">{t.quickLinks}</h4>
             <ul className="space-y-4">
-              <li><Link to="/#services" className="text-muted-foreground hover:text-primary transition-colors">{nav.services}</Link></li>
-              <li><Link to="/#about" className="text-muted-foreground hover:text-primary transition-colors">{nav.about}</Link></li>
-              <li><Link to="/#events" className="text-muted-foreground hover:text-primary transition-colors">{nav.events}</Link></li>
-              <li><Link to="/#book" className="text-muted-foreground hover:text-primary transition-colors">{nav.book}</Link></li>
-              <li><Link to="/#testimonials" className="text-muted-foreground hover:text-primary transition-colors">{nav.reviews}</Link></li>
-              {FEATURE_BLOG_ENABLED && <li><Link to="/#blog" className="text-muted-foreground hover:text-primary transition-colors">{nav.blog}</Link></li>}
-              <li><Link to="/#faq" className="text-muted-foreground hover:text-primary transition-colors">{nav.faq}</Link></li>
+              <li><Link to={`${prefix}/#services`} className="text-muted-foreground hover:text-primary transition-colors">{nav.services}</Link></li>
+              <li><Link to={`${prefix}/#about`} className="text-muted-foreground hover:text-primary transition-colors">{nav.about}</Link></li>
+              <li><Link to={`${prefix}/#events`} className="text-muted-foreground hover:text-primary transition-colors">{nav.events}</Link></li>
+              <li><Link to={`${prefix}/#book`} className="text-muted-foreground hover:text-primary transition-colors">{nav.book}</Link></li>
+              <li><Link to={`${prefix}/#testimonials`} className="text-muted-foreground hover:text-primary transition-colors">{nav.reviews}</Link></li>
+              {FEATURE_BLOG_ENABLED && <li><Link to={`${prefix}/#blog`} className="text-muted-foreground hover:text-primary transition-colors">{nav.blog}</Link></li>}
+              <li><Link to={`${prefix}/#faq`} className="text-muted-foreground hover:text-primary transition-colors">{nav.faq}</Link></li>
             </ul>
           </div>
 
@@ -2168,7 +2207,16 @@ const BookSection = ({ lang }: { lang: "EN" | "DE" }) => {
 // through <Outlet>, and gets the state it needs (lang, the booking
 // callbacks) via useOutletContext rather than every page redeclaring it.
 const AppLayout = () => {
-  const [lang, setLang] = useState<"EN" | "DE">("EN");
+  const location = useLocation();
+  const navigate = useNavigate();
+  // The language is the URL, not separate app state: "/de..." is German,
+  // everything else is English. That's what makes each language's content
+  // a real, distinct, indexable page instead of a client-side toggle Google
+  // never sees past the first version it crawls.
+  const lang: "EN" | "DE" = (location.pathname === "/de" || location.pathname.startsWith("/de/")) ? "DE" : "EN";
+  const toggleLang = () => {
+    navigate(lang === "EN" ? `/de${location.pathname}` : location.pathname.replace(/^\/de/, "") || "/");
+  };
   const [legalModal, setLegalModal] = useState<"impressum" | "privacy" | null>(null);
   const [bookingContext, setBookingContext] = useState<BookingContext | null>(null);
   const openBooking = (ctx: BookingContext = {}) => setBookingContext(ctx);
@@ -2215,14 +2263,15 @@ const AppLayout = () => {
         areaServed: "Ostfildern, Germany",
       },
     })),
+    inLanguage: lang === "EN" ? "en" : "de",
   }), [lang]);
   useJsonLd("ld-json-business", businessJsonLd);
 
   return (
     <div className="min-h-screen selection:bg-primary/20">
       <ScrollManager />
-      <Navbar lang={lang} setLang={setLang} onBook={openBooking} />
-      <Outlet context={{ lang, setLang, onBook: openBooking, onBookAstrology: () => setAstrologyIntakeOpen(true), onOpenLegal: setLegalModal } satisfies LayoutContext} />
+      <Navbar lang={lang} onToggleLang={toggleLang} onBook={openBooking} />
+      <Outlet context={{ lang, onBook: openBooking, onBookAstrology: () => setAstrologyIntakeOpen(true), onOpenLegal: setLegalModal } satisfies LayoutContext} />
       <Footer lang={lang} onOpenLegal={setLegalModal} />
 
       <LegalModal
@@ -2260,7 +2309,9 @@ const HomePage = () => {
     description: lang === "EN"
       ? "Niramay Wellbeing: yoga, Reiki, NLP coaching, hypnotherapy and Vedic astrology guidance with Richa Kansal in Ostfildern, Germany. Book a free 15-minute call."
       : "Niramay Wellbeing: Yoga, Reiki, NLP-Coaching, Hypnotherapie und vedische Astrologie mit Richa Kansal in Ostfildern. Vereinbaren Sie ein kostenloses 15-minütiges Gespräch.",
-    canonical: `${SITE_URL}/`,
+    canonical: lang === "EN" ? `${SITE_URL}/` : `${SITE_URL}/de`,
+    lang,
+    alternates: { en: `${SITE_URL}/`, de: `${SITE_URL}/de` },
   });
 
   // The two "openInModal" service cards link to standalone third-party
@@ -2308,6 +2359,11 @@ export default function App() {
         <Route element={<AppLayout />}>
           <Route index element={<HomePage />} />
           <Route path="services/:id" element={<ServicePage />} />
+          <Route path="de" element={<HomePage />} />
+          <Route path="de/services/:id" element={<ServicePage />} />
+          {/* An unknown path under /de falls back to the German home page
+              rather than jumping to the English one. */}
+          <Route path="de/*" element={<Navigate to="/de" replace />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
       </Routes>
