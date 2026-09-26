@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
+import { BrowserRouter, Routes, Route, Link, Navigate, Outlet, useParams, useOutletContext } from "react-router-dom";
 import { motion, AnimatePresence } from "motion/react";
 import { 
   Menu, 
@@ -85,6 +86,47 @@ function useJsonLd(id: string, data: object | null) {
     };
   }, [id, data]);
 }
+
+// Updates the page's <title>, description/OG/Twitter meta tags, and
+// canonical link in place (they already exist as static defaults in
+// index.html) so each route carries its own accurate metadata instead of
+// every URL sharing the homepage's.
+function useSeo({ title, description, canonical }: { title: string; description: string; canonical: string }) {
+  useEffect(() => {
+    document.title = title;
+    const setMeta = (selector: string, attr: string, attrValue: string, content: string) => {
+      let el = document.querySelector(selector) as HTMLMetaElement | null;
+      if (!el) {
+        el = document.createElement("meta");
+        el.setAttribute(attr, attrValue);
+        document.head.appendChild(el);
+      }
+      el.setAttribute("content", content);
+    };
+    setMeta('meta[name="description"]', "name", "description", description);
+    setMeta('meta[property="og:title"]', "property", "og:title", title);
+    setMeta('meta[property="og:description"]', "property", "og:description", description);
+    setMeta('meta[property="og:url"]', "property", "og:url", canonical);
+    setMeta('meta[name="twitter:title"]', "name", "twitter:title", title);
+    setMeta('meta[name="twitter:description"]', "name", "twitter:description", description);
+
+    let link = document.querySelector('link[rel="canonical"]') as HTMLLinkElement | null;
+    if (!link) {
+      link = document.createElement("link");
+      link.setAttribute("rel", "canonical");
+      document.head.appendChild(link);
+    }
+    link.setAttribute("href", canonical);
+  }, [title, description, canonical]);
+}
+
+type LayoutContext = {
+  lang: "EN" | "DE";
+  setLang: (l: "EN" | "DE") => void;
+  onBook: (ctx?: BookingContext) => void;
+  onBookAstrology: () => void;
+  onOpenLegal: (type: "impressum" | "privacy") => void;
+};
 
 const BookingDialog = ({ context, lang, open, onOpenChange }: { context: BookingContext | null, lang: "EN" | "DE", open: boolean, onOpenChange: (o: boolean) => void }) => {
   const t = TRANSLATIONS[lang].booking;
@@ -1015,20 +1057,26 @@ const ServiceCard = ({ service, index, lang, onLearnMore }: { service: any, inde
             <p className="text-xs font-bold uppercase tracking-wider text-primary/50 mb-2">{t.outcomeLabel}</p>
             <p className="text-sm font-medium">{content.outcome}</p>
           </div>
-          {service.link && !service.openInModal ? (
+          {service.link && service.openInModal ? (
+            <Button
+              variant="link"
+              className="mt-6 p-0 h-auto font-bold text-primary group-hover:translate-x-1 transition-transform"
+              onClick={() => onLearnMore?.(service)}
+            >
+              {content.linkLabel || t.learnMore} <ArrowRight className="w-4 h-4 ml-2" />
+            </Button>
+          ) : service.link ? (
             <a href={service.link} target="_blank" rel="noopener noreferrer" className="inline-block mt-6">
               <Button variant="link" className="p-0 h-auto font-bold text-primary group-hover:translate-x-1 transition-transform">
                 {content.linkLabel || t.learnMore} <ArrowRight className="w-4 h-4 ml-2" />
               </Button>
             </a>
           ) : (
-            <Button 
-              variant="link" 
-              className="mt-6 p-0 h-auto font-bold text-primary group-hover:translate-x-1 transition-transform"
-              onClick={() => onLearnMore?.(service)}
-            >
-              {content.linkLabel || t.learnMore} <ArrowRight className="w-4 h-4 ml-2" />
-            </Button>
+            <Link to={`/services/${service.id}`} className="inline-block mt-6">
+              <Button variant="link" className="p-0 h-auto font-bold text-primary group-hover:translate-x-1 transition-transform">
+                {content.linkLabel || t.learnMore} <ArrowRight className="w-4 h-4 ml-2" />
+              </Button>
+            </Link>
           )}
         </CardContent>
       </Card>
@@ -1036,111 +1084,180 @@ const ServiceCard = ({ service, index, lang, onLearnMore }: { service: any, inde
   );
 };
 
-const ServiceDetailModal = ({ service, lang, open, onOpenChange, onBook, onBookAstrology }: { service: any, lang: "EN" | "DE", open: boolean, onOpenChange: (o: boolean) => void, onBook: (ctx?: BookingContext) => void, onBookAstrology: () => void }) => {
-  if (!service) return null;
+// Each in-house service's own indexable page at /services/:id — replaces
+// the old ServiceDetailModal (a same-content popup with no URL of its own,
+// so Google had nothing to rank "Reiki Ostfildern" or "Vedic Astrology
+// Germany" against). Services with an external `link` (the two
+// "openInModal" interactive-tool cards) don't get one: they're not content
+// Niramay owns, so a dedicated page for them would just be thin/duplicate.
+const ServicePage = () => {
+  const { id } = useParams<{ id: string }>();
+  const { lang, onBook, onBookAstrology } = useOutletContext<LayoutContext>();
+  const service = SERVICES.find(s => s.id === id && !s.openInModal);
+
   const t = TRANSLATIONS[lang].services;
+  const sp = TRANSLATIONS[lang].servicePage;
   const nav = TRANSLATIONS[lang].nav;
   const ta = TRANSLATIONS[lang].astrology;
-  const content = service[lang];
-  const isAstrology = service.id === "astrology";
+  const content = service?.[lang];
+  const isAstrology = service?.id === "astrology";
+  const canonical = `${SITE_URL}/services/${id}`;
+
+  useSeo({
+    title: content ? `${content.title} — Niramay Wellbeing, Ostfildern` : "Niramay Wellbeing",
+    description: content?.description ?? "",
+    canonical,
+  });
+
+  const serviceJsonLd = useMemo(() => {
+    if (!service || !content) return null;
+    return {
+      "@context": "https://schema.org",
+      "@type": "Service",
+      name: content.title,
+      description: content.description,
+      areaServed: "Ostfildern, Germany",
+      provider: { "@id": BUSINESS_JSONLD_ID },
+      url: canonical,
+    };
+  }, [service, content, canonical]);
+  useJsonLd("ld-json-service", serviceJsonLd);
+
+  const breadcrumbJsonLd = useMemo(() => {
+    if (!service || !content) return null;
+    return {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      itemListElement: [
+        { "@type": "ListItem", position: 1, name: sp.home, item: `${SITE_URL}/` },
+        { "@type": "ListItem", position: 2, name: content.title, item: canonical },
+      ],
+    };
+  }, [service, content, canonical, sp.home]);
+  useJsonLd("ld-json-breadcrumb", breadcrumbJsonLd);
+
+  if (!service || !content) return <Navigate to="/" replace />;
+
+  const otherServices = SERVICES.filter(s => !s.openInModal && s.id !== service.id);
+  const handleBook = () => {
+    if (isAstrology) {
+      // Astrology doesn't use the self-serve calendar: an appointment can't
+      // be offered until birth details and advance payment are in, so it
+      // gets its own intake flow.
+      onBookAstrology();
+    } else {
+      onBook({
+        title: content.title,
+        subtitle: content.outcome,
+        meta: [{ icon: service.icon, label: service.category }],
+      });
+    }
+  };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent initialFocus={false} className="sm:max-w-2xl max-h-[85vh] overflow-y-auto">
-        <DialogHeader>
-          <div className={`w-12 h-12 ${service.color} rounded-xl flex items-center justify-center mb-4`}>
-            <service.icon className="w-6 h-6 text-primary" />
-          </div>
-          <DialogTitle className="text-2xl md:text-3xl font-serif">{content.title}</DialogTitle>
-          <p className="font-medium text-primary/70">{service.category}</p>
-        </DialogHeader>
+    <main className="pt-32 pb-24">
+      <div className="container mx-auto px-6 max-w-3xl">
+        <nav className="flex items-center gap-2 text-sm text-muted-foreground mb-10" aria-label="Breadcrumb">
+          <Link to="/" className="hover:text-primary transition-colors">{sp.home}</Link>
+          <ChevronRight className="w-3.5 h-3.5" />
+          <Link to="/#services" className="hover:text-primary transition-colors">{sp.breadcrumbServices}</Link>
+          <ChevronRight className="w-3.5 h-3.5" />
+          <span className="text-foreground font-medium">{content.title}</span>
+        </nav>
 
-        <div className="space-y-6 mt-2">
-          <p className="text-muted-foreground leading-relaxed">{content.description}</p>
-          <div className="bg-stone-50 p-4 rounded-xl border border-stone-100">
-            <p className="text-xs font-bold uppercase tracking-wider text-primary/50 mb-2">{t.outcomeLabel}</p>
-            <p className="text-sm font-medium">{content.outcome}</p>
-          </div>
+        <div className={`w-14 h-14 ${service.color} rounded-xl flex items-center justify-center mb-6`}>
+          <service.icon className="w-7 h-7 text-primary" />
+        </div>
+        <p className="font-medium text-primary/70 mb-2">{service.category}</p>
+        <h1 className="text-4xl md:text-5xl font-serif font-bold mb-6 leading-tight">{content.title}</h1>
+        <p className="text-lg text-muted-foreground leading-relaxed mb-8">{content.description}</p>
 
-          {isAstrology && (
-            <div className="space-y-10 pt-4 border-t border-stone-100">
-              <p className="text-sm font-medium uppercase tracking-wider text-primary/60">{ta.traditionNote}</p>
-              <p className="text-muted-foreground leading-relaxed">{ta.intro1}</p>
-              <p className="text-muted-foreground leading-relaxed">{ta.intro2}</p>
+        <div className="bg-stone-50 p-6 rounded-2xl border border-stone-100 mb-10">
+          <p className="text-xs font-bold uppercase tracking-wider text-primary/50 mb-2">{t.outcomeLabel}</p>
+          <p className="text-lg font-medium">{content.outcome}</p>
+        </div>
 
-              <div>
-                <h4 className="text-xl font-serif font-bold mb-6">{ta.exploreTitle}</h4>
-                <div className="grid sm:grid-cols-2 gap-4">
-                  {ta.exploreItems.map((item, idx) => (
-                    <div key={idx} className="bg-stone-50 p-4 rounded-xl border border-stone-100">
-                      <p className="font-bold text-sm mb-1">{item.title}</p>
-                      <p className="text-muted-foreground text-sm leading-relaxed">{item.description}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
+        {isAstrology && (
+          <div className="space-y-10 mb-10 pt-4 border-t border-stone-100">
+            <p className="text-sm font-medium uppercase tracking-wider text-primary/60">{ta.traditionNote}</p>
+            <p className="text-muted-foreground leading-relaxed">{ta.intro1}</p>
+            <p className="text-muted-foreground leading-relaxed">{ta.intro2}</p>
 
-              <div>
-                <h4 className="text-xl font-serif font-bold mb-4">{ta.whoTitle}</h4>
-                <ul className="space-y-3">
-                  {ta.whoItems.map((item, idx) => (
-                    <li key={idx} className="flex items-start gap-3">
-                      <CheckCircle2 className="w-5 h-5 text-primary mt-0.5 shrink-0" />
-                      <span className="text-muted-foreground text-sm leading-relaxed">{item}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              <div>
-                <h4 className="text-xl font-serif font-bold mb-4">{ta.howTitle}</h4>
-                <div className="space-y-4">
-                  {ta.howSteps.map((step, idx) => (
-                    <div key={idx} className="flex gap-4">
-                      <div className="w-7 h-7 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-sm shrink-0">
-                        {idx + 1}
-                      </div>
-                      <div>
-                        <p className="font-bold text-sm mb-1">{step.title}</p>
-                        <p className="text-muted-foreground text-sm leading-relaxed">{step.description}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+            <div>
+              <h2 className="text-2xl font-serif font-bold mb-6">{ta.exploreTitle}</h2>
+              <div className="grid sm:grid-cols-2 gap-4">
+                {ta.exploreItems.map((item, idx) => (
+                  <div key={idx} className="bg-stone-50 p-4 rounded-xl border border-stone-100">
+                    <p className="font-bold text-sm mb-1">{item.title}</p>
+                    <p className="text-muted-foreground text-sm leading-relaxed">{item.description}</p>
+                  </div>
+                ))}
               </div>
             </div>
-          )}
 
-          <div className="pt-2">
-            <Button
-              size="lg"
-              className="rounded-full px-8 gap-2 w-full sm:w-auto"
-              onClick={() => {
-                // Close the detail dialog first so the booking/intake dialog
-                // never stacks on top of it (two Dialogs open at once =
-                // fragile focus/backdrop behavior).
-                onOpenChange(false);
-                if (isAstrology) {
-                  // Astrology doesn't use the self-serve calendar: an
-                  // appointment can't be offered until birth details and
-                  // advance payment are in, so it gets its own intake flow.
-                  onBookAstrology();
-                } else {
-                  onBook({
-                    title: content.title,
-                    subtitle: content.outcome,
-                    meta: [{ icon: service.icon, label: service.category }],
-                  });
-                }
-              }}
-            >
-              <Sparkles className="w-4 h-4" />
-              {isAstrology ? ta.cta : nav.bookNow}
-            </Button>
+            <div>
+              <h2 className="text-2xl font-serif font-bold mb-4">{ta.whoTitle}</h2>
+              <ul className="space-y-3">
+                {ta.whoItems.map((item, idx) => (
+                  <li key={idx} className="flex items-start gap-3">
+                    <CheckCircle2 className="w-5 h-5 text-primary mt-0.5 shrink-0" />
+                    <span className="text-muted-foreground text-sm leading-relaxed">{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div>
+              <h2 className="text-2xl font-serif font-bold mb-4">{ta.howTitle}</h2>
+              <div className="space-y-4">
+                {ta.howSteps.map((step, idx) => (
+                  <div key={idx} className="flex gap-4">
+                    <div className="w-7 h-7 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-sm shrink-0">
+                      {idx + 1}
+                    </div>
+                    <div>
+                      <p className="font-bold text-sm mb-1">{step.title}</p>
+                      <p className="text-muted-foreground text-sm leading-relaxed">{step.description}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        <div className="flex flex-wrap items-center gap-4 mb-20">
+          <Button size="lg" className="rounded-full px-8 gap-2" onClick={handleBook}>
+            <Sparkles className="w-4 h-4" />
+            {isAstrology ? ta.cta : nav.bookNow}
+          </Button>
+          <a
+            href={`https://wa.me/4915175315761?text=${encodeURIComponent(`Hi, I'm interested in "${content.title}".`)}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors inline-flex items-center gap-2"
+          >
+            <MessageCircle className="w-4 h-4" /> {sp.whatsappCta}
+          </a>
+        </div>
+
+        <div className="pt-10 border-t border-stone-100">
+          <h2 className="text-2xl font-serif font-bold mb-6">{sp.otherServicesTitle}</h2>
+          <div className="grid sm:grid-cols-2 gap-4">
+            {otherServices.map(other => (
+              <Link
+                key={other.id}
+                to={`/services/${other.id}`}
+                className="flex items-center justify-between gap-3 p-4 rounded-xl border border-stone-100 hover:border-primary/30 hover:bg-stone-50 transition-colors group"
+              >
+                <span className="font-medium">{other[lang].title}</span>
+                <ArrowRight className="w-4 h-4 text-primary shrink-0 group-hover:translate-x-1 transition-transform" />
+              </Link>
+            ))}
           </div>
         </div>
-      </DialogContent>
-    </Dialog>
+      </div>
+    </main>
   );
 };
 
@@ -2020,10 +2137,13 @@ const BookSection = ({ lang }: { lang: "EN" | "DE" }) => {
   );
 };
 
-export default function App() {
+// Shared shell (nav, footer, the booking/legal/astrology-intake modals, and
+// the site-wide LocalBusiness JSON-LD) rendered on every route. Per-route
+// content — the homepage sections, or a single service's page — comes in
+// through <Outlet>, and gets the state it needs (lang, the booking
+// callbacks) via useOutletContext rather than every page redeclaring it.
+const AppLayout = () => {
   const [lang, setLang] = useState<"EN" | "DE">("EN");
-  const [selectedBlog, setSelectedBlog] = useState<any>(null);
-  const [selectedService, setSelectedService] = useState<any>(null);
   const [legalModal, setLegalModal] = useState<"impressum" | "privacy" | null>(null);
   const [bookingContext, setBookingContext] = useState<BookingContext | null>(null);
   const openBooking = (ctx: BookingContext = {}) => setBookingContext(ctx);
@@ -2031,9 +2151,6 @@ export default function App() {
 
   useEffect(() => {
     document.documentElement.lang = lang.toLowerCase();
-    document.title = lang === "EN"
-      ? "Niramay Wellbeing — Yoga, Reiki & Holistic Therapy in Ostfildern"
-      : "Niramay Wellbeing — Yoga, Reiki & Ganzheitliche Therapie in Ostfildern";
   }, [lang]);
 
   const businessJsonLd = useMemo(() => ({
@@ -2076,58 +2193,11 @@ export default function App() {
   }), [lang]);
   useJsonLd("ld-json-business", businessJsonLd);
 
-  const handleServiceLearnMore = (service: any) => {
-    if (service.link && service.openInModal) {
-      setSelectedBlog({
-        id: service.id,
-        title: service[lang].title,
-        category: service.category,
-        image: "https://images.unsplash.com/photo-1484480974693-6ca0a78fb36b?auto=format&fit=crop&q=80&w=800",
-        content: service[lang].description,
-        externalLink: service.link,
-        author: "Niramay Tool"
-      });
-      return;
-    }
-
-    // Every other service always has its own description/outcome copy (and,
-    // for astrology, a full detail write-up), so its "Learn More" pop-up
-    // never needs to depend on a blog post existing.
-    setSelectedService(service);
-  };
-
   return (
     <div className="min-h-screen selection:bg-primary/20">
       <Navbar lang={lang} setLang={setLang} onBook={openBooking} />
-      <main>
-        <Hero lang={lang} onBook={openBooking} />
-        <ServicesSection lang={lang} onLearnMore={handleServiceLearnMore} />
-        <OngoingSessionsSection lang={lang} />
-        <CoursesSection lang={lang} />
-        <AboutSection lang={lang} />
-        <EventsSection lang={lang} />
-        <BookSection lang={lang} />
-        {FEATURE_BLOG_ENABLED && <BlogSection lang={lang} />}
-        <TestimonialsSection lang={lang} />
-        <FAQSection lang={lang} />
-      </main>
+      <Outlet context={{ lang, setLang, onBook: openBooking, onBookAstrology: () => setAstrologyIntakeOpen(true), onOpenLegal: setLegalModal } satisfies LayoutContext} />
       <Footer lang={lang} onOpenLegal={setLegalModal} />
-      
-      <BlogDetailModal
-        blog={selectedBlog}
-        open={!!selectedBlog}
-        onOpenChange={(open) => !open && setSelectedBlog(null)}
-        lang={lang}
-      />
-
-      <ServiceDetailModal
-        service={selectedService}
-        open={!!selectedService}
-        onOpenChange={(open) => !open && setSelectedService(null)}
-        lang={lang}
-        onBook={openBooking}
-        onBookAstrology={() => setAstrologyIntakeOpen(true)}
-      />
 
       <LegalModal
         type={legalModal}
@@ -2150,5 +2220,71 @@ export default function App() {
         onOpenPrivacy={() => setLegalModal("privacy")}
       />
     </div>
+  );
+};
+
+const HomePage = () => {
+  const { lang, onBook } = useOutletContext<LayoutContext>();
+  const [selectedBlog, setSelectedBlog] = useState<any>(null);
+
+  useSeo({
+    title: lang === "EN"
+      ? "Niramay Wellbeing — Yoga, Reiki & Holistic Therapy in Ostfildern"
+      : "Niramay Wellbeing — Yoga, Reiki & Ganzheitliche Therapie in Ostfildern",
+    description: lang === "EN"
+      ? "Niramay Wellbeing: yoga, Reiki, NLP coaching, hypnotherapy and Vedic astrology guidance with Richa Kansal in Ostfildern, Germany. Book a free 15-minute call."
+      : "Niramay Wellbeing: Yoga, Reiki, NLP-Coaching, Hypnotherapie und vedische Astrologie mit Richa Kansal in Ostfildern. Vereinbaren Sie ein kostenloses 15-minütiges Gespräch.",
+    canonical: `${SITE_URL}/`,
+  });
+
+  // The two "openInModal" service cards link to standalone third-party
+  // tools rather than a page of Niramay's own, so they still open as an
+  // iframe preview here instead of routing to /services/:id.
+  const handleServiceToolPreview = (service: any) => {
+    setSelectedBlog({
+      id: service.id,
+      title: service[lang].title,
+      category: service.category,
+      image: "https://images.unsplash.com/photo-1484480974693-6ca0a78fb36b?auto=format&fit=crop&q=80&w=800",
+      content: service[lang].description,
+      externalLink: service.link,
+      author: "Niramay Tool"
+    });
+  };
+
+  return (
+    <main>
+      <Hero lang={lang} onBook={onBook} />
+      <ServicesSection lang={lang} onLearnMore={handleServiceToolPreview} />
+      <OngoingSessionsSection lang={lang} />
+      <CoursesSection lang={lang} />
+      <AboutSection lang={lang} />
+      <EventsSection lang={lang} />
+      <BookSection lang={lang} />
+      {FEATURE_BLOG_ENABLED && <BlogSection lang={lang} />}
+      <TestimonialsSection lang={lang} />
+      <FAQSection lang={lang} />
+
+      <BlogDetailModal
+        blog={selectedBlog}
+        open={!!selectedBlog}
+        onOpenChange={(open) => !open && setSelectedBlog(null)}
+        lang={lang}
+      />
+    </main>
+  );
+};
+
+export default function App() {
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route element={<AppLayout />}>
+          <Route index element={<HomePage />} />
+          <Route path="services/:id" element={<ServicePage />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Route>
+      </Routes>
+    </BrowserRouter>
   );
 }
