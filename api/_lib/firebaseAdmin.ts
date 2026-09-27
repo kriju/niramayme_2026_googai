@@ -1,5 +1,6 @@
 import { cert, getApps, initializeApp, type App } from "firebase-admin/app";
 import { getFirestore, type Firestore } from "firebase-admin/firestore";
+import { getAuth, type Auth } from "firebase-admin/auth";
 
 // Must match firebase-applet-config.json's firestoreDatabaseId — this project
 // does NOT use the "(default)" Firestore database.
@@ -37,4 +38,8 @@ function getAdminApp(): App {
 
 export function getAdminDb(): Firestore {
   return getFirestore(getAdminApp(), FIRESTORE_DATABASE_ID);
+}
+
+export function getAdminAuth(): Auth {
+  return getAuth(getAdminApp());
 }

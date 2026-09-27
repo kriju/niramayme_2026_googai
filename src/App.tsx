@@ -1,14 +1,14 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { BrowserRouter, Routes, Route, Link, Navigate, Outlet, useParams, useOutletContext, useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "motion/react";
-import { 
-  Menu, 
-  X, 
-  Globe, 
-  Calendar, 
-  MessageCircle, 
-  Instagram, 
-  Facebook, 
+import {
+  Menu,
+  X,
+  Globe,
+  Calendar,
+  MessageCircle,
+  Instagram,
+  Facebook,
   Youtube,
   ArrowRight,
   CheckCircle2,
@@ -20,10 +20,16 @@ import {
   ChevronLeft,
   ChevronRight,
   ExternalLink,
-  Heart
+  Heart,
+  Upload,
+  Trash2,
+  LogOut,
+  Lock,
+  Pencil,
+  Volume2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { db } from "./lib/firebase";
+import { auth, db } from "./lib/firebase";
 import {
   collection,
   onSnapshot,
@@ -31,16 +37,26 @@ import {
   orderBy,
   addDoc,
   updateDoc,
+  deleteDoc,
+  getDocs,
+  limit,
   doc,
   serverTimestamp,
   Timestamp,
   where
 } from "firebase/firestore";
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardHeader, 
+import {
+  onAuthStateChanged,
+  signInWithEmailAndPassword,
+  signOut,
+  type User
+} from "firebase/auth";
+import { upload as uploadBlob } from "@vercel/blob/client";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
   CardTitle,
   CardFooter
 } from "@/components/ui/card";
@@ -48,7 +64,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { SERVICES, TESTIMONIALS, FAQS, HEALER_CERTIFICATIONS, HEALER_IMAGES, TRANSLATIONS, ONGOING_SESSIONS, COURSES, EVENTS, GOOGLE_CALENDAR_URL, GOOGLE_REVIEW_URL, FEATURE_BLOG_ENABLED } from "./constants";
+import { SERVICES, TESTIMONIALS, FAQS, HEALER_CERTIFICATIONS, HEALER_IMAGES, TRANSLATIONS, ONGOING_SESSIONS, COURSES, EVENTS, GOOGLE_CALENDAR_URL, GOOGLE_REVIEW_URL, FEATURE_BLOG_ENABLED, BLOG_ADMIN_USERNAMES, usernameToLoginEmail } from "./constants";
 import { getStoredConsent, grantAnalyticsConsent, denyAnalyticsConsent, initAnalyticsFromStoredConsent, trackPageview } from "./lib/analytics";
 
 // A single booking dialog, controlled from the App root (see the other
@@ -183,6 +199,31 @@ type LayoutContext = {
 // that must stay in the current language (Navbar, Footer, ServiceCard,
 // ServicePage's cross-links) need the same mapping.
 const langPrefix = (lang: "EN" | "DE") => (lang === "DE" ? "/de" : "");
+
+// Only used by the /write dashboard to greet whoever's signed in and to
+// credit posts by name instead of their internal login username.
+const USERNAME_DISPLAY_NAME: Record<string, string> = { rijuk: "Riju", richak: "Richa" };
+
+function slugify(title: string): string {
+  return title
+    .toLowerCase()
+    .normalize("NFKD").replace(/[̀-ͯ]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 80) || "post";
+}
+
+// Blog slugs are auto-generated from the title rather than typed by hand —
+// one less field for Richa/Riju to think about — so a collision (two posts
+// titled similarly) needs to be resolved automatically too.
+async function uniqueSlug(base: string, excludeId?: string): Promise<string> {
+  let candidate = base;
+  for (let n = 2; ; n++) {
+    const snapshot = await getDocs(query(collection(db, "blogs"), where("slug", "==", candidate)));
+    if (!snapshot.docs.some(d => d.id !== excludeId)) return candidate;
+    candidate = `${base}-${n}`;
+  }
+}
 
 const BookingDialog = ({ context, lang, open, onOpenChange }: { context: BookingContext | null, lang: "EN" | "DE", open: boolean, onOpenChange: (o: boolean) => void }) => {
   const t = TRANSLATIONS[lang].booking;
@@ -599,8 +640,9 @@ const LeaveReviewModal = ({ lang }: { lang: "EN" | "DE" }) => {
   );
 };
 
-const BlogCard = ({ blog, lang, onReadMore }: { blog: any, lang: "EN" | "DE", onReadMore: (b: any) => void, key?: any }) => {
+const BlogCard = ({ blog, lang }: { blog: any, lang: "EN" | "DE", key?: any }) => {
   const t = TRANSLATIONS[lang].blog;
+  const prefix = langPrefix(lang);
   return (
     <motion.div
       layout
@@ -609,204 +651,62 @@ const BlogCard = ({ blog, lang, onReadMore }: { blog: any, lang: "EN" | "DE", on
       exit={{ opacity: 0, y: -20 }}
       className="h-full"
     >
-      <Card className="overflow-hidden border-stone-100 flex flex-col h-full hover:shadow-xl transition-all duration-500 group">
-        <div className="relative h-56 overflow-hidden">
-          <img 
-            src={blog.image} 
-            alt={blog.title} 
-            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-            referrerPolicy="no-referrer"
-          />
-          <div className="absolute top-4 left-4">
-            <Badge className="bg-white/90 backdrop-blur-md text-primary border-none">
-              {blog.category}
-            </Badge>
-          </div>
-        </div>
-        <CardHeader className="flex-grow">
-          <CardTitle className="text-xl font-serif mb-2 line-clamp-2 leading-tight">
-            {blog.title}
-          </CardTitle>
-          <CardDescription className="line-clamp-3">
-            {blog.excerpt}
-          </CardDescription>
-        </CardHeader>
-        <CardFooter className="pt-0">
-          <Button 
-            variant="link" 
-            className="px-0 text-primary font-bold group-hover:translate-x-1 transition-transform"
-            onClick={() => onReadMore(blog)}
-          >
-            {t.readMore} <Plus className="ml-2 w-4 h-4" />
-          </Button>
-        </CardFooter>
-      </Card>
+      <Link to={`${prefix}/blog/${blog.slug}`} className="block h-full">
+        <Card className="overflow-hidden border-stone-100 flex flex-col h-full hover:shadow-xl transition-all duration-500 group">
+          {/* A post may or may not have an image — no placeholder is shown
+              when it doesn't, rather than faking a stock photo. */}
+          {blog.image && (
+            <div className="relative h-56 overflow-hidden">
+              <img
+                src={blog.image}
+                alt={blog.title}
+                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                referrerPolicy="no-referrer"
+              />
+              <div className="absolute top-4 left-4">
+                <Badge className="bg-white/90 backdrop-blur-md text-primary border-none">
+                  {blog.category}
+                </Badge>
+              </div>
+            </div>
+          )}
+          <CardHeader className="flex-grow">
+            {!blog.image && (
+              <Badge variant="outline" className="w-fit mb-2">{blog.category}</Badge>
+            )}
+            <CardTitle className="text-xl font-serif mb-2 line-clamp-2 leading-tight">
+              {blog.title}
+            </CardTitle>
+            <CardDescription className="line-clamp-3">
+              {blog.excerpt}
+            </CardDescription>
+          </CardHeader>
+          <CardFooter className="pt-0 flex items-center gap-4">
+            <span className="text-primary font-bold group-hover:translate-x-1 transition-transform inline-flex items-center">
+              {t.readMore} <Plus className="ml-2 w-4 h-4" />
+            </span>
+            {blog.audioUrl && <Volume2 className="w-4 h-4 text-muted-foreground shrink-0" />}
+          </CardFooter>
+        </Card>
+      </Link>
     </motion.div>
   );
 };
 
-const BlogDetailModal = ({ blog, open, onOpenChange, lang }: { blog: any, open: boolean, onOpenChange: (o: boolean) => void, lang: "EN" | "DE" }) => {
-  if (!blog) return null;
-  
+// The two "openInModal" service cards (external interactive tools hosted on
+// lovable.app) preview in a plain iframe modal — not Niramay's own content,
+// so unlike blog posts they don't get a page of their own.
+const ToolPreviewModal = ({ tool, open, onOpenChange }: { tool: { title: string; link: string } | null, open: boolean, onOpenChange: (o: boolean) => void }) => {
+  if (!tool) return null;
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-3xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader className="mb-6">
-          <div className="flex gap-2 mb-4">
-            <Badge variant="outline">{blog.category}</Badge>
-            <span className="text-sm text-stone-400">
-              {blog.createdAt?.toDate ? blog.createdAt.toDate().toLocaleDateString(lang === "DE" ? "de-DE" : "en-US") : ""}
-            </span>
-          </div>
-          <DialogTitle className="text-3xl md:text-4xl font-serif leading-tight">
-            {blog.title}
-          </DialogTitle>
+        <DialogHeader className="mb-4">
+          <DialogTitle className="text-2xl md:text-3xl font-serif">{tool.title}</DialogTitle>
         </DialogHeader>
-        
-        <div className="space-y-6">
-          {blog.externalLink ? (
-            <div className="w-full aspect-[4/3] md:aspect-video rounded-2xl overflow-hidden border border-stone-100 shadow-inner">
-              <iframe 
-                src={blog.externalLink} 
-                className="w-full h-full border-0"
-                title={blog.title}
-              />
-            </div>
-          ) : (
-            <>
-              <img 
-                src={blog.image} 
-                alt={blog.title} 
-                className="w-full aspect-video object-cover rounded-2xl"
-                referrerPolicy="no-referrer"
-              />
-              
-              <div className="prose prose-stone max-w-none prose-lg">
-                {blog.content.split('\n').map((paragraph: string, i: number) => (
-                  <p key={i} className="text-stone-600 leading-relaxed">
-                    {paragraph}
-                  </p>
-                ))}
-              </div>
-            </>
-          )}
-          
-          <div className="pt-12 border-t border-stone-100 flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-full bg-stone-100 flex items-center justify-center font-bold text-stone-600">
-                {blog.author?.[0] || "R"}
-              </div>
-              <div>
-                <p className="font-bold">{blog.author || "Richa"}</p>
-                <p className="text-sm text-stone-400">Therapist & Founder</p>
-              </div>
-            </div>
-          </div>
+        <div className="w-full aspect-[4/3] md:aspect-video rounded-2xl overflow-hidden border border-stone-100 shadow-inner">
+          <iframe src={tool.link} className="w-full h-full border-0" title={tool.title} />
         </div>
-      </DialogContent>
-    </Dialog>
-  );
-};
-
-const BlogEditorModal = ({ open, setOpen, lang }: { open: boolean, setOpen: (o: boolean) => void, lang: "EN" | "DE" }) => {
-  const t = TRANSLATIONS[lang].blog.editor;
-  const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState({
-    title: "",
-    excerpt: "",
-    content: "",
-    category: "Physical Wellness",
-    image: "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&q=80&w=800",
-    author: "Richa"
-  });
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    try {
-      await addDoc(collection(db, "blogs"), {
-        ...formData,
-        lang,
-        createdAt: serverTimestamp()
-      });
-      setOpen(false);
-      setFormData({
-        title: "",
-        excerpt: "",
-        content: "",
-        category: "Physical Wellness",
-        image: "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&q=80&w=800",
-        author: "Richa"
-      });
-    } catch (error) {
-      console.error("Error adding blog:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="text-2xl font-serif">{t.title}</DialogTitle>
-        </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4 pt-4">
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-stone-600">{t.titleLabel}</label>
-            <input 
-              required 
-              className="w-full px-4 py-3 rounded-xl border border-stone-200 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all font-serif italic text-lg" 
-              placeholder="e.g. The Power of Alignment"
-              value={formData.title} 
-              onChange={e => setFormData({...formData, title: e.target.value})} 
-            />
-          </div>
-          <div className="grid md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-stone-600">{t.categoryLabel}</label>
-              <select 
-                className="w-full px-4 py-3 rounded-xl border border-stone-200 bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
-                value={formData.category}
-                onChange={e => setFormData({...formData, category: e.target.value})}
-              >
-                {["Physical Wellness", "Mental Clarity", "Spiritual Healing", "Kids Yoga", "Dance Therapy", "Tarot Reading", "Chair Yoga"].map(c => (
-                  <option key={c} value={c}>{c}</option>
-                ))}
-              </select>
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-stone-600">{t.imageLabel}</label>
-              <input 
-                className="w-full px-4 py-3 rounded-xl border border-stone-200 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all text-sm" 
-                value={formData.image} 
-                onChange={e => setFormData({...formData, image: e.target.value})} 
-              />
-            </div>
-          </div>
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-stone-600">{t.excerptLabel}</label>
-            <textarea 
-              required 
-              className="w-full px-4 py-3 rounded-xl border border-stone-200 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all h-24 resize-none" 
-              value={formData.excerpt} 
-              onChange={e => setFormData({...formData, excerpt: e.target.value})} 
-            />
-          </div>
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-stone-600">{t.contentLabel}</label>
-            <textarea 
-              required 
-              className="w-full px-4 py-3 rounded-xl border border-stone-200 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all h-64" 
-              value={formData.content} 
-              onChange={e => setFormData({...formData, content: e.target.value})} 
-            />
-          </div>
-          <div className="flex justify-end gap-3 pt-6">
-            <Button type="button" variant="ghost" onClick={() => setOpen(false)}>{t.cancel}</Button>
-            <Button type="submit" disabled={loading} className="px-8">{loading ? t.saving : t.submit}</Button>
-          </div>
-        </form>
       </DialogContent>
     </Dialog>
   );
@@ -815,24 +715,25 @@ const BlogEditorModal = ({ open, setOpen, lang }: { open: boolean, setOpen: (o: 
 const BlogSection = ({ lang }: { lang: "EN" | "DE" }) => {
   const [blogs, setBlogs] = useState<any[]>([]);
   const [filter, setFilter] = useState("all");
-  const [selectedBlog, setSelectedBlog] = useState<any>(null);
-  const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [visibleCount, setVisibleCount] = useState(3);
   const t = TRANSLATIONS[lang].blog;
 
   useEffect(() => {
-    // Listen for blogs based on current language
+    // Public visitors only ever see published posts — see the isBlogAdmin()
+    // OR clause in firestore.rules that additionally lets Richa/Riju read
+    // their own drafts from the /write dashboard.
     const q = query(
-      collection(db, "blogs"), 
+      collection(db, "blogs"),
       where("lang", "==", lang),
+      where("published", "==", true),
       orderBy("createdAt", "desc")
     );
-    
+
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const b = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       setBlogs(b);
     });
-    
+
     return () => unsubscribe();
   }, [lang]);
 
@@ -845,17 +746,7 @@ const BlogSection = ({ lang }: { lang: "EN" | "DE" }) => {
       <div className="container mx-auto px-6">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-16 gap-8">
           <div className="max-w-2xl">
-            <div className="flex items-center gap-4 mb-4">
-              <h2 className="text-4xl md:text-5xl font-serif font-bold text-primary">{t.title}</h2>
-              <Button 
-                variant="outline" 
-                size="icon" 
-                className="rounded-full border-stone-200 hover:bg-white hover:text-primary transition-all"
-                onClick={() => setIsEditorOpen(true)}
-              >
-                <Plus className="w-5 h-5" />
-              </Button>
-            </div>
+            <h2 className="text-4xl md:text-5xl font-serif font-bold text-primary mb-4">{t.title}</h2>
             <p className="text-stone-500 text-lg">
               {t.description}
             </p>
@@ -901,11 +792,10 @@ const BlogSection = ({ lang }: { lang: "EN" | "DE" }) => {
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
           <AnimatePresence mode="popLayout">
             {currentBlogs.map(blog => (
-              <BlogCard 
-                key={blog.id} 
-                blog={blog} 
-                lang={lang} 
-                onReadMore={(b) => setSelectedBlog(b)} 
+              <BlogCard
+                key={blog.id}
+                blog={blog}
+                lang={lang}
               />
             ))}
           </AnimatePresence>
@@ -933,19 +823,6 @@ const BlogSection = ({ lang }: { lang: "EN" | "DE" }) => {
           </div>
         )}
       </div>
-      
-      <BlogDetailModal 
-        blog={selectedBlog} 
-        open={!!selectedBlog} 
-        onOpenChange={(open) => !open && setSelectedBlog(null)} 
-        lang={lang}
-      />
-
-      <BlogEditorModal 
-        open={isEditorOpen} 
-        setOpen={setIsEditorOpen} 
-        lang={lang} 
-      />
     </section>
   );
 };
@@ -1320,6 +1197,170 @@ const ServicePage = () => {
             ))}
           </div>
         </div>
+      </div>
+    </main>
+  );
+};
+
+// A single published post at /blog/:slug (+ /de/blog/:slug). Unlike
+// SERVICES, posts are live Firestore data rather than a fixed, known-ahead
+// list, so this fetches by slug+lang rather than looking up a static
+// constant the way ServicePage does.
+const BlogPostPage = () => {
+  const { slug } = useParams<{ slug: string }>();
+  const { lang } = useOutletContext<LayoutContext>();
+  const [post, setPost] = useState<any>(null);
+  const [otherPosts, setOtherPosts] = useState<any[]>([]);
+  const [notFound, setNotFound] = useState(false);
+  const bp = TRANSLATIONS[lang].blogPost;
+  const prefix = langPrefix(lang);
+  const canonical = `${SITE_URL}${prefix}/blog/${slug}`;
+
+  useEffect(() => {
+    setPost(null);
+    setNotFound(false);
+    if (!slug) return;
+    let cancelled = false;
+    const q = query(
+      collection(db, "blogs"),
+      where("slug", "==", slug),
+      where("lang", "==", lang),
+      where("published", "==", true),
+      limit(1)
+    );
+    getDocs(q).then(snapshot => {
+      if (cancelled) return;
+      if (snapshot.empty) {
+        setNotFound(true);
+      } else {
+        const docSnap = snapshot.docs[0];
+        setPost({ id: docSnap.id, ...docSnap.data() });
+      }
+    }).catch(() => !cancelled && setNotFound(true));
+    return () => { cancelled = true; };
+  }, [slug, lang]);
+
+  useEffect(() => {
+    const q = query(
+      collection(db, "blogs"),
+      where("lang", "==", lang),
+      where("published", "==", true),
+      orderBy("createdAt", "desc"),
+      limit(5)
+    );
+    const unsubscribe = onSnapshot(q, snapshot => {
+      setOtherPosts(snapshot.docs.map((d): any => ({ id: d.id, ...d.data() })).filter(p => p.slug !== slug).slice(0, 4));
+    });
+    return () => unsubscribe();
+  }, [lang, slug]);
+
+  useSeo({
+    title: post ? `${post.title} — Niramay Wellbeing Blog` : "Niramay Wellbeing Blog",
+    description: post?.excerpt || "",
+    canonical,
+    lang,
+  });
+
+  const postJsonLd = useMemo(() => {
+    if (!post) return null;
+    const data: Record<string, unknown> = {
+      "@context": "https://schema.org",
+      "@type": "BlogPosting",
+      headline: post.title,
+      description: post.excerpt,
+      inLanguage: lang === "EN" ? "en" : "de",
+      mainEntityOfPage: canonical,
+      url: canonical,
+      author: { "@type": "Person", name: post.author || "Niramay" },
+      publisher: { "@id": BUSINESS_JSONLD_ID },
+    };
+    if (post.image) data.image = post.image;
+    if (post.createdAt?.toDate) data.datePublished = post.createdAt.toDate().toISOString();
+    if (post.updatedAt?.toDate) data.dateModified = post.updatedAt.toDate().toISOString();
+    if (post.audioUrl) data.associatedMedia = { "@type": "AudioObject", contentUrl: post.audioUrl, name: post.title };
+    return data;
+  }, [post, lang, canonical]);
+  useJsonLd("ld-json-blogpost", postJsonLd);
+
+  if (notFound) return <Navigate to={prefix || "/"} replace />;
+  // Post data is fetched async (unlike the static SERVICES list), so there's
+  // a brief gap before it's known to exist — render nothing rather than a
+  // false "not found" flash while that's in flight.
+  if (!post) return null;
+
+  const dateStr = post.createdAt?.toDate
+    ? post.createdAt.toDate().toLocaleDateString(lang === "DE" ? "de-DE" : "en-US")
+    : "";
+
+  return (
+    <main className="pt-32 pb-24">
+      <div className="container mx-auto px-6 max-w-3xl">
+        <nav className="flex items-center gap-2 text-sm text-muted-foreground mb-10" aria-label="Breadcrumb">
+          <Link to={prefix || "/"} className="hover:text-primary transition-colors">{bp.home}</Link>
+          <ChevronRight className="w-3.5 h-3.5" />
+          <Link to={`${prefix}/#blog`} className="hover:text-primary transition-colors">{bp.breadcrumbBlog}</Link>
+          <ChevronRight className="w-3.5 h-3.5" />
+          <span className="text-foreground font-medium line-clamp-1">{post.title}</span>
+        </nav>
+
+        <div className="flex items-center gap-3 mb-4">
+          {post.category && <Badge variant="outline">{post.category}</Badge>}
+          {dateStr && <span className="text-sm text-stone-400">{dateStr}</span>}
+        </div>
+        <h1 className="text-4xl md:text-5xl font-serif font-bold mb-8 leading-tight">{post.title}</h1>
+
+        {post.image && (
+          <img
+            src={post.image}
+            alt={post.title}
+            className="w-full aspect-video object-cover rounded-2xl mb-8"
+            referrerPolicy="no-referrer"
+          />
+        )}
+
+        {post.audioUrl && (
+          <div className="bg-stone-50 border border-stone-100 rounded-2xl p-5 mb-8 flex items-center gap-4">
+            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+              <Volume2 className="w-5 h-5 text-primary" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium mb-2">{bp.listenLabel}</p>
+              {/* eslint-disable-next-line jsx-a11y/media-has-caption -- spoken narration of the text above it, not standalone media */}
+              <audio controls className="w-full h-10" src={post.audioUrl} />
+            </div>
+          </div>
+        )}
+
+        <div className="prose prose-stone max-w-none prose-lg mb-16">
+          {post.content.split('\n').map((paragraph: string, i: number) => (
+            paragraph.trim() ? <p key={i} className="text-stone-600 leading-relaxed">{paragraph}</p> : null
+          ))}
+        </div>
+
+        <div className="flex items-center gap-4 pt-8 border-t border-stone-100 mb-16">
+          <div className="w-12 h-12 rounded-full bg-stone-100 flex items-center justify-center font-bold text-stone-600">
+            {post.author?.[0] || "N"}
+          </div>
+          <p className="font-bold">{post.author || "Niramay"}</p>
+        </div>
+
+        {otherPosts.length > 0 && (
+          <div className="pt-10 border-t border-stone-100">
+            <h2 className="text-2xl font-serif font-bold mb-6">{bp.otherPostsTitle}</h2>
+            <div className="grid sm:grid-cols-2 gap-4">
+              {otherPosts.map(other => (
+                <Link
+                  key={other.id}
+                  to={`${prefix}/blog/${other.slug}`}
+                  className="flex items-center justify-between gap-3 p-4 rounded-xl border border-stone-100 hover:border-primary/30 hover:bg-stone-50 transition-colors group"
+                >
+                  <span className="font-medium line-clamp-1">{other.title}</span>
+                  <ArrowRight className="w-4 h-4 text-primary shrink-0 group-hover:translate-x-1 transition-transform" />
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </main>
   );
@@ -2353,7 +2394,7 @@ const AppLayout = () => {
 
 const HomePage = () => {
   const { lang, onBook } = useOutletContext<LayoutContext>();
-  const [selectedBlog, setSelectedBlog] = useState<any>(null);
+  const [previewTool, setPreviewTool] = useState<{ title: string; link: string } | null>(null);
 
   useSeo({
     title: lang === "EN"
@@ -2371,15 +2412,7 @@ const HomePage = () => {
   // tools rather than a page of Niramay's own, so they still open as an
   // iframe preview here instead of routing to /services/:id.
   const handleServiceToolPreview = (service: any) => {
-    setSelectedBlog({
-      id: service.id,
-      title: service[lang].title,
-      category: service.category,
-      image: "https://images.unsplash.com/photo-1484480974693-6ca0a78fb36b?auto=format&fit=crop&q=80&w=800",
-      content: service[lang].description,
-      externalLink: service.link,
-      author: "Niramay Tool"
-    });
+    setPreviewTool({ title: service[lang].title, link: service.link });
   };
 
   return (
@@ -2395,13 +2428,448 @@ const HomePage = () => {
       <TestimonialsSection lang={lang} />
       <FAQSection lang={lang} />
 
-      <BlogDetailModal
-        blog={selectedBlog}
-        open={!!selectedBlog}
-        onOpenChange={(open) => !open && setSelectedBlog(null)}
-        lang={lang}
+      <ToolPreviewModal
+        tool={previewTool}
+        open={!!previewTool}
+        onOpenChange={(open) => !open && setPreviewTool(null)}
       />
     </main>
+  );
+};
+
+// The /write sign-in form. Real enforcement is Firestore/Storage rules
+// checking the signed-in user's email against the two-account allowlist —
+// this client-side username check is just so a typo doesn't even attempt a
+// sign-in, not the security boundary itself.
+const LoginForm = () => {
+  const wt = TRANSLATIONS.EN.write;
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    const normalized = username.trim().toLowerCase();
+    if (!(BLOG_ADMIN_USERNAMES as readonly string[]).includes(normalized)) {
+      setError(wt.invalidCredentials);
+      return;
+    }
+    setSubmitting(true);
+    try {
+      await signInWithEmailAndPassword(auth, usernameToLoginEmail(normalized), password);
+    } catch {
+      setError(wt.invalidCredentials);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-stone-50 px-6">
+      <div className="w-full max-w-sm bg-white rounded-2xl border border-stone-100 shadow-sm p-8">
+        <div className="flex items-center gap-2 mb-8 justify-center">
+          <img src="/logo.svg" alt="Niramay Logo" className="w-8 h-8" referrerPolicy="no-referrer" />
+          <span className="font-serif text-xl font-bold">{wt.pageTitle}</span>
+        </div>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-stone-600">{wt.usernameLabel}</label>
+            <input
+              required
+              autoFocus
+              autoComplete="username"
+              className="w-full px-4 py-3 rounded-xl border border-stone-200 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
+              value={username}
+              onChange={e => setUsername(e.target.value)}
+            />
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-stone-600">{wt.passwordLabel}</label>
+            <input
+              required
+              type="password"
+              autoComplete="current-password"
+              className="w-full px-4 py-3 rounded-xl border border-stone-200 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+            />
+          </div>
+          {error && <p className="text-sm text-red-600">{error}</p>}
+          <Button type="submit" className="w-full rounded-full gap-2" disabled={submitting}>
+            <Lock className="w-4 h-4" />
+            {submitting ? wt.signingIn : wt.signIn}
+          </Button>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+type BlogPostDoc = {
+  id: string;
+  slug: string;
+  title: string;
+  excerpt?: string;
+  content: string;
+  category?: string;
+  image?: string;
+  audioUrl?: string;
+  author?: string;
+  lang: "EN" | "DE";
+  published: boolean;
+  createdAt?: Timestamp;
+};
+
+const BLOG_CATEGORIES = ["Physical Wellness", "Mental Clarity", "Spiritual Healing", "Kids Yoga", "Dance Therapy", "Tarot Reading", "Chair Yoga"];
+const EMPTY_POST_FORM = { title: "", excerpt: "", content: "", category: BLOG_CATEGORIES[0], image: "", audioUrl: "", lang: "EN" as "EN" | "DE" };
+
+const WriteDashboard = ({ user }: { user: User }) => {
+  const wt = TRANSLATIONS.EN.write;
+  const et = TRANSLATIONS.EN.blog.editor;
+  const username = user.email?.split("@")[0] ?? "";
+  const displayName = USERNAME_DISPLAY_NAME[username] ?? username;
+
+  const [posts, setPosts] = useState<BlogPostDoc[]>([]);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [form, setForm] = useState({ ...EMPTY_POST_FORM });
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [uploadingAudio, setUploadingAudio] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    // No published filter here — Richa/Riju signed in can see every post,
+    // draft or live (see the isBlogAdmin() OR clause in firestore.rules).
+    const q = query(collection(db, "blogs"), orderBy("createdAt", "desc"));
+    const unsubscribe = onSnapshot(q, snapshot => {
+      setPosts(snapshot.docs.map(d => ({ id: d.id, ...d.data() }) as BlogPostDoc));
+    });
+    return () => unsubscribe();
+  }, []);
+
+  const resetForm = () => {
+    setEditingId(null);
+    setForm({ ...EMPTY_POST_FORM });
+    setError(null);
+  };
+
+  const startEdit = (post: BlogPostDoc) => {
+    setEditingId(post.id);
+    setForm({
+      title: post.title,
+      excerpt: post.excerpt || "",
+      content: post.content,
+      category: post.category || BLOG_CATEGORIES[0],
+      image: post.image || "",
+      audioUrl: post.audioUrl || "",
+      lang: post.lang,
+    });
+    setError(null);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const handleUpload = async (file: File, kind: "image" | "audio") => {
+    const setUploading = kind === "image" ? setUploadingImage : setUploadingAudio;
+    setUploading(true);
+    setError(null);
+    try {
+      // api/blog-upload.ts is the actual security boundary — it checks this
+      // ID token against the two-account allowlist before issuing a token
+      // the browser can upload with, since the client never holds Vercel
+      // Blob's write token directly.
+      const idToken = await user.getIdToken();
+      const path = `blog-media/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, "_")}`;
+      const blob = await uploadBlob(path, file, {
+        access: "public",
+        handleUploadUrl: "/api/blog-upload",
+        clientPayload: idToken,
+      });
+      setForm(f => ({ ...f, [kind === "image" ? "image" : "audioUrl"]: blob.url }));
+    } catch (err) {
+      console.error(`Error uploading ${kind}:`, err);
+      setError(`Couldn't upload that file. Please try again.`);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleSave = async (published: boolean) => {
+    if (!form.title.trim() || !form.content.trim()) return;
+    setSaving(true);
+    setError(null);
+    try {
+      const payload = {
+        title: form.title.trim(),
+        excerpt: form.excerpt.trim(),
+        content: form.content,
+        category: form.category,
+        image: form.image,
+        audioUrl: form.audioUrl,
+        lang: form.lang,
+        author: displayName,
+        published,
+      };
+      if (editingId) {
+        await updateDoc(doc(db, "blogs", editingId), { ...payload, updatedAt: serverTimestamp() });
+      } else {
+        const slug = await uniqueSlug(slugify(form.title));
+        await addDoc(collection(db, "blogs"), { ...payload, slug, createdAt: serverTimestamp() });
+      }
+      resetForm();
+    } catch (err) {
+      console.error("Error saving post:", err);
+      setError("Couldn't save the post. Please try again.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const deleteBlob = async (url: string) => {
+    try {
+      const idToken = await user.getIdToken();
+      await fetch("/api/blog-delete-blob", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${idToken}` },
+        body: JSON.stringify({ url }),
+      });
+    } catch (err) {
+      console.error("Error deleting blob:", err);
+    }
+  };
+
+  const handleDelete = async (post: BlogPostDoc) => {
+    if (!window.confirm(et.deleteConfirm)) return;
+    try {
+      await deleteDoc(doc(db, "blogs", post.id));
+      if (post.image) deleteBlob(post.image);
+      if (post.audioUrl) deleteBlob(post.audioUrl);
+      if (editingId === post.id) resetForm();
+    } catch (err) {
+      console.error("Error deleting post:", err);
+    }
+  };
+
+  return (
+    <div className="max-w-3xl mx-auto px-6 py-12">
+      <div className="flex items-center justify-between mb-10">
+        <div className="flex items-center gap-2">
+          <img src="/logo.svg" alt="Niramay Logo" className="w-8 h-8" referrerPolicy="no-referrer" />
+          <span className="font-serif text-xl font-bold">{wt.pageTitle}</span>
+          <span className="text-sm text-muted-foreground">— {displayName}</span>
+        </div>
+        <Button variant="ghost" size="sm" className="gap-2" onClick={() => signOut(auth)}>
+          <LogOut className="w-4 h-4" /> {wt.signOut}
+        </Button>
+      </div>
+
+      <Card className="border-stone-100 mb-12">
+        <CardHeader>
+          <CardTitle className="font-serif text-2xl">{editingId ? et.editTitle : et.newTitle}</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-stone-600">{et.titleLabel}</label>
+            <input
+              className="w-full px-4 py-3 rounded-xl border border-stone-200 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all font-serif italic text-lg"
+              value={form.title}
+              onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
+            />
+          </div>
+
+          <div className="grid sm:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-stone-600">{et.categoryLabel}</label>
+              <select
+                className="w-full px-4 py-3 rounded-xl border border-stone-200 bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
+                value={form.category}
+                onChange={e => setForm(f => ({ ...f, category: e.target.value }))}
+              >
+                {BLOG_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-stone-600">Language</label>
+              <select
+                className="w-full px-4 py-3 rounded-xl border border-stone-200 bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
+                value={form.lang}
+                onChange={e => setForm(f => ({ ...f, lang: e.target.value as "EN" | "DE" }))}
+              >
+                <option value="EN">English</option>
+                <option value="DE">Deutsch</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-stone-600">{et.excerptLabel}</label>
+            <textarea
+              className="w-full px-4 py-3 rounded-xl border border-stone-200 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all h-20 resize-none"
+              value={form.excerpt}
+              onChange={e => setForm(f => ({ ...f, excerpt: e.target.value }))}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-stone-600">{et.contentLabel}</label>
+            <p className="text-xs text-muted-foreground">{et.contentHint}</p>
+            <textarea
+              className="w-full px-4 py-3 rounded-xl border border-stone-200 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all h-64"
+              value={form.content}
+              onChange={e => setForm(f => ({ ...f, content: e.target.value }))}
+            />
+          </div>
+
+          <div className="grid sm:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-stone-600">{et.imageLabel}</label>
+              {form.image ? (
+                <div className="relative w-fit">
+                  <img src={form.image} className="h-28 rounded-lg object-cover" referrerPolicy="no-referrer" />
+                  <button
+                    type="button"
+                    className="absolute -top-2 -right-2 bg-white rounded-full p-1.5 border border-stone-200 shadow-sm hover:text-red-600"
+                    onClick={() => setForm(f => ({ ...f, image: "" }))}
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              ) : (
+                <label className="flex items-center gap-2 px-4 py-3 rounded-xl border border-dashed border-stone-300 text-sm text-muted-foreground cursor-pointer hover:border-primary/40 hover:text-primary transition-colors w-fit">
+                  <Upload className="w-4 h-4" />
+                  {uploadingImage ? et.uploading : et.uploadImage}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    disabled={uploadingImage}
+                    onChange={e => { const file = e.target.files?.[0]; if (file) handleUpload(file, "image"); e.target.value = ""; }}
+                  />
+                </label>
+              )}
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-stone-600">{et.audioLabel}</label>
+              {form.audioUrl ? (
+                <div className="flex items-center gap-2">
+                  <audio controls src={form.audioUrl} className="h-10 max-w-[220px]" />
+                  <button
+                    type="button"
+                    className="p-1.5 rounded-full border border-stone-200 hover:text-red-600"
+                    onClick={() => setForm(f => ({ ...f, audioUrl: "" }))}
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              ) : (
+                <label className="flex items-center gap-2 px-4 py-3 rounded-xl border border-dashed border-stone-300 text-sm text-muted-foreground cursor-pointer hover:border-primary/40 hover:text-primary transition-colors w-fit">
+                  <Upload className="w-4 h-4" />
+                  {uploadingAudio ? et.uploading : et.uploadAudio}
+                  <input
+                    type="file"
+                    accept="audio/*"
+                    className="hidden"
+                    disabled={uploadingAudio}
+                    onChange={e => { const file = e.target.files?.[0]; if (file) handleUpload(file, "audio"); e.target.value = ""; }}
+                  />
+                </label>
+              )}
+            </div>
+          </div>
+
+          {error && <p className="text-sm text-red-600">{error}</p>}
+
+          <div className="flex flex-wrap justify-end gap-3 pt-2">
+            {editingId && <Button type="button" variant="ghost" onClick={resetForm}>{et.cancel}</Button>}
+            <Button
+              type="button"
+              variant="outline"
+              disabled={saving || uploadingImage || uploadingAudio || !form.title.trim() || !form.content.trim()}
+              onClick={() => handleSave(false)}
+            >
+              {saving ? et.saving : et.saveDraft}
+            </Button>
+            <Button
+              type="button"
+              disabled={saving || uploadingImage || uploadingAudio || !form.title.trim() || !form.content.trim()}
+              onClick={() => handleSave(true)}
+            >
+              {saving ? et.saving : et.publish}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      <h2 className="text-xl font-serif font-bold mb-4">{et.yourPosts}</h2>
+      {posts.length === 0 ? (
+        <p className="text-muted-foreground text-sm">{et.noPosts}</p>
+      ) : (
+        <div className="space-y-3">
+          {posts.map(post => (
+            <div key={post.id} className="flex items-center justify-between gap-4 p-4 rounded-xl border border-stone-100 bg-white">
+              <div className="min-w-0">
+                <div className="flex items-center gap-2 mb-1">
+                  <Badge variant={post.published ? "secondary" : "outline"} className="text-xs">
+                    {post.published ? et.statusPublished : et.statusDraft}
+                  </Badge>
+                  <Badge variant="outline" className="text-xs">{post.lang}</Badge>
+                </div>
+                <p className="font-medium truncate">{post.title}</p>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <Button variant="ghost" size="icon" onClick={() => startEdit(post)}>
+                  <Pencil className="w-4 h-4" />
+                </Button>
+                <Button variant="ghost" size="icon" className="hover:text-red-600" onClick={() => handleDelete(post)}>
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+const WritePage = () => {
+  const [user, setUser] = useState<User | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, u => {
+      setUser(u);
+      setAuthLoading(false);
+    });
+    return unsubscribe;
+  }, []);
+
+  useSeo({ title: "Niramay Blog Admin", description: "", canonical: `${SITE_URL}/write`, lang: "EN" });
+
+  // Not content for visitors — keep it out of the index entirely rather
+  // than relying on nobody linking to it.
+  useEffect(() => {
+    let meta = document.querySelector('meta[name="robots"]') as HTMLMetaElement | null;
+    const created = !meta;
+    if (!meta) {
+      meta = document.createElement("meta");
+      meta.setAttribute("name", "robots");
+      document.head.appendChild(meta);
+    }
+    meta.setAttribute("content", "noindex, nofollow");
+    return () => {
+      if (created) meta?.remove();
+      else meta?.setAttribute("content", "index, follow");
+    };
+  }, []);
+
+  if (authLoading) return null;
+
+  return (
+    <div className="min-h-screen bg-stone-50">
+      {user ? <WriteDashboard user={user} /> : <LoginForm />}
+    </div>
   );
 };
 
@@ -2412,13 +2880,18 @@ export default function App() {
         <Route element={<AppLayout />}>
           <Route index element={<HomePage />} />
           <Route path="services/:id" element={<ServicePage />} />
+          <Route path="blog/:slug" element={<BlogPostPage />} />
           <Route path="de" element={<HomePage />} />
           <Route path="de/services/:id" element={<ServicePage />} />
+          <Route path="de/blog/:slug" element={<BlogPostPage />} />
           {/* An unknown path under /de falls back to the German home page
               rather than jumping to the English one. */}
           <Route path="de/*" element={<Navigate to="/de" replace />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
+        {/* Outside AppLayout: no marketing nav/footer/WhatsApp button on the
+            admin tool. */}
+        <Route path="write" element={<WritePage />} />
       </Routes>
     </BrowserRouter>
   );

@@ -6,3 +6,7 @@ import firebaseConfig from '../../firebase-applet-config.json';
 const app = initializeApp(firebaseConfig);
 export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
 export const auth = getAuth(app);
+// Blog image/audio uploads go to Vercel Blob (see api/blog-upload.ts), not
+// Firebase Storage — Cloud Storage on Firebase now requires the paid Blaze
+// plan, while Vercel Blob's free tier covers this easily and needs no new
+// vendor account since the site's already hosted there.

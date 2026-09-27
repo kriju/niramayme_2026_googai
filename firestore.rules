@@ -23,14 +23,31 @@ service cloud.firestore {
           && data.createdAt is timestamp;
     }
 
+    // The only two accounts that will ever exist for this app, so a plain
+    // email allowlist (rather than "any signed-in user") is enough — see
+    // api/_lib/blogAuth.ts for the matching allowlist that gates uploading
+    // blog media to Vercel Blob.
+    function isBlogAdmin() {
+      return request.auth != null
+          && request.auth.token.email in ['rijuk@niramay.me', 'richak@niramay.me'];
+    }
+
     // Blog helper
     function isValidBlog(data) {
-      return data.keys().hasAll(['slug', 'title', 'content', 'createdAt', 'lang'])
-          && data.slug is string && data.slug.size() > 0
-          && data.title is string && data.title.size() > 0
-          && data.content is string && data.content.size() > 0
+      return data.keys().hasAll(['slug', 'title', 'content', 'createdAt', 'lang', 'published'])
+          && data.keys().hasOnly(['slug', 'title', 'excerpt', 'content', 'image', 'audioUrl', 'category', 'author', 'lang', 'createdAt', 'updatedAt', 'published'])
+          && data.slug is string && data.slug.size() > 0 && data.slug.size() <= 200 && data.slug.matches('^[a-z0-9-]+$')
+          && data.title is string && data.title.size() > 0 && data.title.size() <= 200
+          && (!('excerpt' in data) || (data.excerpt is string && data.excerpt.size() <= 500))
+          && data.content is string && data.content.size() > 0 && data.content.size() <= 20000
+          && (!('image' in data) || (data.image is string && data.image.size() <= 2000))
+          && (!('audioUrl' in data) || (data.audioUrl is string && data.audioUrl.size() <= 2000))
+          && (!('category' in data) || data.category is string)
+          && (!('author' in data) || data.author is string)
           && data.lang in ['EN', 'DE']
-          && data.createdAt is timestamp;
+          && data.createdAt is timestamp
+          && (!('updatedAt' in data) || data.updatedAt is timestamp)
+          && data.published is bool;
     }
 
     // Astrology intake helper — holds birth details + a contact, so it's
@@ -71,14 +88,16 @@ service cloud.firestore {
     }
 
     match /blogs/{blogId} {
-      allow get, list: if true;
-      // Blog authoring is admin-only content, not a public form. There's no
-      // admin sign-in flow in the app yet, so requiring auth here blocks all
-      // writes for now — once an admin login exists, this can be narrowed
-      // further (e.g. a specific admin UID or custom claim) instead of any
-      // signed-in user.
-      allow create, update: if request.auth != null && isValidBlog(incoming());
-      allow delete: if false;
+      // A public visitor's query must itself filter on published == true
+      // (as the site's public blog pages do) for Firestore to prove every
+      // possible match is allowed, same as the reviews collection below.
+      // Richa/Riju, signed in, can additionally read their own drafts —
+      // request.auth doesn't depend on resource.data, so that clause holds
+      // for every document once they're signed in, letting their admin
+      // dashboard list everything regardless of published state.
+      allow get, list: if resource.data.published == true || isBlogAdmin();
+      allow create, update: if isBlogAdmin() && isValidBlog(incoming());
+      allow delete: if isBlogAdmin();
     }
 
     match /astrologyRequests/{requestId} {
