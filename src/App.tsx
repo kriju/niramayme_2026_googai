@@ -52,7 +52,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { NavigationMenu } from "@base-ui/react/navigation-menu";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { SERVICES, TESTIMONIALS, FAQS, HEALER_CERTIFICATIONS, HEALER_IMAGES, TRANSLATIONS, ONGOING_SESSIONS, COURSES, EVENTS, GOOGLE_CALENDAR_URL, GOOGLE_REVIEW_URL } from "./constants";
+import { SERVICES, TESTIMONIALS, FAQS, HEALER_CERTIFICATIONS, HEALER_IMAGES, TRANSLATIONS, ONGOING_SESSIONS, COURSES, EVENTS, GOOGLE_CALENDAR_URL, GOOGLE_REVIEW_URL, BUSINESS_STREET_ADDRESS, BUSINESS_POSTAL_CODE, BUSINESS_CITY, GOOGLE_MAPS_URL, GOOGLE_MAPS_EMBED_URL } from "./constants";
 import { getStoredConsent, grantAnalyticsConsent, denyAnalyticsConsent, initAnalyticsFromStoredConsent, trackPageview } from "./lib/analytics";
 import { SITE_URL, BUSINESS_JSONLD_ID, useJsonLd, useSeo } from "./lib/seo";
 
@@ -2063,10 +2063,12 @@ const Footer = ({ lang, onOpenLegal }: { lang: "EN" | "DE", onOpenLegal: (type: 
 
           <div>
             <h4 className="font-bold mb-6">{t.contact}</h4>
-            <ul className="space-y-4">
+            <ul className="space-y-4 mb-6">
               <li className="flex items-start gap-3 text-muted-foreground">
                 <MapPin className="w-5 h-5 text-primary shrink-0" />
-                <span>Ostfildern, Germany</span>
+                <a href={GOOGLE_MAPS_URL} target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors">
+                  {BUSINESS_STREET_ADDRESS}, {BUSINESS_POSTAL_CODE} {BUSINESS_CITY}, Germany
+                </a>
               </li>
               <li className="flex items-start gap-3 text-muted-foreground">
                 <MessageCircle className="w-5 h-5 text-primary shrink-0" />
@@ -2075,9 +2077,26 @@ const Footer = ({ lang, onOpenLegal }: { lang: "EN" | "DE", onOpenLegal: (type: 
                 </a>
               </li>
             </ul>
+            <a
+              href={GOOGLE_MAPS_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block rounded-xl overflow-hidden border border-stone-200 hover:opacity-90 transition-opacity"
+              aria-label={t.viewOnGoogleMaps}
+            >
+              <iframe
+                src={GOOGLE_MAPS_EMBED_URL}
+                title={t.viewOnGoogleMaps}
+                width="100%"
+                height="160"
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+                className="pointer-events-none w-full h-40"
+              />
+            </a>
           </div>
         </div>
-        
+
         <Separator className="mb-8" />
         
         <div className="flex flex-col md:flex-row justify-between items-center gap-6 text-sm text-muted-foreground">
@@ -2331,10 +2350,13 @@ const AppLayout = () => {
     description: TRANSLATIONS[lang].footer.description,
     address: {
       "@type": "PostalAddress",
-      addressLocality: "Ostfildern",
+      streetAddress: BUSINESS_STREET_ADDRESS,
+      postalCode: BUSINESS_POSTAL_CODE,
+      addressLocality: BUSINESS_CITY,
       addressRegion: "Baden-Württemberg",
       addressCountry: "DE",
     },
+    hasMap: GOOGLE_MAPS_URL,
     founder: [
       { "@type": "Person", name: "Richa Kansal", jobTitle: TRANSLATIONS[lang].about.richa.title },
       { "@type": "Person", name: "Riju Kansal", jobTitle: TRANSLATIONS[lang].about.riju.title },
@@ -2343,6 +2365,7 @@ const AppLayout = () => {
       "https://www.instagram.com/niramay.me/",
       "https://www.facebook.com/niramayme/",
       "https://www.youtube.com/@richaniramayme",
+      GOOGLE_MAPS_URL,
     ],
     // Only the sessions Niramay delivers directly — the two "openInModal"
     // entries just link out to standalone third-party tools, not a service

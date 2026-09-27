@@ -3,6 +3,17 @@ import { Heart, Sparkles, Brain, Zap, ShieldCheck, Moon, Users, Star, Graduation
 export const GOOGLE_CALENDAR_URL = "https://calendar.google.com/calendar/appointments/schedules/AcZssZ0bFjK2E2xI3wiT55LqPigmiOHHDxGTghizdBbhy4MSdbw1p6CRUsxVk8gZYqJTnMgoKOAcJjZO?gv=true";
 export const GOOGLE_REVIEW_URL = "https://www.google.com/search?q=Niramay+Ostfildern+reviews";
 
+// The registered business address (same one disclosed in the Impressum,
+// § 5 TMG requires it there anyway) — reused for the LocalBusiness JSON-LD,
+// the visible footer NAP, and the Google Maps link/embed so all three stay
+// in sync instead of drifting the way the old city-only footer text did.
+export const BUSINESS_STREET_ADDRESS = "Ernst Kirchner Str 13/3";
+export const BUSINESS_POSTAL_CODE = "73760";
+export const BUSINESS_CITY = "Ostfildern";
+export const GOOGLE_MAPS_QUERY = `Niramay Wellbeing, ${BUSINESS_STREET_ADDRESS}, ${BUSINESS_POSTAL_CODE} ${BUSINESS_CITY}, Germany`;
+export const GOOGLE_MAPS_URL = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(GOOGLE_MAPS_QUERY)}`;
+export const GOOGLE_MAPS_EMBED_URL = `https://maps.google.com/maps?q=${encodeURIComponent(GOOGLE_MAPS_QUERY)}&z=15&output=embed`;
+
 // The only two people who can sign in to write/edit blog posts. Firebase
 // Auth's email/password provider needs an email-shaped identifier, so a
 // plain username like "rijuk" is mapped to `rijuk@niramay.me` under the
@@ -138,6 +149,7 @@ export const TRANSLATIONS = {
       quickLinks: "Quick Links",
       contact: "Contact",
       whatsapp: "Chat with Richa",
+      viewOnGoogleMaps: "View on Google Maps",
       rights: "All rights reserved.",
       impressum: "Impressum",
       privacy: "Privacy Policy",
@@ -508,6 +520,7 @@ export const TRANSLATIONS = {
       quickLinks: "Schnelllinks",
       contact: "Kontakt",
       whatsapp: "Chat mit Richa",
+      viewOnGoogleMaps: "Auf Google Maps ansehen",
       rights: "Alle Rechte vorbehalten.",
       impressum: "Impressum",
       privacy: "Datenschutz",
