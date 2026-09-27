@@ -19,6 +19,7 @@ import {
   Plus,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
   ExternalLink,
   Heart,
   Volume2
@@ -48,6 +49,7 @@ import {
 } from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { NavigationMenu } from "@base-ui/react/navigation-menu";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { SERVICES, TESTIMONIALS, FAQS, HEALER_CERTIFICATIONS, HEALER_IMAGES, TRANSLATIONS, ONGOING_SESSIONS, COURSES, EVENTS, GOOGLE_CALENDAR_URL, GOOGLE_REVIEW_URL } from "./constants";
@@ -703,6 +705,35 @@ const BlogSection = ({ lang }: { lang: "EN" | "DE" }) => {
   );
 };
 
+// A single link inside a nav dropdown's popup, wired to react-router via
+// Base UI's `render` prop (see the "Use the render prop for client-side
+// routing" note in the Navigation Menu docs) so it keeps history-based
+// navigation while getting the menu's own close-on-click/keyboard behavior.
+const NavDropdownLink = ({ to, children }: { to: string, children: React.ReactNode }) => (
+  <NavigationMenu.Link
+    render={<Link to={to} />}
+    closeOnClick
+    className="block rounded-lg px-3 py-2 text-sm font-medium text-foreground hover:bg-stone-50 hover:text-primary transition-colors"
+  >
+    {children}
+  </NavigationMenu.Link>
+);
+
+// A top-level nav item that's just a link (Reviews, FAQ) rather than a
+// dropdown — same visual weight as a dropdown trigger so the row reads as
+// one consistent set of items.
+const NavFlatLink = ({ to, children }: { to: string, children: React.ReactNode }) => (
+  <NavigationMenu.Item>
+    <NavigationMenu.Link
+      render={<Link to={to} />}
+      closeOnClick
+      className="flex h-full items-center text-sm font-medium hover:text-primary transition-colors outline-none"
+    >
+      {children}
+    </NavigationMenu.Link>
+  </NavigationMenu.Item>
+);
+
 const Navbar = ({ lang, onToggleLang, onBook }: { lang: "EN" | "DE", onToggleLang: () => void, onBook: (ctx?: BookingContext) => void }) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -715,6 +746,8 @@ const Navbar = ({ lang, onToggleLang, onBook }: { lang: "EN" | "DE", onToggleLan
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  const closeMobileMenu = () => setIsMobileMenuOpen(false);
+
   return (
     <nav className={`fixed top-0 w-full z-50 transition-all duration-300 ${isScrolled ? "bg-background/80 backdrop-blur-md border-b py-3" : "bg-transparent py-6"}`}>
       <div className="container mx-auto px-6 flex justify-between items-center">
@@ -723,23 +756,72 @@ const Navbar = ({ lang, onToggleLang, onBook }: { lang: "EN" | "DE", onToggleLan
           <span className="font-serif text-2xl font-bold tracking-tight whitespace-nowrap">Niramay</span>
         </Link>
 
-        {/* Nine links plus the language toggle and Book Now button need
-            roughly 1250px to lay out on one line without crowding the logo
-            or running past the viewport edge — xl, not md, is the first
-            breakpoint that actually has room; below it the hamburger menu
-            (with the same links) takes over instead. */}
-        <div className="hidden xl:flex items-center gap-8">
-          <Link to={`${prefix}/#services`} className="text-sm font-medium hover:text-primary transition-colors">{t.services}</Link>
-          <Link to={`${prefix}/#sessions`} className="text-sm font-medium hover:text-primary transition-colors">{t.sessions}</Link>
-          <Link to={`${prefix}/#courses`} className="text-sm font-medium hover:text-primary transition-colors">{t.courses}</Link>
-          <Link to={`${prefix}/#about`} className="text-sm font-medium hover:text-primary transition-colors">{t.about}</Link>
-          <Link to={`${prefix}/#events`} className="text-sm font-medium hover:text-primary transition-colors">{t.events}</Link>
-          <Link to={`${prefix}/#book`} className="text-sm font-medium hover:text-primary transition-colors">{t.book}</Link>
-          <Link to={`${prefix}/#blog`} className="text-sm font-medium hover:text-primary transition-colors">{t.blog}</Link>
-          <Link to={`${prefix}/#testimonials`} className="text-sm font-medium hover:text-primary transition-colors">{t.reviews}</Link>
-          <Link to={`${prefix}/#faq`} className="text-sm font-medium hover:text-primary transition-colors">{t.faq}</Link>
+        {/* Nine individual links used to need ~1250px to lay out without
+            crowding the logo. Grouped into three dropdowns (About,
+            Offerings, Read) plus the two links that matter most right
+            before booking (Reviews, FAQ), the same content now fits from
+            md up — see the conversation in the PR/commit for the reasoning. */}
+        <div className="hidden md:flex items-center gap-6">
+          <NavigationMenu.Root render={<div />} className="min-w-0">
+            <NavigationMenu.List className="flex items-center gap-6">
+              <NavigationMenu.Item>
+                <NavigationMenu.Trigger className="flex items-center gap-1 text-sm font-medium hover:text-primary transition-colors outline-none data-popup-open:text-primary">
+                  {t.aboutGroup}
+                  <NavigationMenu.Icon className="transition-transform duration-200 data-popup-open:rotate-180">
+                    <ChevronDown className="w-3.5 h-3.5" />
+                  </NavigationMenu.Icon>
+                </NavigationMenu.Trigger>
+                <NavigationMenu.Content className="w-48 p-2">
+                  <NavDropdownLink to={`${prefix}/#about`}>{t.trainers}</NavDropdownLink>
+                  <NavDropdownLink to={`${prefix}/#events`}>{t.events}</NavDropdownLink>
+                </NavigationMenu.Content>
+              </NavigationMenu.Item>
 
-          <div className="flex items-center gap-4 ml-4">
+              <NavigationMenu.Item>
+                <NavigationMenu.Trigger className="flex items-center gap-1 text-sm font-medium hover:text-primary transition-colors outline-none data-popup-open:text-primary">
+                  {t.offerings}
+                  <NavigationMenu.Icon className="transition-transform duration-200 data-popup-open:rotate-180">
+                    <ChevronDown className="w-3.5 h-3.5" />
+                  </NavigationMenu.Icon>
+                </NavigationMenu.Trigger>
+                <NavigationMenu.Content className="w-48 p-2">
+                  <NavDropdownLink to={`${prefix}/#services`}>{t.services}</NavDropdownLink>
+                  <NavDropdownLink to={`${prefix}/#sessions`}>{t.sessions}</NavDropdownLink>
+                  <NavDropdownLink to={`${prefix}/#courses`}>{t.courses}</NavDropdownLink>
+                </NavigationMenu.Content>
+              </NavigationMenu.Item>
+
+              <NavigationMenu.Item>
+                <NavigationMenu.Trigger className="flex items-center gap-1 text-sm font-medium hover:text-primary transition-colors outline-none data-popup-open:text-primary">
+                  {t.read}
+                  <NavigationMenu.Icon className="transition-transform duration-200 data-popup-open:rotate-180">
+                    <ChevronDown className="w-3.5 h-3.5" />
+                  </NavigationMenu.Icon>
+                </NavigationMenu.Trigger>
+                <NavigationMenu.Content className="w-48 p-2">
+                  <NavDropdownLink to={`${prefix}/#blog`}>{t.blog}</NavDropdownLink>
+                  <NavDropdownLink to={`${prefix}/#book`}>{t.book}</NavDropdownLink>
+                </NavigationMenu.Content>
+              </NavigationMenu.Item>
+
+              <NavFlatLink to={`${prefix}/#testimonials`}>{t.reviews}</NavFlatLink>
+              <NavFlatLink to={`${prefix}/#faq`}>{t.faq}</NavFlatLink>
+            </NavigationMenu.List>
+
+            <NavigationMenu.Portal>
+              <NavigationMenu.Positioner
+                sideOffset={12}
+                collisionPadding={16}
+                className="z-50 box-border w-[var(--positioner-width)] max-w-[var(--available-width)] transition-[top,left,right,bottom] duration-200 ease-out data-instant:transition-none"
+              >
+                <NavigationMenu.Popup className="relative w-[var(--popup-width)] h-[var(--popup-height)] origin-[var(--transform-origin)] overflow-hidden rounded-2xl border border-stone-100 bg-white shadow-xl transition-[opacity,transform,width,height] duration-200 ease-out data-starting-style:scale-95 data-starting-style:opacity-0 data-ending-style:scale-95 data-ending-style:opacity-0">
+                  <NavigationMenu.Viewport className="relative w-full h-full" />
+                </NavigationMenu.Popup>
+              </NavigationMenu.Positioner>
+            </NavigationMenu.Portal>
+          </NavigationMenu.Root>
+
+          <div className="flex items-center gap-4">
             <Button variant="ghost" size="sm" onClick={onToggleLang} className="gap-2">
               <Globe className="w-4 h-4" />
               {lang}
@@ -748,7 +830,7 @@ const Navbar = ({ lang, onToggleLang, onBook }: { lang: "EN" | "DE", onToggleLan
           </div>
         </div>
 
-        <button className="xl:hidden" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
+        <button className="md:hidden" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
           {isMobileMenuOpen ? <X /> : <Menu />}
         </button>
       </div>
@@ -759,18 +841,41 @@ const Navbar = ({ lang, onToggleLang, onBook }: { lang: "EN" | "DE", onToggleLan
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="absolute top-full left-0 w-full bg-background border-b xl:hidden p-6 flex flex-col gap-4"
+            className="absolute top-full left-0 w-full max-h-[calc(100vh-5rem)] overflow-y-auto bg-background border-b md:hidden p-6 flex flex-col gap-1"
           >
-            <Link to={`${prefix}/#services`} onClick={() => setIsMobileMenuOpen(false)}>{t.services}</Link>
-            <Link to={`${prefix}/#sessions`} onClick={() => setIsMobileMenuOpen(false)}>{t.sessions}</Link>
-            <Link to={`${prefix}/#courses`} onClick={() => setIsMobileMenuOpen(false)}>{t.courses}</Link>
-            <Link to={`${prefix}/#about`} onClick={() => setIsMobileMenuOpen(false)}>{t.about}</Link>
-            <Link to={`${prefix}/#events`} onClick={() => setIsMobileMenuOpen(false)}>{t.events}</Link>
-            <Link to={`${prefix}/#book`} onClick={() => setIsMobileMenuOpen(false)}>{t.book}</Link>
-            <Link to={`${prefix}/#blog`} onClick={() => setIsMobileMenuOpen(false)}>{t.blog}</Link>
-            <Link to={`${prefix}/#testimonials`} onClick={() => setIsMobileMenuOpen(false)}>{t.reviews}</Link>
-            <Link to={`${prefix}/#faq`} onClick={() => setIsMobileMenuOpen(false)}>{t.faq}</Link>
-            <Separator />
+            <Accordion type="single" collapsible className="w-full">
+              <AccordionItem value="about">
+                <AccordionTrigger className="text-base font-medium">{t.aboutGroup}</AccordionTrigger>
+                <AccordionContent>
+                  <div className="flex flex-col gap-3 pl-2">
+                    <Link to={`${prefix}/#about`} onClick={closeMobileMenu} className="text-muted-foreground hover:text-primary transition-colors">{t.trainers}</Link>
+                    <Link to={`${prefix}/#events`} onClick={closeMobileMenu} className="text-muted-foreground hover:text-primary transition-colors">{t.events}</Link>
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+              <AccordionItem value="offerings">
+                <AccordionTrigger className="text-base font-medium">{t.offerings}</AccordionTrigger>
+                <AccordionContent>
+                  <div className="flex flex-col gap-3 pl-2">
+                    <Link to={`${prefix}/#services`} onClick={closeMobileMenu} className="text-muted-foreground hover:text-primary transition-colors">{t.services}</Link>
+                    <Link to={`${prefix}/#sessions`} onClick={closeMobileMenu} className="text-muted-foreground hover:text-primary transition-colors">{t.sessions}</Link>
+                    <Link to={`${prefix}/#courses`} onClick={closeMobileMenu} className="text-muted-foreground hover:text-primary transition-colors">{t.courses}</Link>
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+              <AccordionItem value="read">
+                <AccordionTrigger className="text-base font-medium">{t.read}</AccordionTrigger>
+                <AccordionContent>
+                  <div className="flex flex-col gap-3 pl-2">
+                    <Link to={`${prefix}/#blog`} onClick={closeMobileMenu} className="text-muted-foreground hover:text-primary transition-colors">{t.blog}</Link>
+                    <Link to={`${prefix}/#book`} onClick={closeMobileMenu} className="text-muted-foreground hover:text-primary transition-colors">{t.book}</Link>
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
+            <Link to={`${prefix}/#testimonials`} onClick={closeMobileMenu} className="py-2.5 font-medium">{t.reviews}</Link>
+            <Link to={`${prefix}/#faq`} onClick={closeMobileMenu} className="py-2.5 font-medium">{t.faq}</Link>
+            <Separator className="my-2" />
             <div className="flex justify-between items-center">
               <Button variant="ghost" onClick={onToggleLang} className="gap-2">
                 <Globe className="w-4 h-4" />

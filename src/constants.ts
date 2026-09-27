@@ -26,6 +26,13 @@ export const TRANSLATIONS = {
       bookNow: "Book Now",
       book: "My Book",
       switchLang: "Switch to German",
+      // Navbar group labels: the desktop/mobile nav collapses the flat
+      // list of links above into three dropdowns (About, Offerings, Read)
+      // plus the standalone Reviews/FAQ links — see Navbar in App.tsx.
+      aboutGroup: "About",
+      trainers: "Trainers",
+      offerings: "Offerings",
+      read: "Read",
     },
     hero: {
       badge: "Holistic Wellbeing in Ostfildern, Germany",
@@ -391,6 +398,10 @@ export const TRANSLATIONS = {
       bookNow: "Jetzt buchen",
       book: "Mein Buch",
       switchLang: "Auf Englisch wechseln",
+      aboutGroup: "Über uns",
+      trainers: "Trainer",
+      offerings: "Angebote",
+      read: "Lesen",
     },
     hero: {
       badge: "Ganzheitliches Wohlbefinden in Ostfildern, Deutschland",
