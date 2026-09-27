@@ -59,6 +59,10 @@ export function grantAnalyticsConsent() {
     // won't persist consent across visits; not worth surfacing to the user.
   }
   loadGtagScript();
+  // Accepting the banner doesn't change the route, so the route-change
+  // effect that normally calls trackPageview won't fire on its own here —
+  // without this, GA would never see a single hit until the next navigation.
+  trackPageview(window.location.pathname);
 }
 
 export function denyAnalyticsConsent() {
