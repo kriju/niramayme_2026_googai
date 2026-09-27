@@ -2,10 +2,13 @@ import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { handleUpload, type HandleUploadBody } from "@vercel/blob/client";
 import { requireBlogAdmin } from "./_lib/blogAuth.js";
 
-const ALLOWED_CONTENT_TYPES = [
-  "image/jpeg", "image/png", "image/webp", "image/gif",
-  "audio/mpeg", "audio/mp4", "audio/wav", "audio/ogg", "audio/webm",
-];
+// Wildcards rather than an enumerated list — browsers/OSes are inconsistent
+// about the exact MIME subtype for a given file (an .m4a recording, for
+// instance, can show up as audio/mp4, audio/x-m4a, or audio/aac depending
+// on where it came from), so matching only a hand-picked list of subtypes
+// silently rejects real image/audio files with no useful way to predict
+// which ones in advance.
+const ALLOWED_CONTENT_TYPES = ["image/*", "audio/*"];
 
 // Authorizes a client-side upload to Vercel Blob (see the upload() call in
 // WriteDashboard, src/App.tsx). The browser never gets a write token
