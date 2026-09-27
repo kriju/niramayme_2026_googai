@@ -49,6 +49,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { SERVICES, TESTIMONIALS, FAQS, HEALER_CERTIFICATIONS, HEALER_IMAGES, TRANSLATIONS, ONGOING_SESSIONS, COURSES, EVENTS, GOOGLE_CALENDAR_URL, GOOGLE_REVIEW_URL, FEATURE_BLOG_ENABLED } from "./constants";
+import { getStoredConsent, grantAnalyticsConsent, denyAnalyticsConsent, initAnalyticsFromStoredConsent, trackPageview } from "./lib/analytics";
 
 // A single booking dialog, controlled from the App root (see the other
 // ...DetailModal components below for the same lift-state-up pattern).
@@ -2059,6 +2060,43 @@ const Footer = ({ lang, onOpenLegal }: { lang: "EN" | "DE", onOpenLegal: (type: 
   );
 };
 
+// Shown once, on first visit, until the visitor picks Accept or Decline —
+// Google Analytics only loads (see src/lib/analytics.ts) after Accept, since
+// GA sets cookies and this is a German business site subject to GDPR consent
+// requirements. The choice is remembered in localStorage, so returning
+// visitors who already decided don't see it again.
+const CookieConsent = ({ lang, onOpenPrivacy }: { lang: "EN" | "DE", onOpenPrivacy: () => void }) => {
+  const [visible, setVisible] = useState(false);
+  const t = TRANSLATIONS[lang].cookieConsent;
+
+  useEffect(() => {
+    setVisible(getStoredConsent() === null);
+  }, []);
+
+  if (!visible) return null;
+
+  return (
+    <div className="fixed bottom-0 inset-x-0 z-[100] p-4 sm:p-6">
+      <div className="max-w-3xl mx-auto bg-background border border-stone-200 shadow-xl rounded-2xl p-5 sm:p-6 flex flex-col sm:flex-row sm:items-center gap-4">
+        <p className="text-sm text-muted-foreground flex-1">
+          {t.message}{" "}
+          <button type="button" onClick={onOpenPrivacy} className="underline underline-offset-2 hover:text-primary">
+            {t.privacyLink}
+          </button>
+        </p>
+        <div className="flex gap-3 shrink-0">
+          <Button variant="outline" size="sm" className="rounded-full" onClick={() => { denyAnalyticsConsent(); setVisible(false); }}>
+            {t.reject}
+          </Button>
+          <Button size="sm" className="rounded-full" onClick={() => { grantAnalyticsConsent(); setVisible(false); }}>
+            {t.accept}
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const LegalModal = ({ type, open, setOpen, lang }: { type: "impressum" | "privacy" | null, open: boolean, setOpen: (o: boolean) => void, lang: "EN" | "DE" }) => {
   if (!type) return null;
   const t = TRANSLATIONS[lang].footer.legal[type];
@@ -2226,6 +2264,19 @@ const AppLayout = () => {
     document.documentElement.lang = lang.toLowerCase();
   }, [lang]);
 
+  // Loads GA only if the visitor already granted consent on a prior visit;
+  // otherwise CookieConsent below prompts them and loads it on Accept.
+  useEffect(() => {
+    initAnalyticsFromStoredConsent();
+  }, []);
+
+  // GA's automatic page_view only fires once per document load, which for
+  // this client-side-routed SPA means only the very first page a visitor
+  // lands on would ever be recorded — so each route change is sent explicitly.
+  useEffect(() => {
+    trackPageview(location.pathname);
+  }, [location.pathname]);
+
   const businessJsonLd = useMemo(() => ({
     "@context": "https://schema.org",
     "@type": "HealthAndBeautyBusiness",
@@ -2294,6 +2345,8 @@ const AppLayout = () => {
         onOpenChange={setAstrologyIntakeOpen}
         onOpenPrivacy={() => setLegalModal("privacy")}
       />
+
+      <CookieConsent lang={lang} onOpenPrivacy={() => setLegalModal("privacy")} />
     </div>
   );
 };

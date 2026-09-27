@@ -183,10 +183,20 @@ export const TRANSLATIONS = {
             {
               title: "7. Vedic Astrology Chart Requests",
               content: "If you request a Vedic Astrology reading, we collect your name, place of birth, date of birth, time of birth, and an email address or WhatsApp number through our booking form (or, if you contact us directly, via email or WhatsApp) solely to prepare your birth chart and coordinate your session. This data is stored only for as long as needed to prepare your chart and deliver your session, and is not shared with third parties. You must actively confirm your consent before this data is submitted, and you may withdraw consent and request deletion of this data at any time by contacting richa@niramay.me."
+            },
+            {
+              title: "8. Analytics (Google Analytics)",
+              content: "With your consent, given via the cookie banner shown on your first visit, this website uses Google Analytics 4, a web analytics service provided by Google Ireland Limited (Gordon House, Barrow Street, Dublin 4, Ireland). Google Analytics uses cookies to help us understand how visitors use the site (e.g. which pages are viewed and for how long). Google may transfer this data to servers in the United States. We use Google Analytics only after you accept via the banner; you may decline or withdraw consent at any time, in which case no Google Analytics cookies are set or, if already set, are no longer used for tracking. Withdraw your consent by clearing your browser's cookies for this site and choosing \"Decline\" on the banner shown afterward."
             }
           ]
         }
       }
+    },
+    cookieConsent: {
+      message: "We use cookies to understand how visitors use this site via Google Analytics. We only set them with your consent.",
+      privacyLink: "Privacy Policy",
+      accept: "Accept",
+      reject: "Decline",
     },
     blog: {
       title: "Insights & Wisdom",
@@ -509,10 +519,20 @@ export const TRANSLATIONS = {
             {
               title: "7. Anfragen für vedische Astrologie-Horoskope",
               content: "Wenn Sie eine vedische Astrologie-Lesung anfragen, erfassen wir über unser Buchungsformular (oder, falls Sie uns direkt kontaktieren, per E-Mail oder WhatsApp) Ihren Namen, Geburtsort, Ihr Geburtsdatum, Ihre Geburtszeit sowie eine E-Mail-Adresse oder WhatsApp-Nummer, ausschließlich zur Erstellung Ihres Geburtshoroskops und zur Koordination Ihrer Sitzung. Diese Daten werden nur so lange gespeichert, wie es für die Vorbereitung Ihres Horoskops und die Durchführung Ihrer Sitzung erforderlich ist, und nicht an Dritte weitergegeben. Sie müssen Ihre Einwilligung vor dem Absenden dieser Daten aktiv bestätigen; Sie können Ihre Einwilligung jederzeit widerrufen und die Löschung dieser Daten verlangen, indem Sie uns unter richa@niramay.me kontaktieren."
+            },
+            {
+              title: "8. Analyse (Google Analytics)",
+              content: "Mit Ihrer über den beim ersten Besuch angezeigten Cookie-Banner erteilten Einwilligung nutzt diese Website Google Analytics 4, einen Webanalysedienst der Google Ireland Limited (Gordon House, Barrow Street, Dublin 4, Irland). Google Analytics verwendet Cookies, damit wir nachvollziehen können, wie Besucher:innen die Website nutzen (z. B. welche Seiten aufgerufen und wie lange sie betrachtet werden). Google kann diese Daten an Server in den USA übertragen. Wir setzen Google Analytics nur nach Ihrer Zustimmung über den Banner ein; Sie können die Zustimmung jederzeit ablehnen oder widerrufen — in diesem Fall werden keine Google-Analytics-Cookies gesetzt bzw. bereits gesetzte nicht mehr zu Tracking-Zwecken verwendet. Widerrufen Sie Ihre Zustimmung, indem Sie die Cookies Ihres Browsers für diese Website löschen und beim danach angezeigten Banner „Ablehnen“ wählen."
             }
           ]
         }
       }
+    },
+    cookieConsent: {
+      message: "Wir verwenden Cookies, um mit Google Analytics zu verstehen, wie Besucher:innen diese Website nutzen. Wir setzen sie nur mit Ihrer Einwilligung.",
+      privacyLink: "Datenschutzerklärung",
+      accept: "Akzeptieren",
+      reject: "Ablehnen",
     },
     blog: {
       title: "Einblicke & Weisheit",
