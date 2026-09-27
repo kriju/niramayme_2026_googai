@@ -947,11 +947,14 @@ const Hero = ({ lang, onBook }: { lang: "EN" | "DE", onBook: (ctx?: BookingConte
           className="relative"
         >
           <div className="aspect-[4/5] rounded-[2rem] overflow-hidden shadow-2xl relative">
-            <img 
-              src="https://picsum.photos/seed/wellness/800/1000" 
-              alt="Wellness Experience" 
+            <img
+              src="/hero-tree-ostfildern.webp"
+              alt="A solitary tree in a green field at sunset in Ostfildern"
               className="w-full h-full object-cover"
-              referrerPolicy="no-referrer"
+              width={1200}
+              height={1500}
+              loading="eager"
+              fetchPriority="high"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
           </div>
