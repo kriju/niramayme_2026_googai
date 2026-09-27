@@ -23,6 +23,14 @@ function loadGtagScript() {
   window.gtag = function gtag(...args: unknown[]) {
     window.dataLayer.push(args);
   };
+  // Gating *whether we load this script at all* behind the cookie banner
+  // isn't the same thing as telling Google's own Consent Mode the visitor
+  // granted analytics consent — without this explicit signal, gtag.js can
+  // still default analytics_storage to denied and silently drop every hit
+  // even though the tag itself initializes fine. We only ever reach this
+  // line after the visitor has actually granted consent, so it's safe to
+  // declare that upfront rather than leaving it unset.
+  window.gtag("consent", "default", { analytics_storage: "granted" });
   window.gtag("js", new Date());
   // We send page_view ourselves on route change (see trackPageview) since
   // this is a client-side-routed SPA, not a fresh document load per page.
