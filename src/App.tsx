@@ -29,7 +29,7 @@ import {
   Volume2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { auth, db, storage } from "./lib/firebase";
+import { auth, db } from "./lib/firebase";
 import {
   collection,
   onSnapshot,
@@ -51,7 +51,7 @@ import {
   signOut,
   type User
 } from "firebase/auth";
-import { ref, uploadBytesResumable, getDownloadURL, deleteObject } from "firebase/storage";
+import { upload as uploadBlob } from "@vercel/blob/client";
 import {
   Card,
   CardContent,
@@ -2522,11 +2522,18 @@ const WriteDashboard = ({ user }: { user: User }) => {
     setUploading(true);
     setError(null);
     try {
+      // api/blog-upload.ts is the actual security boundary — it checks this
+      // ID token against the two-account allowlist before issuing a token
+      // the browser can upload with, since the client never holds Vercel
+      // Blob's write token directly.
+      const idToken = await user.getIdToken();
       const path = `blog-media/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, "_")}`;
-      const task = uploadBytesResumable(ref(storage, path), file);
-      await new Promise<void>((resolve, reject) => task.on("state_changed", undefined, reject, () => resolve()));
-      const url = await getDownloadURL(task.snapshot.ref);
-      setForm(f => ({ ...f, [kind === "image" ? "image" : "audioUrl"]: url }));
+      const blob = await uploadBlob(path, file, {
+        access: "public",
+        handleUploadUrl: "/api/blog-upload",
+        clientPayload: idToken,
+      });
+      setForm(f => ({ ...f, [kind === "image" ? "image" : "audioUrl"]: blob.url }));
     } catch (err) {
       console.error(`Error uploading ${kind}:`, err);
       setError(`Couldn't upload that file. Please try again.`);
@@ -2566,12 +2573,25 @@ const WriteDashboard = ({ user }: { user: User }) => {
     }
   };
 
+  const deleteBlob = async (url: string) => {
+    try {
+      const idToken = await user.getIdToken();
+      await fetch("/api/blog-delete-blob", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${idToken}` },
+        body: JSON.stringify({ url }),
+      });
+    } catch (err) {
+      console.error("Error deleting blob:", err);
+    }
+  };
+
   const handleDelete = async (post: BlogPostDoc) => {
     if (!window.confirm(et.deleteConfirm)) return;
     try {
       await deleteDoc(doc(db, "blogs", post.id));
-      if (post.image) deleteObject(ref(storage, post.image)).catch(() => {});
-      if (post.audioUrl) deleteObject(ref(storage, post.audioUrl)).catch(() => {});
+      if (post.image) deleteBlob(post.image);
+      if (post.audioUrl) deleteBlob(post.audioUrl);
       if (editingId === post.id) resetForm();
     } catch (err) {
       console.error("Error deleting post:", err);
