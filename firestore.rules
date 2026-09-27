@@ -25,7 +25,8 @@ service cloud.firestore {
 
     // The only two accounts that will ever exist for this app, so a plain
     // email allowlist (rather than "any signed-in user") is enough — see
-    // storage.rules for the matching allowlist on uploaded blog media.
+    // api/_lib/blogAuth.ts for the matching allowlist that gates uploading
+    // blog media to Vercel Blob.
     function isBlogAdmin() {
       return request.auth != null
           && request.auth.token.email in ['rijuk@niramay.me', 'richak@niramay.me'];
