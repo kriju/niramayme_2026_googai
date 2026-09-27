@@ -17,8 +17,23 @@ export default defineConfig(({mode}) => {
     },
     server: {
       // HMR is disabled in AI Studio via DISABLE_HMR env var.
-      // Do not modifyâfile watching is disabled to prevent flickering during agent edits.
+      // Do not modify — file watching is disabled to prevent flickering during agent edits.
       hmr: process.env.DISABLE_HMR !== 'true',
+    },
+    build: {
+      rollupOptions: {
+        output: {
+          // Large third-party libraries change far less often than app code,
+          // so they get their own cacheable chunks instead of being
+          // reshipped (and re-parsed as one monolith) on every deploy.
+          manualChunks: {
+            'vendor-firebase': ['firebase/app', 'firebase/firestore'],
+            'vendor-motion': ['motion/react'],
+            'vendor-ui': ['@base-ui/react', 'lucide-react'],
+            'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+          },
+        },
+      },
     },
   };
 });
