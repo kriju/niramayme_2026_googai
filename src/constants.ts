@@ -3,18 +3,11 @@ import { Heart, Sparkles, Brain, Zap, ShieldCheck, Moon, Users, Star, Graduation
 export const GOOGLE_CALENDAR_URL = "https://calendar.google.com/calendar/appointments/schedules/AcZssZ0bFjK2E2xI3wiT55LqPigmiOHHDxGTghizdBbhy4MSdbw1p6CRUsxVk8gZYqJTnMgoKOAcJjZO?gv=true";
 export const GOOGLE_REVIEW_URL = "https://www.google.com/search?q=Niramay+Ostfildern+reviews";
 
-// Feature flags
-// The Blog section is still under active development. It's hidden by default so the
-// rest of the site can go live without it. To work on it, set
-// VITE_FEATURE_BLOG_ENABLED=true in a .env.local file (or as a Vercel Preview env var)
-// and it'll show up again in that environment only.
-export const FEATURE_BLOG_ENABLED = import.meta.env.VITE_FEATURE_BLOG_ENABLED === "true";
-
 // The only two people who can sign in to write/edit blog posts. Firebase
 // Auth's email/password provider needs an email-shaped identifier, so a
 // plain username like "rijuk" is mapped to `rijuk@niramay.me` under the
 // hood — it's never a real inbox, just an internal login identifier. The
-// matching allowlist lives in firestore.rules and storage.rules.
+// matching allowlist lives in firestore.rules and api/_lib/blogAuth.ts.
 export const BLOG_ADMIN_USERNAMES = ["rijuk", "richak"] as const;
 export const BLOG_ADMIN_EMAIL_DOMAIN = "niramay.me";
 export const usernameToLoginEmail = (username: string) => `${username.trim().toLowerCase()}@${BLOG_ADMIN_EMAIL_DOMAIN}`;
@@ -230,7 +223,7 @@ export const TRANSLATIONS = {
         titleLabel: "Post Title",
         excerptLabel: "Short Summary",
         contentLabel: "Main Content",
-        contentHint: "Press Enter to start a new paragraph.",
+        contentHint: "Press Enter to start a new paragraph. Start a line with \"## \" to make it a subheading.",
         categoryLabel: "Category",
         imageLabel: "Image (optional)",
         audioLabel: "Audio (optional)",
@@ -597,7 +590,7 @@ export const TRANSLATIONS = {
         titleLabel: "Titel des Posts",
         excerptLabel: "Kurze Zusammenfassung",
         contentLabel: "Hauptinhalt",
-        contentHint: "Drücken Sie die Eingabetaste, um einen neuen Absatz zu beginnen.",
+        contentHint: "Drücken Sie die Eingabetaste, um einen neuen Absatz zu beginnen. Beginnen Sie eine Zeile mit \"## \", um sie zu einer Zwischenüberschrift zu machen.",
         categoryLabel: "Kategorie",
         imageLabel: "Bild (optional)",
         audioLabel: "Audio (optional)",

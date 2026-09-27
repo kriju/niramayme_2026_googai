@@ -64,7 +64,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { SERVICES, TESTIMONIALS, FAQS, HEALER_CERTIFICATIONS, HEALER_IMAGES, TRANSLATIONS, ONGOING_SESSIONS, COURSES, EVENTS, GOOGLE_CALENDAR_URL, GOOGLE_REVIEW_URL, FEATURE_BLOG_ENABLED, BLOG_ADMIN_USERNAMES, usernameToLoginEmail } from "./constants";
+import { SERVICES, TESTIMONIALS, FAQS, HEALER_CERTIFICATIONS, HEALER_IMAGES, TRANSLATIONS, ONGOING_SESSIONS, COURSES, EVENTS, GOOGLE_CALENDAR_URL, GOOGLE_REVIEW_URL, BLOG_ADMIN_USERNAMES, usernameToLoginEmail } from "./constants";
 import { getStoredConsent, grantAnalyticsConsent, denyAnalyticsConsent, initAnalyticsFromStoredConsent, trackPageview } from "./lib/analytics";
 
 // A single booking dialog, controlled from the App root (see the other
@@ -854,7 +854,7 @@ const Navbar = ({ lang, onToggleLang, onBook }: { lang: "EN" | "DE", onToggleLan
           <Link to={`${prefix}/#about`} className="text-sm font-medium hover:text-primary transition-colors">{t.about}</Link>
           <Link to={`${prefix}/#events`} className="text-sm font-medium hover:text-primary transition-colors">{t.events}</Link>
           <Link to={`${prefix}/#book`} className="text-sm font-medium hover:text-primary transition-colors">{t.book}</Link>
-          {FEATURE_BLOG_ENABLED && <Link to={`${prefix}/#blog`} className="text-sm font-medium hover:text-primary transition-colors">{t.blog}</Link>}
+          <Link to={`${prefix}/#blog`} className="text-sm font-medium hover:text-primary transition-colors">{t.blog}</Link>
           <Link to={`${prefix}/#testimonials`} className="text-sm font-medium hover:text-primary transition-colors">{t.reviews}</Link>
           <Link to={`${prefix}/#faq`} className="text-sm font-medium hover:text-primary transition-colors">{t.faq}</Link>
 
@@ -886,7 +886,7 @@ const Navbar = ({ lang, onToggleLang, onBook }: { lang: "EN" | "DE", onToggleLan
             <Link to={`${prefix}/#about`} onClick={() => setIsMobileMenuOpen(false)}>{t.about}</Link>
             <Link to={`${prefix}/#events`} onClick={() => setIsMobileMenuOpen(false)}>{t.events}</Link>
             <Link to={`${prefix}/#book`} onClick={() => setIsMobileMenuOpen(false)}>{t.book}</Link>
-            {FEATURE_BLOG_ENABLED && <Link to={`${prefix}/#blog`} onClick={() => setIsMobileMenuOpen(false)}>{t.blog}</Link>}
+            <Link to={`${prefix}/#blog`} onClick={() => setIsMobileMenuOpen(false)}>{t.blog}</Link>
             <Link to={`${prefix}/#testimonials`} onClick={() => setIsMobileMenuOpen(false)}>{t.reviews}</Link>
             <Link to={`${prefix}/#faq`} onClick={() => setIsMobileMenuOpen(false)}>{t.faq}</Link>
             <Separator />
@@ -1307,7 +1307,10 @@ const BlogPostPage = () => {
           {post.category && <Badge variant="outline">{post.category}</Badge>}
           {dateStr && <span className="text-sm text-stone-400">{dateStr}</span>}
         </div>
-        <h1 className="text-4xl md:text-5xl font-serif font-bold mb-8 leading-tight">{post.title}</h1>
+        <h1 className="text-4xl md:text-5xl font-serif font-bold mb-4 leading-tight">{post.title}</h1>
+        {post.excerpt && (
+          <p className="text-xl text-muted-foreground leading-relaxed mb-8">{post.excerpt}</p>
+        )}
 
         {post.image && (
           <img
@@ -1331,10 +1334,19 @@ const BlogPostPage = () => {
           </div>
         )}
 
-        <div className="prose prose-stone max-w-none prose-lg mb-16">
-          {post.content.split('\n').map((paragraph: string, i: number) => (
-            paragraph.trim() ? <p key={i} className="text-stone-600 leading-relaxed">{paragraph}</p> : null
-          ))}
+        <div className="mb-16">
+          {post.content.split('\n').map((line: string, i: number) => {
+            const trimmed = line.trim();
+            if (!trimmed) return null;
+            // A line starting with "## " is the one bit of lightweight
+            // formatting the plain-text editor supports, for breaking a
+            // long post into labeled sections without needing a full rich
+            // text editor.
+            if (trimmed.startsWith('## ')) {
+              return <h2 key={i} className="text-2xl font-serif font-bold mt-10 mb-4 first:mt-0">{trimmed.slice(3)}</h2>;
+            }
+            return <p key={i} className="text-lg text-stone-600 leading-relaxed mb-5">{trimmed}</p>;
+          })}
         </div>
 
         <div className="flex items-center gap-4 pt-8 border-t border-stone-100 mb-16">
@@ -2055,7 +2067,7 @@ const Footer = ({ lang, onOpenLegal }: { lang: "EN" | "DE", onOpenLegal: (type: 
               <li><Link to={`${prefix}/#events`} className="text-muted-foreground hover:text-primary transition-colors">{nav.events}</Link></li>
               <li><Link to={`${prefix}/#book`} className="text-muted-foreground hover:text-primary transition-colors">{nav.book}</Link></li>
               <li><Link to={`${prefix}/#testimonials`} className="text-muted-foreground hover:text-primary transition-colors">{nav.reviews}</Link></li>
-              {FEATURE_BLOG_ENABLED && <li><Link to={`${prefix}/#blog`} className="text-muted-foreground hover:text-primary transition-colors">{nav.blog}</Link></li>}
+              <li><Link to={`${prefix}/#blog`} className="text-muted-foreground hover:text-primary transition-colors">{nav.blog}</Link></li>
               <li><Link to={`${prefix}/#faq`} className="text-muted-foreground hover:text-primary transition-colors">{nav.faq}</Link></li>
             </ul>
           </div>
@@ -2424,7 +2436,7 @@ const HomePage = () => {
       <AboutSection lang={lang} />
       <EventsSection lang={lang} />
       <BookSection lang={lang} />
-      {FEATURE_BLOG_ENABLED && <BlogSection lang={lang} />}
+      <BlogSection lang={lang} />
       <TestimonialsSection lang={lang} />
       <FAQSection lang={lang} />
 
