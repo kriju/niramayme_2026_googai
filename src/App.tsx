@@ -718,12 +718,17 @@ const Navbar = ({ lang, onToggleLang, onBook }: { lang: "EN" | "DE", onToggleLan
   return (
     <nav className={`fixed top-0 w-full z-50 transition-all duration-300 ${isScrolled ? "bg-background/80 backdrop-blur-md border-b py-3" : "bg-transparent py-6"}`}>
       <div className="container mx-auto px-6 flex justify-between items-center">
-        <Link to={prefix || "/"} className="flex items-center gap-2">
-          <img src="/logo.svg" alt="Niramay Logo" className="w-10 h-10 object-contain" referrerPolicy="no-referrer" />
-          <span className="font-serif text-2xl font-bold tracking-tight">Niramay</span>
+        <Link to={prefix || "/"} className="flex items-center gap-2 shrink-0">
+          <img src="/logo.svg" alt="Niramay Logo" className="w-10 h-10 object-contain shrink-0" referrerPolicy="no-referrer" />
+          <span className="font-serif text-2xl font-bold tracking-tight whitespace-nowrap">Niramay</span>
         </Link>
 
-        <div className="hidden md:flex items-center gap-8">
+        {/* Nine links plus the language toggle and Book Now button need
+            roughly 1250px to lay out on one line without crowding the logo
+            or running past the viewport edge — xl, not md, is the first
+            breakpoint that actually has room; below it the hamburger menu
+            (with the same links) takes over instead. */}
+        <div className="hidden xl:flex items-center gap-8">
           <Link to={`${prefix}/#services`} className="text-sm font-medium hover:text-primary transition-colors">{t.services}</Link>
           <Link to={`${prefix}/#sessions`} className="text-sm font-medium hover:text-primary transition-colors">{t.sessions}</Link>
           <Link to={`${prefix}/#courses`} className="text-sm font-medium hover:text-primary transition-colors">{t.courses}</Link>
@@ -743,7 +748,7 @@ const Navbar = ({ lang, onToggleLang, onBook }: { lang: "EN" | "DE", onToggleLan
           </div>
         </div>
 
-        <button className="md:hidden" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
+        <button className="xl:hidden" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
           {isMobileMenuOpen ? <X /> : <Menu />}
         </button>
       </div>
@@ -754,7 +759,7 @@ const Navbar = ({ lang, onToggleLang, onBook }: { lang: "EN" | "DE", onToggleLan
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="absolute top-full left-0 w-full bg-background border-b md:hidden p-6 flex flex-col gap-4"
+            className="absolute top-full left-0 w-full bg-background border-b xl:hidden p-6 flex flex-col gap-4"
           >
             <Link to={`${prefix}/#services`} onClick={() => setIsMobileMenuOpen(false)}>{t.services}</Link>
             <Link to={`${prefix}/#sessions`} onClick={() => setIsMobileMenuOpen(false)}>{t.sessions}</Link>
