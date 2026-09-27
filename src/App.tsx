@@ -26,6 +26,8 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { db } from "./lib/firebase";
+import { AuthProvider, useAuth } from "./lib/auth";
+import { AuthDialog } from "./components/AuthDialog";
 import {
   collection,
   onSnapshot,
@@ -167,12 +169,24 @@ const EMPTY_ASTROLOGY_FORM: AstrologyForm = { name: "", placeOfBirth: "", dateOf
 
 const AstrologyIntakeModal = ({ lang, open, onOpenChange, onOpenPrivacy }: { lang: "EN" | "DE", open: boolean, onOpenChange: (o: boolean) => void, onOpenPrivacy: () => void }) => {
   const t = TRANSLATIONS[lang].astrologyIntake;
+  const { profile } = useAuth();
   const [step, setStep] = useState<AstrologyStep>("details");
   const [form, setForm] = useState<AstrologyForm>(EMPTY_ASTROLOGY_FORM);
   const [requestId, setRequestId] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [paying, setPaying] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Prefill from the signed-in user's saved profile, without overwriting
+  // anything they've already typed into the form themselves.
+  useEffect(() => {
+    if (!open || !profile) return;
+    setForm(f => ({
+      ...f,
+      name: f.name || profile.displayName,
+      contact: f.contact || profile.email,
+    }));
+  }, [open, profile]);
 
   // Short human-quotable code derived from the Firestore doc ID, shown to
   // the visitor and re-derived server-side (see api/notify-astrology-request.ts)
@@ -407,6 +421,7 @@ const AstrologyIntakeModal = ({ lang, open, onOpenChange, onOpenPrivacy }: { lan
 
 const LeaveReviewModal = ({ lang }: { lang: "EN" | "DE" }) => {
   const t = TRANSLATIONS[lang].testimonials;
+  const { profile } = useAuth();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -416,6 +431,13 @@ const LeaveReviewModal = ({ lang }: { lang: "EN" | "DE" }) => {
     category: "Mental Clarity",
     role: "",
   });
+
+  // Prefill from the signed-in user's saved profile, without overwriting
+  // anything they've already typed into the form themselves.
+  useEffect(() => {
+    if (!open || !profile) return;
+    setFormData(f => ({ ...f, name: f.name || profile.displayName }));
+  }, [open, profile]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -738,7 +760,15 @@ const Navbar = ({ lang, onToggleLang, onBook }: { lang: "EN" | "DE", onToggleLan
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const t = TRANSLATIONS[lang].nav;
+  const ta = TRANSLATIONS[lang].auth;
   const prefix = langPrefix(lang);
+  const { user, profile, loading, logOut } = useAuth();
+  const [authOpen, setAuthOpen] = useState(false);
+  const [authMode, setAuthMode] = useState<"login" | "signup">("login");
+  const openAuth = (mode: "login" | "signup") => {
+    setAuthMode(mode);
+    setAuthOpen(true);
+  };
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 20);
@@ -826,6 +856,21 @@ const Navbar = ({ lang, onToggleLang, onBook }: { lang: "EN" | "DE", onToggleLan
               <Globe className="w-4 h-4" />
               {lang}
             </Button>
+            {!loading && (
+              user ? (
+                <div className="flex items-center gap-3">
+                  <span className="text-sm font-medium text-muted-foreground max-w-[140px] truncate">
+                    {ta.helloPrefix}{profile?.displayName || user.email}
+                  </span>
+                  <Button variant="ghost" size="sm" onClick={() => logOut()}>{ta.navLogOut}</Button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <Button variant="ghost" size="sm" onClick={() => openAuth("login")}>{ta.navLogIn}</Button>
+                  <Button variant="outline" size="sm" className="rounded-full" onClick={() => openAuth("signup")}>{ta.navSignUp}</Button>
+                </div>
+              )
+            )}
             <Button size="sm" className="rounded-full px-6" onClick={() => onBook()}>{t.bookNow}</Button>
           </div>
         </div>
@@ -876,6 +921,21 @@ const Navbar = ({ lang, onToggleLang, onBook }: { lang: "EN" | "DE", onToggleLan
             <Link to={`${prefix}/#testimonials`} onClick={closeMobileMenu} className="py-2.5 font-medium">{t.reviews}</Link>
             <Link to={`${prefix}/#faq`} onClick={closeMobileMenu} className="py-2.5 font-medium">{t.faq}</Link>
             <Separator className="my-2" />
+            {!loading && (
+              user ? (
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-sm font-medium text-muted-foreground truncate">
+                    {ta.helloPrefix}{profile?.displayName || user.email}
+                  </span>
+                  <Button variant="ghost" size="sm" onClick={() => { closeMobileMenu(); logOut(); }}>{ta.navLogOut}</Button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-3">
+                  <Button variant="ghost" size="sm" className="flex-1" onClick={() => { closeMobileMenu(); openAuth("login"); }}>{ta.navLogIn}</Button>
+                  <Button variant="outline" size="sm" className="flex-1 rounded-full" onClick={() => { closeMobileMenu(); openAuth("signup"); }}>{ta.navSignUp}</Button>
+                </div>
+              )
+            )}
             <div className="flex justify-between items-center">
               <Button variant="ghost" onClick={onToggleLang} className="gap-2">
                 <Globe className="w-4 h-4" />
@@ -886,6 +946,8 @@ const Navbar = ({ lang, onToggleLang, onBook }: { lang: "EN" | "DE", onToggleLan
           </motion.div>
         )}
       </AnimatePresence>
+
+      <AuthDialog lang={lang} open={authOpen} onOpenChange={setAuthOpen} initialMode={authMode} />
     </nav>
   );
 };
@@ -2504,31 +2566,33 @@ const WritePage = lazy(() => import("./pages/WritePage"));
 
 export default function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route element={<AppLayout />}>
-          <Route index element={<HomePage />} />
-          <Route path="services/:id" element={<ServicePage />} />
-          <Route path="blog/:slug" element={<BlogPostPage />} />
-          <Route path="de" element={<HomePage />} />
-          <Route path="de/services/:id" element={<ServicePage />} />
-          <Route path="de/blog/:slug" element={<BlogPostPage />} />
-          {/* An unknown path under /de falls back to the German home page
-              rather than jumping to the English one. */}
-          <Route path="de/*" element={<Navigate to="/de" replace />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Route>
-        {/* Outside AppLayout: no marketing nav/footer/WhatsApp button on the
-            admin tool. */}
-        <Route
-          path="write"
-          element={
-            <Suspense fallback={null}>
-              <WritePage />
-            </Suspense>
-          }
-        />
-      </Routes>
-    </BrowserRouter>
+    <AuthProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route element={<AppLayout />}>
+            <Route index element={<HomePage />} />
+            <Route path="services/:id" element={<ServicePage />} />
+            <Route path="blog/:slug" element={<BlogPostPage />} />
+            <Route path="de" element={<HomePage />} />
+            <Route path="de/services/:id" element={<ServicePage />} />
+            <Route path="de/blog/:slug" element={<BlogPostPage />} />
+            {/* An unknown path under /de falls back to the German home page
+                rather than jumping to the English one. */}
+            <Route path="de/*" element={<Navigate to="/de" replace />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Route>
+          {/* Outside AppLayout: no marketing nav/footer/WhatsApp button on the
+              admin tool. */}
+          <Route
+            path="write"
+            element={
+              <Suspense fallback={null}>
+                <WritePage />
+              </Suspense>
+            }
+          />
+        </Routes>
+      </BrowserRouter>
+    </AuthProvider>
   );
 }
