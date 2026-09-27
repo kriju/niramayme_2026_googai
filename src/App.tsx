@@ -2601,7 +2601,8 @@ const WriteDashboard = ({ user }: { user: User }) => {
       setForm(f => ({ ...f, [kind === "image" ? "image" : "audioUrl"]: blob.url }));
     } catch (err) {
       console.error(`Error uploading ${kind}:`, err);
-      setError(`Couldn't upload that file. Please try again.`);
+      const reason = err instanceof Error ? err.message : String(err);
+      setError(`Couldn't upload that file: ${reason}`);
     } finally {
       setUploading(false);
     }
