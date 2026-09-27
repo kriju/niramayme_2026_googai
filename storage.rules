@@ -1,0 +1,22 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Default deny.
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+
+    // Blog post images/audio. Anyone can view a published post's media;
+    // only the two admin accounts (see firestore.rules for the same
+    // allowlist) can upload. Kept as a plain email allowlist rather than
+    // "any signed-in user" since these are the only two accounts that will
+    // ever exist for this app.
+    match /blog-media/{fileName} {
+      allow read: if true;
+      allow write: if request.auth != null
+                   && request.auth.token.email in ['rijuk@niramay.me', 'richak@niramay.me']
+                   && request.resource.size < 25 * 1024 * 1024
+                   && (request.resource.contentType.matches('image/.*') || request.resource.contentType.matches('audio/.*'));
+    }
+  }
+}

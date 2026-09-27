@@ -10,6 +10,15 @@ export const GOOGLE_REVIEW_URL = "https://www.google.com/search?q=Niramay+Ostfil
 // and it'll show up again in that environment only.
 export const FEATURE_BLOG_ENABLED = import.meta.env.VITE_FEATURE_BLOG_ENABLED === "true";
 
+// The only two people who can sign in to write/edit blog posts. Firebase
+// Auth's email/password provider needs an email-shaped identifier, so a
+// plain username like "rijuk" is mapped to `rijuk@niramay.me` under the
+// hood — it's never a real inbox, just an internal login identifier. The
+// matching allowlist lives in firestore.rules and storage.rules.
+export const BLOG_ADMIN_USERNAMES = ["rijuk", "richak"] as const;
+export const BLOG_ADMIN_EMAIL_DOMAIN = "niramay.me";
+export const usernameToLoginEmail = (username: string) => `${username.trim().toLowerCase()}@${BLOG_ADMIN_EMAIL_DOMAIN}`;
+
 export const TRANSLATIONS = {
   EN: {
     nav: {
@@ -206,16 +215,46 @@ export const TRANSLATIONS = {
         tarot: "Tarot Reading",
         chair: "Chair Yoga"
       },      editor: {
-        title: "Create Post",
+        newTitle: "New Post",
+        editTitle: "Edit Post",
         titleLabel: "Post Title",
         excerptLabel: "Short Summary",
         contentLabel: "Main Content",
+        contentHint: "Press Enter to start a new paragraph.",
         categoryLabel: "Category",
-        imageLabel: "Image URL (Unsplash)",
-        submit: "Publish Article",
+        imageLabel: "Image (optional)",
+        audioLabel: "Audio (optional)",
+        uploadImage: "Upload Image",
+        uploadAudio: "Upload Audio",
+        uploading: "Uploading...",
+        remove: "Remove",
+        saveDraft: "Save Draft",
+        publish: "Publish",
+        saving: "Saving...",
         cancel: "Cancel",
-        saving: "Publishing..."
+        delete: "Delete",
+        deleteConfirm: "Delete this post? This can't be undone.",
+        yourPosts: "Your Posts",
+        noPosts: "No posts yet — write your first one above.",
+        statusPublished: "Published",
+        statusDraft: "Draft",
+        edit: "Edit",
       }
+    },
+    write: {
+      pageTitle: "Niramay Blog",
+      usernameLabel: "Username",
+      passwordLabel: "Password",
+      signIn: "Sign In",
+      signingIn: "Signing in...",
+      signOut: "Sign Out",
+      invalidCredentials: "Invalid username or password.",
+    },
+    blogPost: {
+      home: "Home",
+      breadcrumbBlog: "Blog",
+      listenLabel: "Listen to this article",
+      otherPostsTitle: "More Posts",
     },
     astrology: {
       badge: "1:1 Astrological Guidance & Kundali Analysis",
@@ -533,16 +572,46 @@ export const TRANSLATIONS = {
         chair: "Stuhl-Yoga"
       },
       editor: {
-        title: "Post erstellen",
+        newTitle: "Neuer Post",
+        editTitle: "Post bearbeiten",
         titleLabel: "Titel des Posts",
         excerptLabel: "Kurze Zusammenfassung",
         contentLabel: "Hauptinhalt",
+        contentHint: "Drücken Sie die Eingabetaste, um einen neuen Absatz zu beginnen.",
         categoryLabel: "Kategorie",
-        imageLabel: "Bild-URL (Unsplash)",
-        submit: "Artikel veröffentlichen",
+        imageLabel: "Bild (optional)",
+        audioLabel: "Audio (optional)",
+        uploadImage: "Bild hochladen",
+        uploadAudio: "Audio hochladen",
+        uploading: "Wird hochgeladen...",
+        remove: "Entfernen",
+        saveDraft: "Als Entwurf speichern",
+        publish: "Veröffentlichen",
+        saving: "Wird gespeichert...",
         cancel: "Abbrechen",
-        saving: "Wird veröffentlicht..."
+        delete: "Löschen",
+        deleteConfirm: "Diesen Post löschen? Dies kann nicht rückgängig gemacht werden.",
+        yourPosts: "Ihre Beiträge",
+        noPosts: "Noch keine Beiträge — schreiben Sie oben Ihren ersten.",
+        statusPublished: "Veröffentlicht",
+        statusDraft: "Entwurf",
+        edit: "Bearbeiten",
       }
+    },
+    write: {
+      pageTitle: "Niramay Blog",
+      usernameLabel: "Benutzername",
+      passwordLabel: "Passwort",
+      signIn: "Anmelden",
+      signingIn: "Anmeldung läuft...",
+      signOut: "Abmelden",
+      invalidCredentials: "Ungültiger Benutzername oder Passwort.",
+    },
+    blogPost: {
+      home: "Startseite",
+      breadcrumbBlog: "Blog",
+      listenLabel: "Diesen Artikel anhören",
+      otherPostsTitle: "Weitere Beiträge",
     },
     astrology: {
       badge: "1:1 Astrologische Beratung & Kundali-Analyse",
