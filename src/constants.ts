@@ -280,6 +280,10 @@ export const TRANSLATIONS = {
         statusPublished: "Published",
         statusDraft: "Draft",
         edit: "Edit",
+        translateToGerman: "Translate to German",
+        translating: "Translating...",
+        translateError: "Translation failed. Please try again.",
+        translateHint: "Creates a new German draft from this post — review it before publishing.",
       }
     },
     write: {
@@ -708,6 +712,10 @@ export const TRANSLATIONS = {
         statusPublished: "Veröffentlicht",
         statusDraft: "Entwurf",
         edit: "Bearbeiten",
+        translateToGerman: "Ins Deutsche übersetzen",
+        translating: "Wird übersetzt...",
+        translateError: "Übersetzung fehlgeschlagen. Bitte versuchen Sie es erneut.",
+        translateHint: "Erstellt einen neuen deutschen Entwurf aus diesem Post — bitte vor der Veröffentlichung prüfen.",
       }
     },
     write: {
