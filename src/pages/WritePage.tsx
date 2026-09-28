@@ -150,6 +150,36 @@ const FORMATTING_GUIDE: [string, string][] = [
   ["- item", "Bullet point (one per line)"],
   ["Enter", "Starts a new paragraph"],
 ];
+// iPhone Safari is inconsistent about File.type for audio — an .m4a from
+// Voice Memos/Files can come through as "audio/x-m4a", "audio/mp4",
+// "video/mp4" or an empty string — and Vercel Blob otherwise has to guess
+// the type itself. So upload() always gets an explicit type: the browser's
+// when it's plausible for the field, else one looked up from the extension.
+const MEDIA_TYPES_BY_EXTENSION: Record<string, string> = {
+  m4a: "audio/mp4", mp3: "audio/mpeg", aac: "audio/aac", wav: "audio/wav",
+  caf: "audio/x-caf", aif: "audio/aiff", aiff: "audio/aiff", flac: "audio/flac",
+  ogg: "audio/ogg", opus: "audio/ogg", weba: "audio/webm",
+  jpg: "image/jpeg", jpeg: "image/jpeg", png: "image/png", gif: "image/gif",
+  webp: "image/webp", heic: "image/heic", heif: "image/heif", avif: "image/avif",
+};
+// Listed explicitly alongside the wildcard because iOS's file picker greys
+// out some .m4a files for a bare "audio/*".
+const AUDIO_ACCEPT = "audio/*,.m4a,.mp3,.aac,.wav,.caf,.aif,.aiff,.flac,.ogg,.opus";
+// Keep in sync with maximumSizeInBytes in api/blog-upload.ts. Generous
+// because a Voice Memos recording in Lossless mode is ~5 MB per minute.
+const MAX_UPLOAD_BYTES = 200 * 1024 * 1024;
+// Above this, upload in chunks so a flaky mobile connection doesn't have to
+// restart one huge request from scratch.
+const MULTIPART_THRESHOLD_BYTES = 20 * 1024 * 1024;
+
+function resolveContentType(file: File, kind: "image" | "audio"): string | null {
+  const extension = file.name.split(".").pop()?.toLowerCase() ?? "";
+  const byExtension = MEDIA_TYPES_BY_EXTENSION[extension];
+  if (byExtension?.startsWith(`${kind}/`)) return byExtension;
+  if (file.type.startsWith(`${kind}/`)) return file.type;
+  return null;
+}
+
 const EMPTY_POST_FORM = { title: "", excerpt: "", content: "", category: BLOG_CATEGORIES[0], image: "", audioUrl: "", lang: "EN" as "EN" | "DE" };
 
 const WriteDashboard = ({ user }: { user: User }) => {
@@ -199,8 +229,18 @@ const WriteDashboard = ({ user }: { user: User }) => {
 
   const handleUpload = async (file: File, kind: "image" | "audio") => {
     const setUploading = kind === "image" ? setUploadingImage : setUploadingAudio;
-    setUploading(true);
     setError(null);
+    const contentType = resolveContentType(file, kind);
+    if (!contentType) {
+      setError(`Couldn't upload "${file.name}": it doesn't look like an ${kind} file.`);
+      return;
+    }
+    if (file.size > MAX_UPLOAD_BYTES) {
+      const sizeMb = Math.round(file.size / (1024 * 1024));
+      setError(`Couldn't upload "${file.name}": it's ${sizeMb} MB, and the limit is ${MAX_UPLOAD_BYTES / (1024 * 1024)} MB.`);
+      return;
+    }
+    setUploading(true);
     try {
       // api/blog-upload.ts is the actual security boundary — it checks this
       // ID token against the two-account allowlist before issuing a token
@@ -210,6 +250,8 @@ const WriteDashboard = ({ user }: { user: User }) => {
       const path = `blog-media/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, "_")}`;
       const blob = await uploadBlob(path, file, {
         access: "public",
+        contentType,
+        multipart: file.size > MULTIPART_THRESHOLD_BYTES,
         handleUploadUrl: "/api/blog-upload",
         clientPayload: idToken,
       });
@@ -409,7 +451,7 @@ const WriteDashboard = ({ user }: { user: User }) => {
                   {uploadingAudio ? et.uploading : et.uploadAudio}
                   <input
                     type="file"
-                    accept="audio/*"
+                    accept={AUDIO_ACCEPT}
                     className="hidden"
                     disabled={uploadingAudio}
                     onChange={e => { const file = e.target.files?.[0]; if (file) handleUpload(file, "audio"); e.target.value = ""; }}

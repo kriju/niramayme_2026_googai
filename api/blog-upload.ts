@@ -31,7 +31,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return {
           allowedContentTypes: ALLOWED_CONTENT_TYPES,
           addRandomSuffix: true,
-          maximumSizeInBytes: 25 * 1024 * 1024,
+          // Keep in sync with MAX_UPLOAD_BYTES in src/pages/WritePage.tsx.
+          // iPhone Voice Memos in Lossless mode run ~5 MB per minute, so the
+          // old 25 MB cap rejected anything past about five minutes.
+          maximumSizeInBytes: 200 * 1024 * 1024,
         };
       },
       // Vercel Blob calls this asynchronously once the upload finishes; the
