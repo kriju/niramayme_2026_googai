@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, lazy, Suspense } from "react";
-import { BrowserRouter, Routes, Route, Link, Navigate, Outlet, useParams, useOutletContext, useLocation, useNavigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Link, Navigate, Outlet, useParams, useOutletContext, useLocation, useNavigate, matchRoutes } from "react-router-dom";
+import { SpeedInsights } from "@vercel/speed-insights/react";
 import { motion, AnimatePresence } from "motion/react";
 import {
   Menu,
@@ -2564,6 +2565,25 @@ const HomePage = () => {
 // the marketing site never pay for its bytes.
 const WritePage = lazy(() => import("./pages/WritePage"));
 
+// Route patterns reported to Vercel Speed Insights so the dashboard groups
+// visits by page type (e.g. /blog/:slug) instead of "Unknown". Keep in sync
+// with the <Routes> below; redirecting catch-alls are left out on purpose.
+const SPEED_INSIGHTS_ROUTES = [
+  "/",
+  "/services/:id",
+  "/blog/:slug",
+  "/de",
+  "/de/services/:id",
+  "/de/blog/:slug",
+  "/write",
+].map((path) => ({ path }));
+
+const RouteAwareSpeedInsights = () => {
+  const location = useLocation();
+  const route = matchRoutes(SPEED_INSIGHTS_ROUTES, location)?.[0]?.route.path ?? null;
+  return <SpeedInsights route={route} />;
+};
+
 export default function App() {
   return (
     <AuthProvider>
@@ -2592,6 +2612,7 @@ export default function App() {
             }
           />
         </Routes>
+        <RouteAwareSpeedInsights />
       </BrowserRouter>
     </AuthProvider>
   );
