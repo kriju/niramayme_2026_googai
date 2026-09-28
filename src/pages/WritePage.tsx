@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Upload, Trash2, LogOut, Lock, Pencil } from "lucide-react";
+import { Upload, Trash2, LogOut, Lock, Pencil, Languages } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { db } from "../lib/firebase";
 import { auth } from "../lib/firebase-auth";
@@ -194,6 +194,7 @@ const WriteDashboard = ({ user }: { user: User }) => {
   const [uploadingImage, setUploadingImage] = useState(false);
   const [uploadingAudio, setUploadingAudio] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [translating, setTranslating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -293,6 +294,34 @@ const WriteDashboard = ({ user }: { user: User }) => {
       setError("Couldn't save the post. Please try again.");
     } finally {
       setSaving(false);
+    }
+  };
+
+  // Machine-translates the currently loaded (already-saved English) post and
+  // drops the result into a brand-new, unsaved German draft — editingId is
+  // cleared so the next Save creates a new document instead of overwriting
+  // the English original. Image/audio carry over unchanged since neither
+  // needs translating.
+  const handleTranslate = async () => {
+    setTranslating(true);
+    setError(null);
+    try {
+      const idToken = await user.getIdToken();
+      const response = await fetch("/api/translate-post", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${idToken}` },
+        body: JSON.stringify({ title: form.title, excerpt: form.excerpt, content: form.content }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Translation failed");
+      setEditingId(null);
+      setForm(f => ({ ...f, title: data.title, excerpt: data.excerpt, content: data.content, lang: "DE" }));
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } catch (err) {
+      console.error("Error translating post:", err);
+      setError(et.translateError);
+    } finally {
+      setTranslating(false);
     }
   };
 
@@ -462,6 +491,23 @@ const WriteDashboard = ({ user }: { user: User }) => {
           </div>
 
           {error && <p className="text-sm text-red-600">{error}</p>}
+
+          {editingId && form.lang === "EN" && form.title.trim() && form.content.trim() && (
+            <div className="flex items-center justify-between gap-3 rounded-xl border border-dashed border-stone-300 px-4 py-3">
+              <p className="text-xs text-muted-foreground">{et.translateHint}</p>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="gap-2 shrink-0"
+                disabled={translating}
+                onClick={handleTranslate}
+              >
+                <Languages className="w-4 h-4" />
+                {translating ? et.translating : et.translateToGerman}
+              </Button>
+            </div>
+          )}
 
           <div className="flex flex-wrap justify-end gap-3 pt-2">
             {editingId && <Button type="button" variant="ghost" onClick={resetForm}>{et.cancel}</Button>}
