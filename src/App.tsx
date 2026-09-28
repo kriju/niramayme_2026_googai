@@ -690,17 +690,23 @@ const BlogSection = ({ lang }: { lang: "EN" | "DE" }) => {
           </div>
         </div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
-          <AnimatePresence mode="popLayout">
-            {currentBlogs.map(blog => (
-              <BlogCard
-                key={blog.id}
-                blog={blog}
-                lang={lang}
-              />
-            ))}
-          </AnimatePresence>
-        </div>
+        {filtered.length === 0 ? (
+          <p className="text-center text-stone-400 py-12">
+            {blogs.length === 0 ? t.emptyState : t.emptyStateFiltered}
+          </p>
+        ) : (
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
+            <AnimatePresence mode="popLayout">
+              {currentBlogs.map(blog => (
+                <BlogCard
+                  key={blog.id}
+                  blog={blog}
+                  lang={lang}
+                />
+              ))}
+            </AnimatePresence>
+          </div>
+        )}
 
         {filtered.length > 0 && (
           <div className="flex justify-center">

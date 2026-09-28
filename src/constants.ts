@@ -243,6 +243,8 @@ export const TRANSLATIONS = {
       showLess: "Show Less",
       backToList: "Back to Blog",
       addPost: "Add New Post",
+      emptyState: "New articles are on the way — check back soon.",
+      emptyStateFiltered: "No posts in this category yet.",
       categories: {
         all: "All Insights",
         physical: "Physical Wellness",
@@ -668,6 +670,8 @@ export const TRANSLATIONS = {
       showLess: "Weniger anzeigen",
       backToList: "Zurück zum Blog",
       addPost: "Neuen Post erstellen",
+      emptyState: "Neue Artikel sind unterwegs — schauen Sie bald wieder vorbei.",
+      emptyStateFiltered: "Noch keine Beiträge in dieser Kategorie.",
       categories: {
         all: "Alle Einblicke",
         physical: "Körperlich",
