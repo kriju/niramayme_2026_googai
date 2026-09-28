@@ -1029,6 +1029,27 @@ export const TESTIMONIALS = [
 ];
 
 export const FAQS = [
+  // Getting started
+  {
+    EN: {
+      question: "I'm new to this — which service is right for me?",
+      answer: "Book the free 15-minute discovery call. We'll talk through your goals and suggest the best fit, whether that's body-focused (Yoga), mind-focused (NLP, Hypnotherapy) or spiritual (Reiki, Past Life Regression, Vedic Astrology).",
+    },
+    DE: {
+      question: "Ich bin neu hier – welches Angebot passt zu mir?",
+      answer: "Buchen Sie das kostenlose 15-minütige Kennenlerngespräch. Wir sprechen über Ihre Ziele und empfehlen, was am besten passt – ob körperorientiert (Yoga), mental (NLP, Hypnotherapie) oder spirituell (Reiki, Rückführung, Vedische Astrologie).",
+    }
+  },
+  {
+    EN: {
+      question: "Is there a free consultation?",
+      answer: "Absolutely. We offer a free 15-minute discovery call to see if we are a good fit for your healing journey.",
+    },
+    DE: {
+      question: "Gibt es eine kostenlose Beratung?",
+      answer: "Absolut. Wir bieten ein kostenloses 15-minütiges Kennenlerngespräch an, um zu sehen, ob wir für Ihre Heilungsreise gut zusammenpassen.",
+    }
+  },
   {
     EN: {
       question: "What should I expect in my first session?",
@@ -1041,22 +1062,205 @@ export const FAQS = [
   },
   {
     EN: {
-      question: "Do you offer sessions in German?",
-      answer: "Yes, all sessions are available in both English and German to ensure you feel comfortable and understood.",
+      question: "Do I need any prior experience?",
+      answer: "No. Every individual session is tailored to you, and group classes like Active Yoga and Chair Yoga are open to everyone. Our seminars, such as Surya Namaskar, need no prior experience either.",
     },
     DE: {
-      question: "Bieten Sie Sitzungen auf Deutsch an?",
-      answer: "Ja, alle Sitzungen sind sowohl auf Englisch als auch auf Deutsch verfügbar, um sicherzustellen, dass Sie sich wohl und verstanden fühlen.",
+      question: "Brauche ich Vorerfahrung?",
+      answer: "Nein. Jede Einzelsitzung wird auf Sie abgestimmt, und Gruppenkurse wie Active Yoga und Stuhl-Yoga sind für alle offen. Auch unsere Seminare, etwa Surya Namaskar, setzen keine Vorkenntnisse voraus.",
     }
   },
   {
     EN: {
-      question: "Is there a free consultation?",
-      answer: "Absolutely. I offer a free 15-minute discovery call to see if we are a good fit for your healing journey.",
+      question: "How do I book?",
+      answer: "Click \"Book Now\" to pick a slot in our Google Calendar (Mon–Fri, 9am–6pm). For weekly group classes, message us on WhatsApp or email richa@niramay.me. VHS courses are booked directly with VHS Ostfildern using the course number.",
     },
     DE: {
-      question: "Gibt es eine kostenlose Beratung?",
-      answer: "Absolut. Ich biete ein kostenloses 15-minütiges Kennenlerngespräch an, um zu sehen, ob wir für Ihre Heilungsreise gut zusammenpassen.",
+      question: "Wie buche ich einen Termin?",
+      answer: "Klicken Sie auf „Jetzt buchen\" und wählen Sie einen Termin in unserem Google-Kalender (Mo–Fr, 9–18 Uhr). Für die wöchentlichen Gruppenkurse schreiben Sie uns per WhatsApp oder an richa@niramay.me. VHS-Kurse buchen Sie direkt bei der VHS Ostfildern über die Kursnummer.",
+    }
+  },
+  {
+    EN: {
+      question: "Do I need to create an account?",
+      answer: "No, an account is optional. It simply saves your details so booking and leaving reviews are quicker next time.",
+    },
+    DE: {
+      question: "Muss ich ein Konto anlegen?",
+      answer: "Nein, ein Konto ist optional. Es speichert lediglich Ihre Angaben, damit Buchungen und Bewertungen beim nächsten Mal schneller gehen.",
+    }
+  },
+  // Sessions & logistics
+  {
+    EN: {
+      question: "Where do sessions take place?",
+      answer: "Individual sessions take place at Ernst Kirchner Str 13/3, 73760 Ostfildern. Group classes run at Bürgertreff Scharnhauserpark, Treffpunkt Ruit, and An der Halle in Nellingen.",
+    },
+    DE: {
+      question: "Wo finden die Sitzungen statt?",
+      answer: "Einzelsitzungen finden in der Ernst Kirchner Str 13/3, 73760 Ostfildern statt. Gruppenkurse laufen im Bürgertreff Scharnhauserpark, im Treffpunkt Ruit und An der Halle in Nellingen.",
+    }
+  },
+  {
+    EN: {
+      question: "Do you offer online sessions?",
+      answer: "Yes. Vedic Astrology readings are held online via Google Meet or Zoom, and Reiki can be done as distance energy work. NLP, Hypnotherapy and Yoga are also offered online.",
+    },
+    DE: {
+      question: "Bieten Sie Online-Sitzungen an?",
+      answer: "Ja. Vedische Astrologie-Lesungen finden online über Google Meet oder Zoom statt, und Reiki ist auch als Fernenergiearbeit möglich. NLP, Hypnotherapie und Yoga bieten wir ebenfalls online an.",
+    }
+  },
+  {
+    EN: {
+      question: "How long is a session?",
+      answer: "Individual and group sessions usually last 60–90 minutes, depending on the service.",
+    },
+    DE: {
+      question: "Wie lange dauert eine Sitzung?",
+      answer: "Einzel- und Gruppensitzungen dauern in der Regel 60–90 Minuten, je nach Angebot.",
+    }
+  },
+  {
+    EN: {
+      question: "What should I wear or bring?",
+      answer: "Wear comfortable clothes you can move in. For yoga, bring a mat and a small towel. No mat is needed for Chair Yoga.",
+    },
+    DE: {
+      question: "Was soll ich anziehen oder mitbringen?",
+      answer: "Tragen Sie bequeme Kleidung, in der Sie sich gut bewegen können. Für Yoga bringen Sie bitte eine Matte und ein kleines Handtuch mit. Für Stuhl-Yoga brauchen Sie keine Matte.",
+    }
+  },
+  {
+    EN: {
+      question: "Do you offer sessions in German?",
+      answer: "Our instructors are fluent in English and also use German as needed. Sessions are mostly held in English, with course material and translations available in German whenever you need them — around 95% of our clients are German speakers.",
+    },
+    DE: {
+      question: "Bieten Sie Sitzungen auf Deutsch an?",
+      answer: "Unsere Lehrenden sprechen fließend Englisch und nutzen bei Bedarf auch Deutsch. Die Sitzungen finden überwiegend auf Englisch statt, Kursmaterialien und Übersetzungen ins Deutsche stehen jederzeit zur Verfügung – rund 95 % unserer Klientinnen und Klienten sind deutschsprachig.",
+    }
+  },
+  {
+    EN: {
+      question: "What is your cancellation policy?",
+      answer: "Please give at least 24 hours' notice to reschedule or cancel.",
+    },
+    DE: {
+      question: "Wie sind Ihre Stornierungsbedingungen?",
+      answer: "Bitte sagen Sie mindestens 24 Stunden vorher Bescheid, wenn Sie einen Termin verschieben oder absagen möchten.",
+    }
+  },
+  // Specific services
+  {
+    EN: {
+      question: "What is Reiki, and do I have to be touched?",
+      answer: "Reiki is gentle energy work for deep relaxation and emotional release. It can be done with light touch or at a distance — whichever you prefer.",
+    },
+    DE: {
+      question: "Was ist Reiki, und werde ich dabei berührt?",
+      answer: "Reiki ist sanfte Energiearbeit für tiefe Entspannung und emotionale Befreiung. Sie kann mit leichter Berührung oder aus der Ferne erfolgen – ganz wie Sie möchten.",
+    }
+  },
+  {
+    EN: {
+      question: "Will I lose control under hypnosis?",
+      answer: "No. You stay aware and in control throughout. Hypnotherapy is a deeply relaxed, focused state that helps you work with your subconscious on things like anxiety, phobias or habits.",
+    },
+    DE: {
+      question: "Verliere ich unter Hypnose die Kontrolle?",
+      answer: "Nein. Sie bleiben die ganze Zeit wach und behalten die Kontrolle. Hypnotherapie ist ein tief entspannter, fokussierter Zustand, in dem Sie mit Ihrem Unterbewusstsein an Themen wie Ängsten, Phobien oder Gewohnheiten arbeiten.",
+    }
+  },
+  {
+    EN: {
+      question: "How much is a Vedic Astrology reading, and how do I pay?",
+      answer: "A reading costs 20 EUR or 2000 INR, paid in advance via PayPal or SEPA bank transfer (EUR) or UPI (INR). Include your reference code in the payment note — your slot is confirmed within 24–48 hours.",
+    },
+    DE: {
+      question: "Was kostet eine Vedische Astrologie-Lesung, und wie bezahle ich?",
+      answer: "Eine Lesung kostet 20 EUR oder 2000 INR, zahlbar im Voraus per PayPal oder SEPA-Überweisung (EUR) bzw. UPI (INR). Geben Sie Ihren Referenzcode im Verwendungszweck an – Ihr Termin wird innerhalb von 24–48 Stunden bestätigt.",
+    }
+  },
+  {
+    EN: {
+      question: "What do I need for an astrology reading?",
+      answer: "Your full name, place of birth, date of birth and time of birth, as exact as you have it. Your chart is prepared before the call, and you receive a write-up of the analysis afterwards.",
+    },
+    DE: {
+      question: "Was brauche ich für eine Astrologie-Lesung?",
+      answer: "Ihren vollständigen Namen, Geburtsort, Geburtsdatum und Geburtszeit – so genau wie möglich. Ihr Horoskop wird vor dem Gespräch vorbereitet, und im Anschluss erhalten Sie eine schriftliche Zusammenfassung der Analyse.",
+    }
+  },
+  {
+    EN: {
+      question: "Is astrology about predicting my future?",
+      answer: "No. We treat your birth chart as a map of your nature and life cycles, not as fixed fortune-telling — grounded guidance free from fear or fatalism.",
+    },
+    DE: {
+      question: "Geht es bei Astrologie darum, meine Zukunft vorherzusagen?",
+      answer: "Nein. Wir betrachten Ihr Geburtshoroskop als Landkarte Ihrer Natur und Lebenszyklen, nicht als starre Wahrsagerei – eine geerdete Begleitung ohne Angst oder Fatalismus.",
+    }
+  },
+  {
+    EN: {
+      question: "Do you offer classes for children?",
+      answer: "Yes. Yoga Kids (ages 7–11, Fridays) and Teen Yoga (ages 12–14, Tuesdays) run through VHS Ostfildern.",
+    },
+    DE: {
+      question: "Gibt es Kurse für Kinder?",
+      answer: "Ja. Yoga Kids (7–11 Jahre, freitags) und Teen Yoga (12–14 Jahre, dienstags) finden über die VHS Ostfildern statt.",
+    }
+  },
+  {
+    EN: {
+      question: "What is Chair Yoga, and who is it for?",
+      answer: "Gentle movement and breathing done seated or with the support of a chair — no mat and no getting down on the floor. It suits older adults, people with limited mobility, or anyone who prefers to stay off the floor.",
+    },
+    DE: {
+      question: "Was ist Stuhl-Yoga, und für wen ist es geeignet?",
+      answer: "Sanfte Bewegung und Atmung im Sitzen oder mit Unterstützung eines Stuhls – ohne Matte und ohne auf den Boden zu müssen. Ideal für ältere Menschen, Menschen mit eingeschränkter Beweglichkeit oder alle, die lieber nicht auf dem Boden üben.",
+    }
+  },
+  // About Niramay
+  {
+    EN: {
+      question: "Who are the teachers, and what are their qualifications?",
+      answer: "Richa Kansal is Yoga Alliance and S-VYASA certified, a certified NLP practitioner, Reiki Master, hypnotherapist and Past Life Regression therapist. Riju Kansal is an S-VYASA certified yoga therapist, trained at Vyasa Yoga Singapore and Yoga Alliance certified. They have taught together since 2018.",
+    },
+    DE: {
+      question: "Wer sind die Lehrenden, und welche Qualifikationen haben sie?",
+      answer: "Richa Kansal ist Yoga-Alliance- und S-VYASA-zertifiziert, zertifizierte NLP-Praktikerin, Reiki-Meisterin, Hypnotherapeutin und Rückführungstherapeutin. Riju Kansal ist S-VYASA-zertifizierter Yogatherapeut, ausgebildet bei Vyasa Yoga Singapur und Yoga-Alliance-zertifiziert. Beide unterrichten seit 2018 gemeinsam.",
+    }
+  },
+  {
+    EN: {
+      question: "Is this a replacement for medical or psychological treatment?",
+      answer: "No. Our sessions complement, but don't replace, medical or psychotherapeutic care. If you have a diagnosed condition, please continue working with your doctor.",
+    },
+    DE: {
+      question: "Ersetzen die Sitzungen eine ärztliche oder psychotherapeutische Behandlung?",
+      answer: "Nein. Unsere Sitzungen ergänzen eine ärztliche oder psychotherapeutische Behandlung, ersetzen sie aber nicht. Wenn bei Ihnen eine Erkrankung diagnostiziert wurde, bleiben Sie bitte weiterhin in ärztlicher Betreuung.",
+    }
+  },
+  {
+    EN: {
+      question: "How is my personal data handled?",
+      answer: "Birth details and contact information are used only to prepare your session, are never shared with third parties, and can be deleted on request via richa@niramay.me. Analytics cookies are only set with your consent.",
+    },
+    DE: {
+      question: "Wie werden meine persönlichen Daten behandelt?",
+      answer: "Geburtsdaten und Kontaktangaben werden ausschließlich zur Vorbereitung Ihrer Sitzung verwendet, nie an Dritte weitergegeben und auf Anfrage über richa@niramay.me gelöscht. Analyse-Cookies setzen wir nur mit Ihrer Einwilligung.",
+    }
+  },
+  {
+    EN: {
+      question: "Can I buy Richa's book?",
+      answer: "Yes. \"Journey from Body to Bliss: The Niramay Path to Pancha Koshas\" is available on Amazon.",
+    },
+    DE: {
+      question: "Kann ich Richas Buch kaufen?",
+      answer: "Ja. „Journey from Body to Bliss: The Niramay Path to Pancha Koshas\" ist bei Amazon erhältlich.",
     }
   },
 ];
