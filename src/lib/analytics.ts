@@ -30,7 +30,17 @@ function loadGtagScript() {
   // even though the tag itself initializes fine. We only ever reach this
   // line after the visitor has actually granted consent, so it's safe to
   // declare that upfront rather than leaving it unset.
-  window.gtag("consent", "default", { analytics_storage: "granted" });
+  // This property has a linked Google tag (GTM-style container) rather
+  // than a bare gtag.js install, which holds every hit until it sees a
+  // complete Consent Mode v2 state — sending analytics_storage alone
+  // still left the tag waiting on the other three, so all four are set
+  // explicitly (we don't do ads/personalization, hence denied for those).
+  window.gtag("consent", "default", {
+    ad_storage: "denied",
+    ad_user_data: "denied",
+    ad_personalization: "denied",
+    analytics_storage: "granted",
+  });
   window.gtag("js", new Date());
   // We send page_view ourselves on route change (see trackPageview) since
   // this is a client-side-routed SPA, not a fresh document load per page.
