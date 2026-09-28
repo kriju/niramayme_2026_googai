@@ -842,7 +842,7 @@ const Navbar = ({ lang, onToggleLang, onBook }: { lang: "EN" | "DE", onToggleLan
               </NavigationMenu.Item>
 
               <NavFlatLink to={`${prefix}/#testimonials`}>{t.reviews}</NavFlatLink>
-              <NavFlatLink to={`${prefix}/#faq`}>{t.faq}</NavFlatLink>
+              <NavFlatLink to={`${prefix}/faq`}>{t.faq}</NavFlatLink>
             </NavigationMenu.List>
 
             <NavigationMenu.Portal>
@@ -926,7 +926,7 @@ const Navbar = ({ lang, onToggleLang, onBook }: { lang: "EN" | "DE", onToggleLan
               </AccordionItem>
             </Accordion>
             <Link to={`${prefix}/#testimonials`} onClick={closeMobileMenu} className="py-2.5 font-medium">{t.reviews}</Link>
-            <Link to={`${prefix}/#faq`} onClick={closeMobileMenu} className="py-2.5 font-medium">{t.faq}</Link>
+            <Link to={`${prefix}/faq`} onClick={closeMobileMenu} className="py-2.5 font-medium">{t.faq}</Link>
             <Separator className="my-2" />
             {!loading && (
               user ? (
@@ -2072,22 +2072,34 @@ const TestimonialsSection = ({ lang }: { lang: "EN" | "DE" }) => {
   );
 };
 
+// Shared by the homepage teaser and the full /faq page so both render
+// questions identically. `hiddenUntilFound` keeps collapsed answers in the
+// DOM (hidden="until-found"), so the full page's answers are crawlable and
+// match its FAQPage JSON-LD, and the browser's find-in-page can open them.
+const FAQList = ({ faqs, lang, hiddenUntilFound }: { faqs: typeof FAQS, lang: "EN" | "DE", hiddenUntilFound?: boolean }) => (
+  <Accordion multiple hiddenUntilFound={hiddenUntilFound} className="w-full">
+    {faqs.map((faq) => {
+      const content = faq[lang];
+      return (
+        <AccordionItem key={faq.EN.question} value={faq.EN.question} className="border-b-stone-200 px-4">
+          <AccordionTrigger className="text-left text-lg font-medium py-6 hover:no-underline hover:text-primary transition-colors">
+            {content.question}
+          </AccordionTrigger>
+          <AccordionContent className="text-muted-foreground text-lg leading-relaxed pb-6">
+            {content.answer}
+          </AccordionContent>
+        </AccordionItem>
+      );
+    })}
+  </Accordion>
+);
+
+// The homepage shows only the `featured` questions and links through to
+// /faq. It deliberately emits no FAQPage JSON-LD: Google asks for a
+// question set to be marked up on one page only, and that's /faq.
 const FAQSection = ({ lang }: { lang: "EN" | "DE" }) => {
   const t = TRANSLATIONS[lang].faq;
-
-  const faqJsonLd = useMemo(() => ({
-    "@context": "https://schema.org",
-    "@type": "FAQPage",
-    mainEntity: FAQS.map(faq => ({
-      "@type": "Question",
-      name: faq[lang].question,
-      acceptedAnswer: {
-        "@type": "Answer",
-        text: faq[lang].answer,
-      },
-    })),
-  }), [lang]);
-  useJsonLd("ld-json-faq", faqJsonLd);
+  const prefix = langPrefix(lang);
 
   return (
     <section id="faq" className="py-24">
@@ -2096,24 +2108,106 @@ const FAQSection = ({ lang }: { lang: "EN" | "DE" }) => {
           <h2 className="text-4xl font-serif font-bold mb-6">{t.title}</h2>
           <p className="text-muted-foreground text-lg">{t.description}</p>
         </div>
-        
-        <Accordion type="single" collapsible className="w-full">
-          {FAQS.map((faq, idx) => {
-            const content = faq[lang];
-            return (
-              <AccordionItem key={idx} value={`item-${idx}`} className="border-b-stone-200 px-4">
-                <AccordionTrigger className="text-left text-lg font-medium py-6 hover:no-underline hover:text-primary transition-colors">
-                  {content.question}
-                </AccordionTrigger>
-                <AccordionContent className="text-muted-foreground text-lg leading-relaxed pb-6">
-                  {content.answer}
-                </AccordionContent>
-              </AccordionItem>
-            );
-          })}
-        </Accordion>
+
+        <FAQList faqs={FAQS.filter(faq => faq.featured)} lang={lang} />
+
+        <div className="flex justify-center mt-10">
+          <Link to={`${prefix}/faq`}>
+            <Button variant="ghost" className="font-bold text-primary group">
+              {t.seeAll} <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
+            </Button>
+          </Link>
+        </div>
       </div>
     </section>
+  );
+};
+
+const FAQ_CATEGORIES = ["start", "sessions", "services", "about"] as const;
+
+// The full FAQ at /faq (+ /de/faq): every question, grouped by category,
+// on its own indexable URL with its own title/description and the site's
+// only FAQPage JSON-LD.
+const FAQPage = () => {
+  const { lang, onBook } = useOutletContext<LayoutContext>();
+  const t = TRANSLATIONS[lang].faq;
+  const sp = TRANSLATIONS[lang].servicePage;
+  const prefix = langPrefix(lang);
+  const canonical = `${SITE_URL}${prefix}/faq`;
+
+  useSeo({
+    title: t.seoTitle,
+    description: t.seoDescription,
+    canonical,
+    lang,
+    alternates: { en: `${SITE_URL}/faq`, de: `${SITE_URL}/de/faq` },
+  });
+
+  const faqJsonLd = useMemo(() => ({
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    url: canonical,
+    inLanguage: lang === "EN" ? "en" : "de",
+    mainEntity: FAQS.map(faq => ({
+      "@type": "Question",
+      name: faq[lang].question,
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: faq[lang].answer,
+      },
+    })),
+  }), [lang, canonical]);
+  useJsonLd("ld-json-faq", faqJsonLd);
+
+  const breadcrumbJsonLd = useMemo(() => ({
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: sp.home, item: `${SITE_URL}${prefix}/` },
+      { "@type": "ListItem", position: 2, name: t.breadcrumb, item: canonical },
+    ],
+  }), [sp.home, t.breadcrumb, prefix, canonical]);
+  useJsonLd("ld-json-breadcrumb", breadcrumbJsonLd);
+
+  return (
+    <main className="pt-32 pb-24">
+      <div className="container mx-auto px-6 max-w-3xl">
+        <nav className="flex items-center gap-2 text-sm text-muted-foreground mb-10" aria-label="Breadcrumb">
+          <Link to={prefix || "/"} className="hover:text-primary transition-colors">{sp.home}</Link>
+          <ChevronRight className="w-3.5 h-3.5" />
+          <span className="text-foreground font-medium">{t.breadcrumb}</span>
+        </nav>
+
+        <h1 className="text-4xl md:text-5xl font-serif font-bold mb-6 leading-tight">{t.pageTitle}</h1>
+        <p className="text-lg text-muted-foreground leading-relaxed mb-14">{t.pageDescription}</p>
+
+        {FAQ_CATEGORIES.map(category => (
+          <section key={category} className="mb-14">
+            <h2 className="text-2xl font-serif font-bold mb-4">{t.categories[category]}</h2>
+            <FAQList faqs={FAQS.filter(faq => faq.category === category)} lang={lang} hiddenUntilFound />
+          </section>
+        ))}
+
+        <div className="bg-stone-50 p-8 rounded-2xl border border-stone-100 text-center">
+          <h2 className="text-2xl font-serif font-bold mb-3">{t.ctaTitle}</h2>
+          <p className="text-muted-foreground mb-6">{t.ctaBody}</p>
+          <div className="flex flex-wrap items-center justify-center gap-4">
+            <Button size="lg" className="rounded-full px-8 gap-2" onClick={() => onBook({ title: t.ctaBook })}>
+              <Sparkles className="w-4 h-4" />
+              {t.ctaBook}
+            </Button>
+            <a
+              href="https://wa.me/4915175315761"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors inline-flex items-center gap-2"
+            >
+              <MessageCircle className="w-4 h-4" /> {t.ctaWhatsapp}
+            </a>
+          </div>
+        </div>
+      </div>
+    </main>
   );
 };
 
@@ -2161,7 +2255,7 @@ const Footer = ({ lang, onOpenLegal }: { lang: "EN" | "DE", onOpenLegal: (type: 
               <li><Link to={`${prefix}/#book`} className="text-muted-foreground hover:text-primary transition-colors">{nav.book}</Link></li>
               <li><Link to={`${prefix}/#testimonials`} className="text-muted-foreground hover:text-primary transition-colors">{nav.reviews}</Link></li>
               <li><Link to={`${prefix}/#blog`} className="text-muted-foreground hover:text-primary transition-colors">{nav.blog}</Link></li>
-              <li><Link to={`${prefix}/#faq`} className="text-muted-foreground hover:text-primary transition-colors">{nav.faq}</Link></li>
+              <li><Link to={`${prefix}/faq`} className="text-muted-foreground hover:text-primary transition-colors">{nav.faq}</Link></li>
             </ul>
           </div>
 
@@ -2578,9 +2672,11 @@ const SPEED_INSIGHTS_ROUTES = [
   "/",
   "/services/:id",
   "/blog/:slug",
+  "/faq",
   "/de",
   "/de/services/:id",
   "/de/blog/:slug",
+  "/de/faq",
   "/write",
 ].map((path) => ({ path }));
 
@@ -2599,9 +2695,11 @@ export default function App() {
             <Route index element={<HomePage />} />
             <Route path="services/:id" element={<ServicePage />} />
             <Route path="blog/:slug" element={<BlogPostPage />} />
+            <Route path="faq" element={<FAQPage />} />
             <Route path="de" element={<HomePage />} />
             <Route path="de/services/:id" element={<ServicePage />} />
             <Route path="de/blog/:slug" element={<BlogPostPage />} />
+            <Route path="de/faq" element={<FAQPage />} />
             {/* An unknown path under /de falls back to the German home page
                 rather than jumping to the English one. */}
             <Route path="de/*" element={<Navigate to="/de" replace />} />
