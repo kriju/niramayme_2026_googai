@@ -118,6 +118,22 @@ export const TRANSLATIONS = {
     faq: {
       title: "Common Questions",
       description: "Everything you need to know before your first session.",
+      seeAll: "See all questions",
+      pageTitle: "Frequently Asked Questions",
+      pageDescription: "Answers about booking, sessions, our services and the Niramay team in Ostfildern — from your free discovery call to what to bring.",
+      seoTitle: "FAQ — Yoga, Reiki & Holistic Therapy in Ostfildern | Niramay Wellbeing",
+      seoDescription: "Answers to common questions about Niramay Wellbeing in Ostfildern: booking, session length, online sessions, language, cancellation, Reiki, hypnotherapy, Vedic astrology and more.",
+      breadcrumb: "FAQ",
+      categories: {
+        start: "Getting Started",
+        sessions: "Sessions & Logistics",
+        services: "About Our Services",
+        about: "About Niramay",
+      },
+      ctaTitle: "Still have a question?",
+      ctaBody: "Book a free 15-minute call or message us on WhatsApp — we're happy to help.",
+      ctaBook: "Book a Free 15-Min Call",
+      ctaWhatsapp: "Message us on WhatsApp",
     },
     sessions: {
       title: "Ongoing Sessions",
@@ -527,6 +543,22 @@ export const TRANSLATIONS = {
     faq: {
       title: "Häufige Fragen",
       description: "Alles, was Sie vor Ihrer ersten Sitzung wissen müssen.",
+      seeAll: "Alle Fragen ansehen",
+      pageTitle: "Häufig gestellte Fragen",
+      pageDescription: "Antworten rund um Buchung, Sitzungen, unsere Angebote und das Niramay-Team in Ostfildern – vom kostenlosen Kennenlerngespräch bis zur Frage, was Sie mitbringen sollten.",
+      seoTitle: "FAQ — Yoga, Reiki & Ganzheitliche Therapie in Ostfildern | Niramay Wellbeing",
+      seoDescription: "Antworten auf häufige Fragen zu Niramay Wellbeing in Ostfildern: Buchung, Sitzungsdauer, Online-Sitzungen, Sprache, Stornierung, Reiki, Hypnotherapie, vedische Astrologie und mehr.",
+      breadcrumb: "FAQ",
+      categories: {
+        start: "Erste Schritte",
+        sessions: "Sitzungen & Organisatorisches",
+        services: "Zu unseren Angeboten",
+        about: "Über Niramay",
+      },
+      ctaTitle: "Noch Fragen offen?",
+      ctaBody: "Buchen Sie ein kostenloses 15-minütiges Gespräch oder schreiben Sie uns auf WhatsApp – wir helfen gern weiter.",
+      ctaBook: "Kostenloses 15-Min-Gespräch buchen",
+      ctaWhatsapp: "Auf WhatsApp schreiben",
     },
     sessions: {
       title: "Laufende Sitzungen",
@@ -1028,9 +1060,12 @@ export const TESTIMONIALS = [
   },
 ];
 
+// Grouped by `category` on the /faq page (headings in TRANSLATIONS.faq.categories).
+// Only the `featured` ones also appear in the homepage FAQ section, which
+// links through to the full page — so the FAQPage JSON-LD lives on /faq alone.
 export const FAQS = [
-  // Getting started
   {
+    category: "start",
     EN: {
       question: "I'm new to this — which service is right for me?",
       answer: "Book the free 15-minute discovery call. We'll talk through your goals and suggest the best fit, whether that's body-focused (Yoga), mind-focused (NLP, Hypnotherapy) or spiritual (Reiki, Past Life Regression, Vedic Astrology).",
@@ -1041,6 +1076,8 @@ export const FAQS = [
     }
   },
   {
+    category: "start",
+    featured: true,
     EN: {
       question: "Is there a free consultation?",
       answer: "Absolutely. We offer a free 15-minute discovery call to see if we are a good fit for your healing journey.",
@@ -1051,6 +1088,8 @@ export const FAQS = [
     }
   },
   {
+    category: "start",
+    featured: true,
     EN: {
       question: "What should I expect in my first session?",
       answer: "Your first session begins with a 15-minute discovery talk where we discuss your goals and any health concerns. We then proceed with a gentle introduction to the chosen modality.",
@@ -1061,6 +1100,7 @@ export const FAQS = [
     }
   },
   {
+    category: "start",
     EN: {
       question: "Do I need any prior experience?",
       answer: "No. Every individual session is tailored to you, and group classes like Active Yoga and Chair Yoga are open to everyone. Our seminars, such as Surya Namaskar, need no prior experience either.",
@@ -1071,6 +1111,8 @@ export const FAQS = [
     }
   },
   {
+    category: "start",
+    featured: true,
     EN: {
       question: "How do I book?",
       answer: "Click \"Book Now\" to pick a slot in our Google Calendar (Mon–Fri, 9am–6pm). For weekly group classes, message us on WhatsApp or email richa@niramay.me. VHS courses are booked directly with VHS Ostfildern using the course number.",
@@ -1081,6 +1123,7 @@ export const FAQS = [
     }
   },
   {
+    category: "start",
     EN: {
       question: "Do I need to create an account?",
       answer: "No, an account is optional. It simply saves your details so booking and leaving reviews are quicker next time.",
@@ -1090,8 +1133,9 @@ export const FAQS = [
       answer: "Nein, ein Konto ist optional. Es speichert lediglich Ihre Angaben, damit Buchungen und Bewertungen beim nächsten Mal schneller gehen.",
     }
   },
-  // Sessions & logistics
   {
+    category: "sessions",
+    featured: true,
     EN: {
       question: "Where do sessions take place?",
       answer: "Individual sessions take place at Ernst Kirchner Str 13/3, 73760 Ostfildern. Group classes run at Bürgertreff Scharnhauserpark, Treffpunkt Ruit, and An der Halle in Nellingen.",
@@ -1102,6 +1146,7 @@ export const FAQS = [
     }
   },
   {
+    category: "sessions",
     EN: {
       question: "Do you offer online sessions?",
       answer: "Yes. Vedic Astrology readings are held online via Google Meet or Zoom, and Reiki can be done as distance energy work. NLP, Hypnotherapy and Yoga are also offered online.",
@@ -1112,6 +1157,7 @@ export const FAQS = [
     }
   },
   {
+    category: "sessions",
     EN: {
       question: "How long is a session?",
       answer: "Individual and group sessions usually last 60–90 minutes, depending on the service.",
@@ -1122,6 +1168,7 @@ export const FAQS = [
     }
   },
   {
+    category: "sessions",
     EN: {
       question: "What should I wear or bring?",
       answer: "Wear comfortable clothes you can move in. For yoga, bring a mat and a small towel. No mat is needed for Chair Yoga.",
@@ -1132,6 +1179,8 @@ export const FAQS = [
     }
   },
   {
+    category: "sessions",
+    featured: true,
     EN: {
       question: "Do you offer sessions in German?",
       answer: "Our instructors are fluent in English and also use German as needed. Sessions are mostly held in English, with course material and translations available in German whenever you need them — around 95% of our clients are German speakers.",
@@ -1142,6 +1191,8 @@ export const FAQS = [
     }
   },
   {
+    category: "sessions",
+    featured: true,
     EN: {
       question: "What is your cancellation policy?",
       answer: "Please give at least 24 hours' notice to reschedule or cancel.",
@@ -1151,8 +1202,8 @@ export const FAQS = [
       answer: "Bitte sagen Sie mindestens 24 Stunden vorher Bescheid, wenn Sie einen Termin verschieben oder absagen möchten.",
     }
   },
-  // Specific services
   {
+    category: "services",
     EN: {
       question: "What is Reiki, and do I have to be touched?",
       answer: "Reiki is gentle energy work for deep relaxation and emotional release. It can be done with light touch or at a distance — whichever you prefer.",
@@ -1163,6 +1214,7 @@ export const FAQS = [
     }
   },
   {
+    category: "services",
     EN: {
       question: "Will I lose control under hypnosis?",
       answer: "No. You stay aware and in control throughout. Hypnotherapy is a deeply relaxed, focused state that helps you work with your subconscious on things like anxiety, phobias or habits.",
@@ -1173,6 +1225,7 @@ export const FAQS = [
     }
   },
   {
+    category: "services",
     EN: {
       question: "How much is a Vedic Astrology reading, and how do I pay?",
       answer: "A reading costs 20 EUR or 2000 INR, paid in advance via PayPal or SEPA bank transfer (EUR) or UPI (INR). Include your reference code in the payment note — your slot is confirmed within 24–48 hours.",
@@ -1183,6 +1236,7 @@ export const FAQS = [
     }
   },
   {
+    category: "services",
     EN: {
       question: "What do I need for an astrology reading?",
       answer: "Your full name, place of birth, date of birth and time of birth, as exact as you have it. Your chart is prepared before the call, and you receive a write-up of the analysis afterwards.",
@@ -1193,6 +1247,7 @@ export const FAQS = [
     }
   },
   {
+    category: "services",
     EN: {
       question: "Is astrology about predicting my future?",
       answer: "No. We treat your birth chart as a map of your nature and life cycles, not as fixed fortune-telling — grounded guidance free from fear or fatalism.",
@@ -1203,6 +1258,7 @@ export const FAQS = [
     }
   },
   {
+    category: "services",
     EN: {
       question: "Do you offer classes for children?",
       answer: "Yes. Yoga Kids (ages 7–11, Fridays) and Teen Yoga (ages 12–14, Tuesdays) run through VHS Ostfildern.",
@@ -1213,6 +1269,7 @@ export const FAQS = [
     }
   },
   {
+    category: "services",
     EN: {
       question: "What is Chair Yoga, and who is it for?",
       answer: "Gentle movement and breathing done seated or with the support of a chair — no mat and no getting down on the floor. It suits older adults, people with limited mobility, or anyone who prefers to stay off the floor.",
@@ -1222,8 +1279,8 @@ export const FAQS = [
       answer: "Sanfte Bewegung und Atmung im Sitzen oder mit Unterstützung eines Stuhls – ohne Matte und ohne auf den Boden zu müssen. Ideal für ältere Menschen, Menschen mit eingeschränkter Beweglichkeit oder alle, die lieber nicht auf dem Boden üben.",
     }
   },
-  // About Niramay
   {
+    category: "about",
     EN: {
       question: "Who are the teachers, and what are their qualifications?",
       answer: "Richa Kansal is Yoga Alliance and S-VYASA certified, a certified NLP practitioner, Reiki Master, hypnotherapist and Past Life Regression therapist. Riju Kansal is an S-VYASA certified yoga therapist, trained at Vyasa Yoga Singapore and Yoga Alliance certified. They have taught together since 2018.",
@@ -1234,6 +1291,7 @@ export const FAQS = [
     }
   },
   {
+    category: "about",
     EN: {
       question: "Is this a replacement for medical or psychological treatment?",
       answer: "No. Our sessions complement, but don't replace, medical or psychotherapeutic care. If you have a diagnosed condition, please continue working with your doctor.",
@@ -1244,6 +1302,7 @@ export const FAQS = [
     }
   },
   {
+    category: "about",
     EN: {
       question: "How is my personal data handled?",
       answer: "Birth details and contact information are used only to prepare your session, are never shared with third parties, and can be deleted on request via richa@niramay.me. Analytics cookies are only set with your consent.",
@@ -1254,6 +1313,7 @@ export const FAQS = [
     }
   },
   {
+    category: "about",
     EN: {
       question: "Can I buy Richa's book?",
       answer: "Yes. \"Journey from Body to Bliss: The Niramay Path to Pancha Koshas\" is available on Amazon.",

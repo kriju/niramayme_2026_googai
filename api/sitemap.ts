@@ -54,6 +54,7 @@ function isoDate(value: unknown): string | undefined {
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   const pairs: LocalizedPair[] = [
     { en: `${SITE_URL}/`, de: `${SITE_URL}/de`, changefreq: "weekly", priority: "1.0" },
+    { en: `${SITE_URL}/faq`, de: `${SITE_URL}/de/faq`, changefreq: "monthly", priority: "0.7" },
     ...SERVICE_IDS.map((id) => ({
       en: `${SITE_URL}/services/${id}`,
       de: `${SITE_URL}/de/services/${id}`,
