@@ -141,6 +141,15 @@ type BlogPostDoc = {
 };
 
 const BLOG_CATEGORIES = ["Physical Wellness", "Mental Clarity", "Spiritual Healing", "Kids Yoga", "Dance Therapy", "Tarot Reading", "Chair Yoga"];
+// Cheat sheet shown under the content box — keep in sync with
+// renderPostContent in App.tsx, which is what actually renders these.
+const FORMATTING_GUIDE: [string, string][] = [
+  ["## Heading", "Subheading (on its own line)"],
+  ["**bold text**", "Bold"],
+  ["*italic text*", "Italic"],
+  ["- item", "Bullet point (one per line)"],
+  ["Enter", "Starts a new paragraph"],
+];
 const EMPTY_POST_FORM = { title: "", excerpt: "", content: "", category: BLOG_CATEGORIES[0], image: "", audioUrl: "", lang: "EN" as "EN" | "DE" };
 
 const WriteDashboard = ({ user }: { user: User }) => {
@@ -333,6 +342,19 @@ const WriteDashboard = ({ user }: { user: User }) => {
           <div className="space-y-2">
             <label className="text-sm font-medium text-stone-600">{et.contentLabel}</label>
             <p className="text-xs text-muted-foreground">{et.contentHint}</p>
+            <details open className="rounded-xl border border-stone-200 bg-stone-50 px-4 py-2 text-xs text-stone-600">
+              <summary className="cursor-pointer font-medium text-stone-700">{et.formattingGuideTitle}</summary>
+              <table className="mt-2 mb-1 w-full">
+                <tbody>
+                  {FORMATTING_GUIDE.map(([syntax, result]) => (
+                    <tr key={syntax} className="align-top">
+                      <td className="py-1 pr-4 font-mono whitespace-nowrap text-stone-800">{syntax}</td>
+                      <td className="py-1">{result}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </details>
             <textarea
               className="w-full px-4 py-3 rounded-xl border border-stone-200 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all h-64"
               value={form.content}

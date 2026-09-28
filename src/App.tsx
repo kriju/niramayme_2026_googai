@@ -1195,6 +1195,52 @@ const ServicePage = () => {
 // SERVICES, posts are live Firestore data rather than a fixed, known-ahead
 // list, so this fetches by slug+lang rather than looking up a static
 // constant the way ServicePage does.
+// Inline formatting for blog post text: **bold** and *italic*. Anything
+// else is left as plain text, so a stray asterisk just shows as-is.
+const renderInline = (text: string): React.ReactNode[] =>
+  text.split(/(\*\*[^*]+\*\*|\*[^*]+\*)/g).map((part, i) => {
+    if (part.startsWith('**') && part.endsWith('**') && part.length > 4) {
+      return <strong key={i} className="font-semibold text-stone-800">{part.slice(2, -2)}</strong>;
+    }
+    if (part.startsWith('*') && part.endsWith('*') && part.length > 2) {
+      return <em key={i}>{part.slice(1, -1)}</em>;
+    }
+    return part;
+  });
+
+// Turns the plain-text editor's content into blocks: "## " subheadings,
+// consecutive "- " lines grouped into one bullet list, everything else a
+// paragraph. The matching cheat sheet lives on the /write page.
+const renderPostContent = (content: string) => {
+  const blocks: React.ReactNode[] = [];
+  let listItems: string[] = [];
+  const flushList = () => {
+    if (!listItems.length) return;
+    blocks.push(
+      <ul key={`ul-${blocks.length}`} className="list-disc pl-6 mb-5 space-y-2 text-lg text-stone-600 leading-relaxed">
+        {listItems.map((item, j) => <li key={j}>{renderInline(item)}</li>)}
+      </ul>
+    );
+    listItems = [];
+  };
+  content.split('\n').forEach((line, i) => {
+    const trimmed = line.trim();
+    if (trimmed.startsWith('- ')) {
+      listItems.push(trimmed.slice(2));
+      return;
+    }
+    flushList();
+    if (!trimmed) return;
+    if (trimmed.startsWith('## ')) {
+      blocks.push(<h2 key={i} className="text-2xl font-serif font-bold mt-10 mb-4 first:mt-0">{renderInline(trimmed.slice(3))}</h2>);
+      return;
+    }
+    blocks.push(<p key={i} className="text-lg text-stone-600 leading-relaxed mb-5">{renderInline(trimmed)}</p>);
+  });
+  flushList();
+  return blocks;
+};
+
 const BlogPostPage = () => {
   const { slug } = useParams<{ slug: string }>();
   const { lang } = useOutletContext<LayoutContext>();
@@ -1324,18 +1370,7 @@ const BlogPostPage = () => {
         )}
 
         <div className="mb-16">
-          {post.content.split('\n').map((line: string, i: number) => {
-            const trimmed = line.trim();
-            if (!trimmed) return null;
-            // A line starting with "## " is the one bit of lightweight
-            // formatting the plain-text editor supports, for breaking a
-            // long post into labeled sections without needing a full rich
-            // text editor.
-            if (trimmed.startsWith('## ')) {
-              return <h2 key={i} className="text-2xl font-serif font-bold mt-10 mb-4 first:mt-0">{trimmed.slice(3)}</h2>;
-            }
-            return <p key={i} className="text-lg text-stone-600 leading-relaxed mb-5">{trimmed}</p>;
-          })}
+          {renderPostContent(post.content)}
         </div>
 
         <div className="flex items-center gap-4 pt-8 border-t border-stone-100 mb-16">
