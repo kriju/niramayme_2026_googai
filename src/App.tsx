@@ -959,67 +959,191 @@ const Navbar = ({ lang, onToggleLang, onBook }: { lang: "EN" | "DE", onToggleLan
   );
 };
 
+// The homepage hero is the only thing most visitors see before deciding to
+// stay, so instead of a big photo taking half the fold it leads with what
+// they came for: the latest articles, what clients say, and the book. The
+// tree photo becomes a faint, slowly drifting backdrop behind all of it.
 const Hero = ({ lang, onBook }: { lang: "EN" | "DE", onBook: (ctx?: BookingContext) => void }) => {
   const t = TRANSLATIONS[lang].hero;
+  const tBook = TRANSLATIONS[lang].book;
+  const prefix = langPrefix(lang);
+  const [latestPosts, setLatestPosts] = useState<any[]>([]);
+  const [approvedReviews, setApprovedReviews] = useState<any[]>([]);
+  const [reviewIndex, setReviewIndex] = useState(0);
+
+  // One-shot reads (not live listeners) — BlogSection/TestimonialsSection
+  // further down keep their own subscriptions; the hero only needs a peek.
+  useEffect(() => {
+    let cancelled = false;
+    getDocs(query(
+      collection(db, "blogs"),
+      where("lang", "==", lang),
+      where("published", "==", true),
+      orderBy("createdAt", "desc"),
+      limit(3)
+    ))
+      .then(snap => { if (!cancelled) setLatestPosts(snap.docs.map(d => ({ id: d.id, ...d.data() }))); })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [lang]);
+
+  useEffect(() => {
+    let cancelled = false;
+    getDocs(query(collection(db, "reviews"), where("approved", "==", true), orderBy("createdAt", "desc"), limit(6)))
+      .then(snap => { if (!cancelled) setApprovedReviews(snap.docs.map(d => ({ id: d.id, ...d.data() }))); })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, []);
+
+  // Real, moderated reviews first; the seed TESTIMONIALS fill in until there
+  // are enough of them.
+  const reviews = useMemo(() => [
+    ...approvedReviews.map(r => ({ id: r.id, name: r.name, rating: r.rating || 5, content: r.content, role: r.role })),
+    ...TESTIMONIALS.map(r => ({ id: r.id, name: r.name, rating: 5, content: r[lang].content, role: r[lang].role })),
+  ].slice(0, 6), [approvedReviews, lang]);
+
+  useEffect(() => {
+    if (reviews.length < 2) return;
+    const id = setInterval(() => setReviewIndex(i => (i + 1) % reviews.length), 6000);
+    return () => clearInterval(id);
+  }, [reviews.length]);
+
+  const review = reviews[reviewIndex % reviews.length];
+
+  const reveal = (delay: number) => ({
+    initial: { opacity: 0, y: 16 },
+    animate: { opacity: 1, y: 0 },
+    transition: { duration: 0.7, delay, ease: [0.22, 1, 0.36, 1] as const },
+  });
+
+  const glass = "rounded-3xl bg-white/55 backdrop-blur-xl ring-1 ring-white/70 shadow-[0_8px_40px_-12px_rgba(28,25,23,0.18)]";
+
   return (
-    <section className="relative min-h-screen flex items-center pt-20 overflow-hidden">
-      <div className="absolute inset-0 z-0">
-        <div className="absolute top-1/4 -left-20 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
-        <div className="absolute bottom-1/4 -right-20 w-96 h-96 bg-primary/10 rounded-full blur-3xl" />
+    <section className="relative isolate overflow-hidden pt-28 pb-12 md:pt-32 md:pb-20 lg:min-h-[92vh] flex items-center">
+      {/* Faint photographic backdrop: the image drifts slowly (Ken Burns)
+          under a wash of the page's own off-white, heavier where text sits. */}
+      <div className="absolute inset-0 -z-10" aria-hidden="true">
+        <img
+          src="/hero-tree-ostfildern.webp"
+          alt=""
+          className="hero-drift w-full h-full object-cover object-[60%_55%] opacity-70 saturate-[0.85]"
+          width={1200}
+          height={1500}
+          loading="eager"
+          fetchPriority="high"
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-background/95 via-background/80 to-background lg:bg-gradient-to-r lg:from-background lg:via-background/85 lg:to-background/30" />
+        <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-background to-transparent" />
+        <div className="absolute -top-32 -left-32 w-[36rem] h-[36rem] rounded-full bg-amber-100/40 blur-3xl" />
       </div>
-      
-      <div className="container mx-auto px-6 relative z-10 grid md:grid-cols-2 gap-12 items-center">
-        <motion.div
-          initial={{ opacity: 0, x: -30 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.8 }}
-        >
-          <Badge variant="secondary" className="mb-6 px-4 py-1 rounded-full text-primary font-medium">
-            {t.badge}
-          </Badge>
-          <h1 className="text-5xl md:text-7xl font-serif font-bold leading-[1.1] mb-6">
-            {t.title.split(t.titleItalic)[0]}<span className="italic text-primary/80">{t.titleItalic}</span>{t.title.split(t.titleItalic)[1]}
-          </h1>
-          <p className="text-lg text-muted-foreground mb-8 max-w-lg leading-relaxed">
+
+      <div className="container mx-auto px-6 grid lg:grid-cols-[1.1fr_1fr] gap-10 lg:gap-14 items-center">
+        {/* Left: promise + actions */}
+        <div>
+          <motion.div {...reveal(0)}>
+            <Badge variant="secondary" className="mb-5 px-4 py-1 rounded-full bg-white/70 backdrop-blur text-primary font-medium ring-1 ring-stone-200/70">
+              <MapPin className="w-3.5 h-3.5 mr-1.5" />{t.badge}
+            </Badge>
+          </motion.div>
+          <motion.h1 {...reveal(0.08)} className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-serif font-bold leading-[1.05] tracking-tight mb-5 text-balance">
+            {t.title.split(t.titleItalic)[0]}
+            <span className="italic bg-gradient-to-r from-stone-700 via-amber-700/80 to-stone-500 bg-clip-text text-transparent">{t.titleItalic}</span>
+            {t.title.split(t.titleItalic)[1]}
+          </motion.h1>
+          <motion.p {...reveal(0.16)} className="text-base md:text-lg text-muted-foreground mb-7 max-w-lg leading-relaxed">
             {t.description}
-          </p>
-          <div className="flex flex-wrap gap-4">
-            <Button size="lg" className="rounded-full px-8 gap-2 h-14 text-lg" onClick={() => onBook({ title: t.ctaPrimary })}>
+          </motion.p>
+          <motion.div {...reveal(0.24)} className="flex flex-wrap gap-3">
+            <Button size="lg" className="rounded-full px-6 md:px-8 gap-2 h-12 md:h-14 text-base md:text-lg shadow-lg shadow-stone-900/10" onClick={() => onBook({ title: t.ctaPrimary })}>
               {t.ctaPrimary} <ArrowRight className="w-5 h-5" />
             </Button>
             <a href="#services">
-              <Button size="lg" variant="outline" className="rounded-full px-8 h-14 text-lg">
+              <Button size="lg" variant="outline" className="rounded-full px-6 md:px-8 h-12 md:h-14 text-base md:text-lg bg-white/60 backdrop-blur">
                 {t.ctaSecondary}
               </Button>
             </a>
-          </div>
-        </motion.div>
+          </motion.div>
+        </div>
 
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 1, delay: 0.2 }}
-          className="relative"
-        >
-          <div className="aspect-[4/5] rounded-[2rem] overflow-hidden shadow-2xl relative">
+        {/* Right: bento of the site's most valuable content. On phones it
+            becomes a swipeable row so it still shows within the first screen. */}
+        <div className="-mx-6 px-6 lg:mx-0 lg:px-0 flex lg:grid lg:grid-cols-2 gap-4 overflow-x-auto lg:overflow-visible snap-x snap-mandatory no-scrollbar pb-2 lg:pb-0">
+          {latestPosts.length > 0 && (
+            <motion.div {...reveal(0.3)} className={`${glass} p-5 md:p-6 lg:col-span-2 min-w-[85%] sm:min-w-[60%] lg:min-w-0 snap-start`}>
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-xs font-bold uppercase tracking-[0.18em] text-stone-500 flex items-center gap-2">
+                  <Sparkles className="w-3.5 h-3.5 text-amber-600" />{t.latestReads}
+                </p>
+                <a href="#blog" className="text-xs font-semibold text-primary hover:underline underline-offset-4">{t.seeAll}</a>
+              </div>
+              <ul className="divide-y divide-stone-200/70">
+                {latestPosts.map(post => (
+                  <li key={post.id}>
+                    <Link to={`${prefix}/blog/${post.slug}`} className="group flex items-center gap-3 py-2.5">
+                      <div className="min-w-0 flex-1">
+                        <p className="font-serif text-base md:text-lg leading-snug line-clamp-1 group-hover:text-stone-600 transition-colors">{post.title}</p>
+                        {post.category && <p className="text-xs text-stone-500 mt-0.5">{post.category}</p>}
+                      </div>
+                      {post.audioUrl && <Volume2 className="w-4 h-4 text-stone-400 shrink-0" />}
+                      <ArrowRight className="w-4 h-4 shrink-0 text-stone-400 group-hover:text-primary group-hover:translate-x-1 transition-all" />
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </motion.div>
+          )}
+
+          {review && (
+            <motion.a {...reveal(0.38)} href="#testimonials" className={`${glass} p-5 md:p-6 flex flex-col min-w-[85%] sm:min-w-[60%] lg:min-w-0 snap-start hover:bg-white/70 transition-colors`}>
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex gap-0.5">
+                  {[1,2,3,4,5].map(i => <Star key={i} className={`w-4 h-4 ${i <= review.rating ? "text-amber-500 fill-amber-500" : "text-stone-300"}`} />)}
+                </div>
+                <span className="text-xs font-bold uppercase tracking-[0.18em] text-stone-500">{t.reviewsLabel}</span>
+              </div>
+              <div className="relative flex-1 min-h-[6.5rem]">
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={review.id}
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -8 }}
+                    transition={{ duration: 0.4 }}
+                  >
+                    <p className="font-serif italic text-[15px] md:text-base leading-relaxed text-stone-800 line-clamp-4">"{review.content}"</p>
+                    <p className="mt-3 text-sm font-semibold text-stone-700">{review.name}{review.role && <span className="font-normal text-stone-500"> · {review.role}</span>}</p>
+                  </motion.div>
+                </AnimatePresence>
+              </div>
+              {reviews.length > 1 && (
+                <div className="flex gap-1.5 mt-4">
+                  {reviews.map((r, i) => (
+                    <span key={r.id} className={`h-1 rounded-full transition-all duration-500 ${i === reviewIndex % reviews.length ? "w-6 bg-stone-700" : "w-1.5 bg-stone-300"}`} />
+                  ))}
+                </div>
+              )}
+            </motion.a>
+          )}
+
+          <motion.a {...reveal(0.46)} href="#book" className={`${glass} p-5 md:p-6 flex gap-4 items-center lg:flex-col lg:items-start min-w-[85%] sm:min-w-[60%] lg:min-w-0 snap-start group hover:bg-white/70 transition-colors`}>
             <img
-              src="/hero-tree-ostfildern.webp"
-              alt="A solitary tree in a green field at sunset in Ostfildern"
-              className="w-full h-full object-cover"
-              width={1200}
-              height={1500}
-              loading="eager"
-              fetchPriority="high"
+              src="/bookcover.webp"
+              alt=""
+              width={900}
+              height={1350}
+              loading="lazy"
+              decoding="async"
+              className="w-16 lg:w-20 aspect-[2/3] object-cover rounded-md shadow-lg shadow-stone-900/20 -rotate-3 group-hover:rotate-0 transition-transform duration-500"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
-          </div>
-          <div className="absolute -bottom-6 -left-6 bg-white p-6 rounded-2xl shadow-xl max-w-[200px] hidden md:block">
-            <div className="flex gap-1 mb-2">
-              {[1,2,3,4,5].map(i => <Sparkles key={i} className="w-4 h-4 text-yellow-500 fill-yellow-500" />)}
+            <div className="min-w-0">
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-stone-500 mb-1">{t.bookLabel}</p>
+              <p className="font-serif text-lg leading-snug">{tBook.title}</p>
+              <p className="text-sm text-primary font-semibold mt-2 inline-flex items-center gap-1">
+                {t.bookCta} <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+              </p>
             </div>
-            <p className="text-sm font-medium italic">"{t.testimonial}"</p>
-          </div>
-        </motion.div>
+          </motion.a>
+        </div>
       </div>
     </section>
   );

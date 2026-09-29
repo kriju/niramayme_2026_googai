@@ -259,3 +259,24 @@
     @apply font-sans;
     }
 }
+/* Horizontal carousels (hero bento on phones, reviews row) stay swipeable
+   without showing a scrollbar track. */
+@utility no-scrollbar {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* Slow Ken Burns drift for the faint hero backdrop. */
+@keyframes hero-drift {
+  from { transform: scale(1.05) translate3d(0, 0, 0); }
+  to { transform: scale(1.15) translate3d(-2%, -1.5%, 0); }
+}
+.hero-drift {
+  animation: hero-drift 30s ease-in-out infinite alternate;
+  will-change: transform;
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero-drift { animation: none; transform: scale(1.05); }
+}
