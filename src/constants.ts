@@ -420,7 +420,7 @@ export const TRANSLATIONS = {
       description: "Explore the transformative path of holistic healing through the Five Sheaths (Pancha Koshas) of human existence. From physical vitality to spiritual ecstasy, this book provides a comprehensive roadmap for self-discovery and lasting transformation.",
       author: "Richa Jain Kansal",
       cta: "Order on Amazon",
-      link: "https://a.co/d/05dRUInw",
+      link: "https://www.amazon.de/stores/Richa-Jain-Kansal/author/B0H3W87WW9?language=en&ref=sr_ntt_srch_lnk_1&qid=1790675468&sr=8-1&shoppingPortalEnabled=true",
       badges: ["Holistic Guide", "Ancient Wisdom"],
     },
     auth: {
@@ -856,7 +856,7 @@ export const TRANSLATIONS = {
       description: "Erkunden Sie den transformativen Pfad der ganzheitlichen Heilung durch die fünf Hüllen (Pancha Koshas) der menschlichen Existenz. Von körperlicher Vitalität bis hin zu spiritueller Ekstase bietet dieses Buch einen umfassenden Fahrplan für Selbsterkenntnis und dauerhafte Transformation.",
       author: "Richa Jain Kansal",
       cta: "Auf Amazon bestellen",
-      link: "https://a.co/d/05dRUInw",
+      link: "https://www.amazon.de/stores/Richa-Jain-Kansal/author/B0H3W87WW9?language=en&ref=sr_ntt_srch_lnk_1&qid=1790675468&sr=8-1&shoppingPortalEnabled=true",
       badges: ["Ganzheitlicher Leitfaden", "Altes Wissen"],
     },
     auth: {
