@@ -469,7 +469,7 @@ const LeaveReviewModal = ({ lang }: { lang: "EN" | "DE" }) => {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger render={
-        <Button variant="outline" className="rounded-full border-white/20 text-white hover:bg-white hover:text-primary gap-2">
+        <Button variant="outline" className="rounded-full border-white/20 bg-transparent text-white hover:bg-white hover:text-primary gap-2">
           <Plus className="w-4 h-4" /> {t.leaveReview}
         </Button>
       } />
@@ -510,6 +510,10 @@ const LeaveReviewModal = ({ lang }: { lang: "EN" | "DE" }) => {
               <option value="Physical Wellness">Physical Wellness</option>
               <option value="Mental Clarity">Mental Clarity</option>
               <option value="Spiritual Healing">Spiritual Healing</option>
+              <option value="Kids Yoga">Kids Yoga</option>
+              <option value="Dance Therapy">Dance Therapy</option>
+              <option value="Tarot Reading">Tarot Reading</option>
+              <option value="Chair Yoga">Chair Yoga</option>
             </select>
           </div>
           <div className="grid gap-2">
@@ -1978,7 +1982,7 @@ const TestimonialsSection = ({ lang }: { lang: "EN" | "DE" }) => {
                   variant={filter === cat ? "secondary" : "outline"} 
                   size="sm" 
                   onClick={() => setFilter(cat)}
-                  className="rounded-full border-primary-foreground/20 hover:bg-primary-foreground hover:text-primary transition-all duration-300"
+                  className={`rounded-full border-primary-foreground/20 hover:bg-primary-foreground hover:text-primary transition-all duration-300 ${filter === cat ? "" : "bg-transparent text-primary-foreground"}`}
                 >
                   {t.filters[key as keyof typeof t.filters]}
                 </Button>
@@ -2063,7 +2067,7 @@ const TestimonialsSection = ({ lang }: { lang: "EN" | "DE" }) => {
         </div>
         
         <div className="mt-16 text-center">
-          <Button variant="outline" className="rounded-full border-white/20 text-white hover:bg-white hover:text-primary gap-2">
+          <Button variant="outline" className="rounded-full border-white/20 bg-transparent text-white hover:bg-white hover:text-primary gap-2">
             {t.googleReview} <Globe className="w-4 h-4" />
           </Button>
         </div>
