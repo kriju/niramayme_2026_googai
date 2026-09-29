@@ -1133,11 +1133,11 @@ const Hero = ({ lang, onBook }: { lang: "EN" | "DE", onBook: (ctx?: BookingConte
             <img
               src={tBook.cover}
               alt=""
-              width={287}
-              height={465}
+              width={900}
+              height={1350}
               loading="lazy"
               decoding="async"
-              className="w-16 lg:w-20 aspect-[5/8] object-cover rounded-md shadow-lg shadow-stone-900/20 -rotate-3 group-hover:rotate-0 transition-transform duration-500"
+              className="w-16 lg:w-20 aspect-[2/3] object-cover rounded-md shadow-lg shadow-stone-900/20 -rotate-3 group-hover:rotate-0 transition-transform duration-500"
             />
             <div className="min-w-0">
               <p className="text-xs font-bold uppercase tracking-[0.18em] text-stone-500 mb-1">{t.bookLabel}</p>
@@ -2537,12 +2537,12 @@ const BookSection = ({ lang }: { lang: "EN" | "DE" }) => {
             viewport={{ once: true }}
             className="lg:w-1/2 relative"
           >
-            <div className="relative z-10 rounded-2xl overflow-hidden shadow-[20px_30px_60px_-12px_rgba(0,0,0,0.5)] group bg-stone-900 aspect-[5/8] max-w-sm mx-auto border-r-4 border-stone-800">
+            <div className="relative z-10 rounded-2xl overflow-hidden shadow-[20px_30px_60px_-12px_rgba(0,0,0,0.5)] group bg-stone-900 aspect-[2/3] max-w-sm mx-auto border-r-4 border-stone-800">
               <img
                 src={t.cover}
                 alt={t.title}
-                width={287}
-                height={465}
+                width={900}
+                height={1350}
                 loading="lazy"
                 decoding="async"
                 className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105"
