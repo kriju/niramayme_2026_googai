@@ -111,6 +111,32 @@ service cloud.firestore {
       allow delete: if isBlogAdmin();
     }
 
+    // Comments on a blog post. Every write goes through api/blog-comments.ts
+    // (admin SDK, bypasses these rules) so it can be rate limited, spam
+    // checked and have isAuthor set from a verified token — never by the
+    // client. Visitors can read only visible comments on published posts;
+    // like the blogs rule above, a visitor's list query must itself filter on
+    // status == "visible". Richa/Riju, signed in, see pending/hidden ones too
+    // so they can moderate from the post page.
+    match /blogs/{blogId}/comments/{commentId} {
+      allow get, list: if isBlogAdmin()
+                       || (resource.data.status == 'visible'
+                           && get(/databases/$(database)/documents/blogs/$(blogId)).data.published == true);
+      allow write: if false;
+    }
+
+    // Per-voter like/dislike records — server-only (api/blog-vote.ts). Only
+    // the aggregate in blogStats is ever shown.
+    match /blogs/{blogId}/votes/{voteId} {
+      allow read, write: if false;
+    }
+
+    // Public like/dislike totals per post, written only by api/blog-vote.ts.
+    match /blogStats/{blogId} {
+      allow get: if true;
+      allow list, write: if false;
+    }
+
     match /astrologyRequests/{requestId} {
       // Never client-readable — this holds names, birth details and a
       // contact address/number. The admin reads it via the Firebase console

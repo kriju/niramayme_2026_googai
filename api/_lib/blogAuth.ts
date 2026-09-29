@@ -19,3 +19,15 @@ export async function requireBlogAdmin(bearerHeader: string | string[] | undefin
   }
   return decoded.email;
 }
+
+// How each admin is credited when they reply to a blog comment. Keyed by
+// login email so the name always comes from the verified token, never from
+// anything the request body says.
+const AUTHOR_DISPLAY_NAMES: Record<string, string> = {
+  "rijuk@niramay.me": "Riju",
+  "richak@niramay.me": "Richa",
+};
+
+export function authorDisplayName(email: string): string {
+  return AUTHOR_DISPLAY_NAMES[email] ?? "Niramay";
+}

@@ -1438,6 +1438,10 @@ const renderPostContent = (content: string) => {
   return blocks;
 };
 
+// Likes, sharing and comments sit below the article, so their code (and
+// the reads they make) never delays the post itself from rendering.
+const BlogEngagement = lazy(() => import("./components/BlogEngagement"));
+
 const BlogPostPage = () => {
   const { slug } = useParams<{ slug: string }>();
   const { lang } = useOutletContext<LayoutContext>();
@@ -1570,12 +1574,17 @@ const BlogPostPage = () => {
           {renderPostContent(post.content)}
         </div>
 
-        <div className="flex items-center gap-4 pt-8 border-t border-stone-100 mb-16">
+        <div className="flex items-center gap-4 pt-8 border-t border-stone-100 mb-8">
           <div className="w-12 h-12 rounded-full bg-stone-100 flex items-center justify-center font-bold text-stone-600">
             {post.author?.[0] || "N"}
           </div>
           <p className="font-bold">{post.author || "Niramay"}</p>
         </div>
+
+        <Suspense fallback={null}>
+          {/* keyed by post so navigating between posts resets vote/comment state */}
+          <BlogEngagement key={post.id} blogId={post.id} title={post.title} url={canonical} lang={lang} />
+        </Suspense>
 
         {otherPosts.length > 0 && (
           <div className="pt-10 border-t border-stone-100">
