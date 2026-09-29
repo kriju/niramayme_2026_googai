@@ -1131,7 +1131,7 @@ const Hero = ({ lang, onBook }: { lang: "EN" | "DE", onBook: (ctx?: BookingConte
 
           <motion.a {...reveal(0.46)} href="#book" className={`${glass} p-5 md:p-6 flex gap-4 items-center lg:flex-col lg:items-start min-w-[85%] sm:min-w-[60%] lg:min-w-0 snap-start group hover:bg-white/70 transition-colors`}>
             <img
-              src="/bookcover.webp"
+              src={tBook.cover}
               alt=""
               width={900}
               height={1350}
@@ -2539,13 +2539,13 @@ const BookSection = ({ lang }: { lang: "EN" | "DE" }) => {
           >
             <div className="relative z-10 rounded-2xl overflow-hidden shadow-[20px_30px_60px_-12px_rgba(0,0,0,0.5)] group bg-stone-900 aspect-[2/3] max-w-sm mx-auto border-r-4 border-stone-800">
               <img
-                src="/bookcover.webp"
-                alt="Journey from Body to Bliss Book"
+                src={t.cover}
+                alt={t.title}
                 width={900}
                 height={1350}
                 loading="lazy"
                 decoding="async"
-                className="w-full h-full object-contain transition-transform duration-1000 group-hover:scale-105"
+                className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105"
                 referrerPolicy="no-referrer"
               />
               <div className="absolute inset-0 bg-gradient-to-r from-black/20 via-transparent to-transparent" />
@@ -2562,7 +2562,7 @@ const BookSection = ({ lang }: { lang: "EN" | "DE" }) => {
             <motion.div 
               animate={{ y: [0, -10, 0] }}
               transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-              className="absolute -right-4 top-20 z-20 bg-white p-6 rounded-2xl shadow-xl border border-stone-100 hidden md:block"
+              className="absolute -right-4 bottom-20 z-20 bg-white p-6 rounded-2xl shadow-xl border border-stone-100 hidden md:block"
             >
               <div className="flex flex-col items-center gap-2">
                 <div className="flex text-yellow-500">
