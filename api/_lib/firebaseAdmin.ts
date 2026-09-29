@@ -4,11 +4,11 @@ import { getAuth, type Auth } from "firebase-admin/auth";
 
 // Must match firebase-applet-config.json's firestoreDatabaseId — this project
 // does NOT use the "(default)" Firestore database.
-const FIRESTORE_DATABASE_ID = "ai-studio-594cf9c4-79be-46f5-b470-815b908e1d16";
+export const FIRESTORE_DATABASE_ID = "ai-studio-594cf9c4-79be-46f5-b470-815b908e1d16";
 
 let cachedApp: App | null = null;
 
-function getAdminApp(): App {
+export function getAdminApp(): App {
   if (cachedApp) return cachedApp;
   const existing = getApps();
   if (existing.length) {
