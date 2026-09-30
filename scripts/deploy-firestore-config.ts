@@ -148,7 +148,7 @@ async function deployIndexes(token: string) {
       fields: index.fields,
     });
     if (result.status === 403) {
-      permissionDenied.push(`index ${key}`);
+      permissionDenied.push(`index ${key} (${result.data?.error?.message ?? "no details"})`);
       continue;
     }
     // 409 = an identical index already exists or is being built.
@@ -193,7 +193,7 @@ async function deployTtlPolicies(token: string) {
     }
     const result = await api(token, "PATCH", `${fieldUrl}?updateMask=ttlConfig`, { ttlConfig: {} });
     if (result.status === 403) {
-      permissionDenied.push(`TTL ${collectionGroup}.${field}`);
+      permissionDenied.push(`TTL ${collectionGroup}.${field} (${result.data?.error?.message ?? "no details"})`);
       continue;
     }
     // 409 = a TTL change on this field is already in progress.
