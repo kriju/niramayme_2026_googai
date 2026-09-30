@@ -1,0 +1,51 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__Vercel__get_auth_user",
+      "mcp__Vercel__list_teams",
+      "mcp__Vercel__get_team",
+      "mcp__Vercel__list_projects",
+      "mcp__Vercel__get_project",
+      "mcp__Vercel__filter_project_envs",
+      "mcp__Vercel__get_project_env",
+      "mcp__Vercel__create_project_env",
+      "mcp__Vercel__edit_project_env",
+      "mcp__Vercel__list_deployments",
+      "mcp__Vercel__get_deployment",
+      "mcp__Vercel__list_deployment_events",
+      "mcp__Vercel__list_deployment_files",
+      "mcp__Vercel__get_deployment_file_contents",
+      "mcp__Vercel__list_deployment_aliases",
+      "mcp__Vercel__create_deployment",
+      "mcp__Vercel__cancel_deployment",
+      "mcp__Vercel__get_runtime_logs",
+      "mcp__Vercel__get_runtime_errors",
+      "mcp__Vercel__list_project_domains",
+      "mcp__Vercel__list_aliases",
+      "mcp__Vercel__get_storage_stores_by_id",
+      "mcp__Vercel__search_vercel_documentation",
+      "mcp__Vercel__web_fetch_vercel_url",
+      "mcp__Vercel__get_access_to_vercel_url",
+      "mcp__Vercel__status"
+    ],
+    "ask": [
+      "mcp__Vercel__buy_addon",
+      "mcp__Vercel__buy_credits",
+      "mcp__Vercel__buy_credits_endpoint",
+      "mcp__Vercel__buy_domain",
+      "mcp__Vercel__buy_domains",
+      "mcp__Vercel__buy_pro",
+      "mcp__Vercel__buy_single_domain",
+      "mcp__Vercel__add_project_domain",
+      "mcp__Vercel__assign_alias",
+      "mcp__Vercel__request_promote",
+      "mcp__Vercel__request_rollback",
+      "mcp__Vercel__pause_project",
+      "mcp__Vercel__update_project",
+      "mcp__Vercel__update_firewall_config",
+      "mcp__Vercel__put_firewall_config",
+      "mcp__Vercel__replace_domains_by_domain_records",
+      "mcp__Vercel__update_record"
+    ]
+  }
+}
