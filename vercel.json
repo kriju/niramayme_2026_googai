@@ -1,10 +1,15 @@
 {
+  "functions": {
+    "api/blog-share.ts": { "includeFiles": "dist/index.html" }
+  },
   "redirects": [
     { "source": "/services/:id(nlp|hypnotherapy|past-life)", "destination": "/services/subconscious-healing", "permanent": true },
     { "source": "/de/services/:id(nlp|hypnotherapy|past-life)", "destination": "/de/services/subconscious-healing", "permanent": true }
   ],
   "rewrites": [
     { "source": "/sitemap.xml", "destination": "/api/sitemap" },
+    { "source": "/blog/:slug", "destination": "/api/blog-share?slug=:slug" },
+    { "source": "/de/blog/:slug", "destination": "/api/blog-share?slug=:slug&lang=de" },
     { "source": "/((?!api/).*)", "destination": "/index.html" }
   ]
 }
