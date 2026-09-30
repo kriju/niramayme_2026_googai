@@ -434,14 +434,17 @@ function CommentsSection({ blogId, lang }: { blogId: string; lang: Lang }) {
     setState("loading");
     try {
       const col = collection(db, "blogs", blogId, "comments");
-      // Newest first so the cap never hides recent comments. Visitors must
-      // filter on status for firestore.rules to accept the query; authors
-      // see everything so they can publish held comments.
+      // Visitors must filter on status for firestore.rules to accept the
+      // query; authors see everything so they can publish held comments.
+      // The visitor query deliberately has no orderBy: equality + orderBy on
+      // another field would need a composite index, which the deploy
+      // step's service account isn't allowed to create. Sorting a few
+      // hundred comments client-side costs nothing.
       const q = isAdmin
         ? query(col, orderBy("createdAt", "desc"), limit(500))
-        : query(col, where("status", "==", "visible"), orderBy("createdAt", "desc"), limit(300));
+        : query(col, where("status", "==", "visible"), limit(500));
       const snap = await getDocs(q);
-      setComments(snap.docs.map((d) => toComment(d.id, d.data())));
+      setComments(snap.docs.map((d) => toComment(d.id, d.data())).sort((a, b) => b.createdAt - a.createdAt));
       setState("ready");
     } catch (err) {
       console.error("Error loading comments:", err);

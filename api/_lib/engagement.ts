@@ -51,9 +51,11 @@ export function clientKey(req: VercelRequest): string {
 }
 
 // Fixed-window counter in Firestore (serverless instances share no memory,
-// so an in-process counter would reset on every cold start). Old buckets
-// carry an expiresAt so a Firestore TTL policy on rateLimits.expiresAt can
-// sweep them; without one they're just tiny, never-read docs.
+// so an in-process counter would reset on every cold start). Expired
+// buckets are swept here on each call — they hold a hashed IP, so they
+// shouldn't outlive their window. (A TTL policy on rateLimits.expiresAt is
+// also requested at deploy time, but that needs IAM rights the service
+// account may not have, so this sweep doesn't rely on it.)
 export async function enforceRateLimit(
   db: Firestore,
   kind: string,
@@ -73,7 +75,22 @@ export async function enforceRateLimit(
     });
     return true;
   });
+  await sweepExpiredRateLimits(db);
   if (!allowed) throw new HttpError(429, "rate_limited");
+}
+
+// Single-field range query (automatically indexed); usually matches
+// nothing, costing one read. Never fails the request it runs in.
+async function sweepExpiredRateLimits(db: Firestore): Promise<void> {
+  try {
+    const expired = await db.collection("rateLimits").where("expiresAt", "<", Timestamp.now()).limit(100).get();
+    if (expired.empty) return;
+    const batch = db.batch();
+    expired.docs.forEach((d) => batch.delete(d.ref));
+    await batch.commit();
+  } catch (error) {
+    console.warn("rateLimits sweep failed:", error);
+  }
 }
 
 // A JSON content type forces a CORS preflight for any cross-origin browser
