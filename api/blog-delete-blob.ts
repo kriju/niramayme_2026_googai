@@ -17,6 +17,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (!url || !url.includes(".public.blob.vercel-storage.com/")) {
       return res.status(400).json({ error: "Invalid url" });
     }
+    // Previews mirror the live posts (scripts/sync-preview-content.ts) and
+    // share the live Blob store, so deleting a mirrored post on a preview
+    // must leave its media alone — only files uploaded from a preview (see
+    // WritePage) may be removed there.
+    if (process.env.VERCEL_ENV === "preview" && !new URL(url).pathname.startsWith("/preview/")) {
+      return res.status(200).json({ ok: true, skipped: "production media is never deleted from a preview" });
+    }
     await del(url);
     return res.status(200).json({ ok: true });
   } catch (error) {
