@@ -13,6 +13,8 @@
 // Never fails the build: the site keeps working on the previously deployed
 // rules/indexes, so a problem here is logged loudly instead.
 //
+// Also enables the TTL policies listed in TTL_POLICIES below.
+//
 // Usage (runs automatically on Vercel builds; skipped locally):
 //   FIREBASE_SERVICE_ACCOUNT="$(cat service-account.json)" npx tsx scripts/deploy-firestore-config.ts --force
 
@@ -127,6 +129,34 @@ async function deployIndexes(token: string) {
   if (!created) console.log("[firestore] indexes unchanged — skipping");
 }
 
+// Firestore TTL policies: docs whose field holds a past timestamp are
+// deleted automatically (within ~24h of expiry). Declared here rather than
+// in firestore.indexes.json since firebase-tools has no file format for
+// them. Only ever enabled, never removed.
+const TTL_POLICIES = [
+  // Blog comment/vote rate-limit buckets (api/_lib/engagement.ts) — they're
+  // only needed for their 10-minute window, and hold a hashed IP.
+  { collectionGroup: "rateLimits", field: "expiresAt" },
+];
+
+async function deployTtlPolicies(token: string) {
+  const dbPath = `${FIRESTORE_API}/projects/${PROJECT_ID}/databases/${DATABASE_ID}`;
+  for (const { collectionGroup, field } of TTL_POLICIES) {
+    const fieldUrl = `${dbPath}/collectionGroups/${collectionGroup}/fields/${field}`;
+    const current = await api(token, "GET", fieldUrl);
+    if (!current.ok && current.status !== 404) fail(`Reading TTL policy ${collectionGroup}.${field}`, current);
+    const state = current.data.ttlConfig?.state;
+    if (state === "ACTIVE" || state === "CREATING") {
+      console.log(`[firestore] TTL ${collectionGroup}.${field} ${state.toLowerCase()} — skipping`);
+      continue;
+    }
+    const result = await api(token, "PATCH", `${fieldUrl}?updateMask=ttlConfig`, { ttlConfig: {} });
+    // 409 = a TTL change on this field is already in progress.
+    if (!result.ok && result.status !== 409) fail(`Enabling TTL ${collectionGroup}.${field}`, result);
+    console.log(`[firestore] TTL policy enabling: ${collectionGroup}.${field}`);
+  }
+}
+
 async function main() {
   const force = process.argv.includes("--force");
   const vercelEnv = process.env.VERCEL_ENV;
@@ -153,6 +183,7 @@ async function main() {
     const { access_token } = await credential.getAccessToken();
     await deployRules(access_token);
     await deployIndexes(access_token);
+    await deployTtlPolicies(access_token);
   } catch (error) {
     console.warn("[firestore] WARNING: could not deploy rules/indexes — the previously deployed ones stay live.");
     console.warn(error);

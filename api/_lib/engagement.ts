@@ -2,6 +2,7 @@ import crypto from "node:crypto";
 import type { VercelRequest } from "@vercel/node";
 import { Timestamp, type Firestore } from "firebase-admin/firestore";
 import nodemailer from "nodemailer";
+import { adminSubject } from "./util.js";
 
 // Shared plumbing for the public blog engagement endpoints (comments and
 // likes/dislikes). Unlike reviews, these accept writes from completely
@@ -135,7 +136,7 @@ export async function sendAdminEmail(subject: string, html: string): Promise<voi
   await transporter.sendMail({
     from: process.env.GMAIL_USER,
     to: process.env.ADMIN_NOTIFY_EMAIL || "riju.kansal@niramay.me",
-    subject,
+    subject: adminSubject(subject),
     html,
   });
 }
