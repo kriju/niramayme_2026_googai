@@ -11,7 +11,15 @@ export const BUSINESS_STREET_ADDRESS = "Ernst Kirchner Str 13/3";
 export const BUSINESS_POSTAL_CODE = "73760";
 export const BUSINESS_CITY = "Ostfildern";
 export const GOOGLE_MAPS_QUERY = `Niramay Wellbeing, ${BUSINESS_STREET_ADDRESS}, ${BUSINESS_POSTAL_CODE} ${BUSINESS_CITY}, Germany`;
-export const GOOGLE_MAPS_URL = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(GOOGLE_MAPS_QUERY)}`;
+// The claimed Google Business Profile listing itself — used for the footer's
+// address link and for LocalBusiness JSON-LD's sameAs/hasMap, since those
+// need to resolve to the one stable, verified listing Google already
+// associates with this business, not a re-derived text search that could
+// (in principle) surface a different result.
+export const GOOGLE_MAPS_URL = "https://share.google/Uz5At5p2SAwgCjhtb";
+// Only the embedded map iframe still uses a plain text-query URL — Google's
+// embed endpoint doesn't accept a share link, and a query-based embed is
+// visually identical for that purpose.
 export const GOOGLE_MAPS_EMBED_URL = `https://maps.google.com/maps?q=${encodeURIComponent(GOOGLE_MAPS_QUERY)}&z=15&output=embed`;
 
 // The only two people who can sign in to write/edit blog posts. Firebase
