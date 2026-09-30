@@ -338,12 +338,30 @@ const WriteDashboard = ({ user }: { user: User }) => {
     }
   };
 
+  // Firestore doesn't cascade deletes into subcollections, so the post's
+  // comments and like/dislike records are removed server-side afterwards.
+  // Best-effort like deleteBlob: leftovers are unreadable once the post
+  // is gone (see firestore.rules), just untidy.
+  const purgeEngagement = async (blogId: string) => {
+    try {
+      const idToken = await user.getIdToken();
+      await fetch("/api/blog-comments", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${idToken}` },
+        body: JSON.stringify({ blogId }),
+      });
+    } catch (err) {
+      console.error("Error purging comments:", err);
+    }
+  };
+
   const handleDelete = async (post: BlogPostDoc) => {
     if (!window.confirm(et.deleteConfirm)) return;
     try {
       await deleteDoc(doc(db, "blogs", post.id));
       if (post.image) deleteBlob(post.image);
       if (post.audioUrl) deleteBlob(post.audioUrl);
+      purgeEngagement(post.id);
       if (editingId === post.id) resetForm();
     } catch (err) {
       console.error("Error deleting post:", err);

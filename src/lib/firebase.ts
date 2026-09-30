@@ -1,6 +1,17 @@
 import { initializeApp } from 'firebase/app';
 import { getFirestore } from 'firebase/firestore';
-import firebaseConfig from '../../firebase-applet-config.json';
+import productionConfig from '../../firebase-applet-config.json';
+import previewConfig from '../../firebase-preview-config.json';
+
+// Vercel preview deployments talk to the separate niramay-me-prev Firebase
+// project, so testing a branch never touches the live site's reviews, blog
+// posts, bookings or accounts. Production and local dev use the live
+// project. VITE_FIREBASE_TARGET is set at build time in vite.config.ts.
+const usePreview = import.meta.env.VITE_FIREBASE_TARGET === 'preview' && previewConfig.apiKey !== '';
+if (import.meta.env.VITE_FIREBASE_TARGET === 'preview' && !usePreview) {
+  console.warn('firebase-preview-config.json is incomplete — this preview is using the live Firebase project.');
+}
+const firebaseConfig = usePreview ? previewConfig : productionConfig;
 
 export const app = initializeApp(firebaseConfig);
 export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);

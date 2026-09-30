@@ -89,9 +89,9 @@ service cloud.firestore {
       allow get, list: if resource.data.approved == true;
       // Public visitors may submit a review, but it always lands unapproved —
       // a submission can't set approved:true itself. Nothing becomes visible
-      // on the site until an admin flips `approved` to true directly in the
-      // Firebase console (client-side update/delete stays blocked below, so
-      // this can't be done from the app).
+      // on the site until an admin clicks Approve in the notification email
+      // (api/review-action.ts, which uses the admin SDK) — client-side
+      // update/delete stays blocked below.
       allow create: if isValidId(reviewId)
                     && isValidReview(incoming())
                     && (!('approved' in incoming()) || incoming().approved == false);
@@ -109,6 +109,32 @@ service cloud.firestore {
       allow get, list: if resource.data.published == true || isBlogAdmin();
       allow create, update: if isBlogAdmin() && isValidBlog(incoming());
       allow delete: if isBlogAdmin();
+    }
+
+    // Comments on a blog post. Every write goes through api/blog-comments.ts
+    // (admin SDK, bypasses these rules) so it can be rate limited, spam
+    // checked and have isAuthor set from a verified token — never by the
+    // client. Visitors can read only visible comments on published posts;
+    // like the blogs rule above, a visitor's list query must itself filter on
+    // status == "visible". Richa/Riju, signed in, see pending/hidden ones too
+    // so they can moderate from the post page.
+    match /blogs/{blogId}/comments/{commentId} {
+      allow get, list: if isBlogAdmin()
+                       || (resource.data.status == 'visible'
+                           && get(/databases/$(database)/documents/blogs/$(blogId)).data.published == true);
+      allow write: if false;
+    }
+
+    // Per-voter like/dislike records — server-only (api/blog-vote.ts). Only
+    // the aggregate in blogStats is ever shown.
+    match /blogs/{blogId}/votes/{voteId} {
+      allow read, write: if false;
+    }
+
+    // Public like/dislike totals per post, written only by api/blog-vote.ts.
+    match /blogStats/{blogId} {
+      allow get: if true;
+      allow list, write: if false;
     }
 
     match /astrologyRequests/{requestId} {
