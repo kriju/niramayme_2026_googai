@@ -248,7 +248,11 @@ const WriteDashboard = ({ user }: { user: User }) => {
       // the browser can upload with, since the client never holds Vercel
       // Blob's write token directly.
       const idToken = await user.getIdToken();
-      const path = `blog-media/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, "_")}`;
+      // Preview deployments share production's Blob store, so their uploads
+      // get their own prefix — api/blog-delete-blob.ts only lets a preview
+      // delete those, never the live posts' media mirrored into it.
+      const prefix = import.meta.env.VITE_FIREBASE_TARGET === "preview" ? "preview/blog-media" : "blog-media";
+      const path = `${prefix}/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, "_")}`;
       const blob = await uploadBlob(path, file, {
         access: "public",
         contentType,
