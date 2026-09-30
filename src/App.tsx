@@ -1211,6 +1211,15 @@ const ServiceCard = ({ service, index, lang, onLearnMore }: { service: any, inde
 // Germany" against). Services with an external `link` (the two
 // "openInModal" interactive-tool cards) don't get one: they're not content
 // Niramay owns, so a dedicated page for them would just be thin/duplicate.
+// NLP Coaching, Hypnotherapy and Past Life Regression were merged into one
+// "Subconscious Healing" service; their old URLs are 301'd in vercel.json,
+// and this covers in-app links that never reach the server.
+const MERGED_SERVICE_IDS: Record<string, string> = {
+  nlp: "subconscious-healing",
+  hypnotherapy: "subconscious-healing",
+  "past-life": "subconscious-healing",
+};
+
 const ServicePage = () => {
   const { id } = useParams<{ id: string }>();
   const { lang, onBook, onBookAstrology } = useOutletContext<LayoutContext>();
@@ -1263,6 +1272,7 @@ const ServicePage = () => {
   }, [service, content, canonical, sp.home, prefix]);
   useJsonLd("ld-json-breadcrumb", breadcrumbJsonLd);
 
+  if (id && MERGED_SERVICE_IDS[id]) return <Navigate to={`${prefix}/services/${MERGED_SERVICE_IDS[id]}`} replace />;
   if (!service || !content) return <Navigate to={prefix || "/"} replace />;
 
   const otherServices = SERVICES.filter(s => !s.openInModal && s.id !== service.id);
@@ -1298,6 +1308,14 @@ const ServicePage = () => {
         <p className="font-medium text-primary/70 mb-2">{service.category}</p>
         <h1 className="text-4xl md:text-5xl font-serif font-bold mb-6 leading-tight">{content.title}</h1>
         <p className="text-lg text-muted-foreground leading-relaxed mb-8">{content.description}</p>
+
+        {"details" in content && content.details && (
+          <div className="space-y-4 mb-10">
+            {content.details.map((para, idx) => (
+              <p key={idx} className="text-muted-foreground leading-relaxed">{para}</p>
+            ))}
+          </div>
+        )}
 
         <div className="bg-stone-50 p-6 rounded-2xl border border-stone-100 mb-10">
           <p className="text-xs font-bold uppercase tracking-wider text-primary/50 mb-2">{t.outcomeLabel}</p>
