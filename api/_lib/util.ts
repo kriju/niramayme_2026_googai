@@ -24,3 +24,10 @@ export function getSiteUrl(req: { headers: Record<string, string | string[] | un
 function firstHeader(value: string | string[] | undefined): string | undefined {
   return Array.isArray(value) ? value[0] : value;
 }
+
+// Admin notification emails from a Vercel preview deployment come from the
+// separate preview Firebase project — label them so test submissions are
+// never mistaken for real reviews or bookings.
+export function adminSubject(subject: string): string {
+  return process.env.VERCEL_ENV === "preview" ? `[Preview] ${subject}` : subject;
+}

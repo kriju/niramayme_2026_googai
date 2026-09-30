@@ -2,7 +2,7 @@ import type { VercelRequest, VercelResponse } from "@vercel/node";
 import nodemailer from "nodemailer";
 import { getAdminDb } from "./_lib/firebaseAdmin.js";
 import { makeReviewToken } from "./_lib/reviewToken.js";
-import { escapeHtml, getSiteUrl } from "./_lib/util.js";
+import { adminSubject, escapeHtml, getSiteUrl } from "./_lib/util.js";
 
 // Called by the browser right after a review is saved to Firestore (see
 // LeaveReviewModal in src/App.tsx). It re-fetches the review server-side by
@@ -66,7 +66,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     await transporter.sendMail({
       from: process.env.GMAIL_USER,
       to: process.env.ADMIN_NOTIFY_EMAIL || "riju.kansal@niramay.me",
-      subject: `New review from ${review.name || "a visitor"} — needs approval`,
+      subject: adminSubject(`New review from ${review.name || "a visitor"} — needs approval`),
       html,
     });
 

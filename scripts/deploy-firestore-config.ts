@@ -1,7 +1,9 @@
-// Pushes firestore.rules and firestore.indexes.json to the live Firestore
-// database as part of every Vercel production build (see "build" in
-// package.json), so changing either file only needs a merge to main — no
-// `firebase deploy` and no pasting rules into the Firebase console.
+// Pushes firestore.rules and firestore.indexes.json to Firestore as part of
+// every Vercel build (see "build" in package.json), so changing either file
+// needs no `firebase deploy` and no pasting rules into the Firebase console.
+// Production builds update the live project; preview builds update the
+// separate preview project (whichever FIREBASE_SERVICE_ACCOUNT Vercel hands
+// that environment), so a branch's rules can be tried out before merging.
 //
 // Talks to the Firebase Rules and Firestore Admin REST APIs directly using
 // the FIREBASE_SERVICE_ACCOUNT the API routes already use, rather than
@@ -11,18 +13,17 @@
 // Never fails the build: the site keeps working on the previously deployed
 // rules/indexes, so a problem here is logged loudly instead.
 //
-// Usage (runs automatically on Vercel production builds; skipped elsewhere):
+// Usage (runs automatically on Vercel builds; skipped locally):
 //   FIREBASE_SERVICE_ACCOUNT="$(cat service-account.json)" npx tsx scripts/deploy-firestore-config.ts --force
 
 import { readFileSync } from "node:fs";
-import firebaseConfig from "../firebase-applet-config.json";
-import { FIRESTORE_DATABASE_ID, getAdminApp } from "../api/_lib/firebaseAdmin";
+import { getAdminApp, getDatabaseId, getProjectId } from "../api/_lib/firebaseAdmin";
 
-const PROJECT_ID = firebaseConfig.projectId;
 const RULES_API = "https://firebaserules.googleapis.com/v1";
 const FIRESTORE_API = "https://firestore.googleapis.com/v1";
-// Non-default databases get their own release, named like firebase-tools does.
-const RELEASE_NAME = `projects/${PROJECT_ID}/releases/cloud.firestore/${FIRESTORE_DATABASE_ID}`;
+let PROJECT_ID = "";
+let DATABASE_ID = "";
+let RELEASE_NAME = "";
 
 interface IndexField {
   fieldPath: string;
@@ -96,7 +97,7 @@ function indexKey(index: IndexDef) {
 
 async function deployIndexes(token: string) {
   const wanted: IndexDef[] = JSON.parse(readFileSync("firestore.indexes.json", "utf8")).indexes;
-  const dbPath = `${FIRESTORE_API}/projects/${PROJECT_ID}/databases/${FIRESTORE_DATABASE_ID}`;
+  const dbPath = `${FIRESTORE_API}/projects/${PROJECT_ID}/databases/${DATABASE_ID}`;
 
   const existing = new Set<string>();
   let pageToken = "";
@@ -128,12 +129,19 @@ async function deployIndexes(token: string) {
 
 async function main() {
   const force = process.argv.includes("--force");
-  if (!force && process.env.VERCEL_ENV !== "production") {
-    console.log("[firestore] not a Vercel production build — skipping rules/index deploy");
+  const vercelEnv = process.env.VERCEL_ENV;
+  if (!force && vercelEnv !== "production" && vercelEnv !== "preview") {
+    console.log("[firestore] not a Vercel build — skipping rules/index deploy");
     return;
   }
 
   try {
+    PROJECT_ID = getProjectId();
+    DATABASE_ID = getDatabaseId();
+    // The (default) database's release is plain cloud.firestore; named ones
+    // get their own, the same way firebase-tools names them.
+    RELEASE_NAME = `projects/${PROJECT_ID}/releases/cloud.firestore${DATABASE_ID === "(default)" ? "" : `/${DATABASE_ID}`}`;
+    console.log(`[firestore] ${vercelEnv ?? "manual"} build → project ${PROJECT_ID}, database ${DATABASE_ID}`);
     const credential = getAdminApp().options.credential;
     if (!credential) throw new Error("Firebase admin app has no credential");
     const { access_token } = await credential.getAccessToken();

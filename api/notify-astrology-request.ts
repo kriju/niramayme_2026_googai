@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import nodemailer from "nodemailer";
 import { getAdminDb } from "./_lib/firebaseAdmin.js";
-import { escapeHtml } from "./_lib/util.js";
+import { adminSubject, escapeHtml } from "./_lib/util.js";
 
 // Called by the browser right after AstrologyIntakeModal (see src/App.tsx)
 // writes/updates a doc in the astrologyRequests Firestore collection — once
@@ -57,9 +57,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     await transporter.sendMail({
       from: process.env.GMAIL_USER,
       to: process.env.ADMIN_NOTIFY_EMAIL || "riju.kansal@niramay.me",
-      subject: kind === "submitted"
+      subject: adminSubject(kind === "submitted"
         ? `New astrology chart request — ${refCode}`
-        : `Payment claimed for astrology request — ${refCode}`,
+        : `Payment claimed for astrology request — ${refCode}`),
       text: renderAdminEmailText({ refCode, kind, request, formattedDate, isEmailContact }),
       html: renderAdminEmailHtml({ refCode, kind, request, formattedDate, isEmailContact }),
     });
