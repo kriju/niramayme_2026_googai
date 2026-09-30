@@ -89,9 +89,9 @@ service cloud.firestore {
       allow get, list: if resource.data.approved == true;
       // Public visitors may submit a review, but it always lands unapproved —
       // a submission can't set approved:true itself. Nothing becomes visible
-      // on the site until an admin flips `approved` to true directly in the
-      // Firebase console (client-side update/delete stays blocked below, so
-      // this can't be done from the app).
+      // on the site until an admin clicks Approve in the notification email
+      // (api/review-action.ts, which uses the admin SDK) — client-side
+      // update/delete stays blocked below.
       allow create: if isValidId(reviewId)
                     && isValidReview(incoming())
                     && (!('approved' in incoming()) || incoming().approved == false);

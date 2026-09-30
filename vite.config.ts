@@ -9,6 +9,9 @@ export default defineConfig(({mode}) => {
     plugins: [react(), tailwindcss()],
     define: {
       'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY),
+      // Picks the Firebase project in src/lib/firebase.ts: Vercel preview
+      // builds use the separate preview project, everything else the live one.
+      'import.meta.env.VITE_FIREBASE_TARGET': JSON.stringify(process.env.VERCEL_ENV === 'preview' ? 'preview' : 'production'),
     },
     resolve: {
       alias: {
