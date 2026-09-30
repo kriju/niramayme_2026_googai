@@ -1,4 +1,8 @@
 {
+  "redirects": [
+    { "source": "/services/:id(nlp|hypnotherapy|past-life)", "destination": "/services/subconscious-healing", "permanent": true },
+    { "source": "/de/services/:id(nlp|hypnotherapy|past-life)", "destination": "/de/services/subconscious-healing", "permanent": true }
+  ],
   "rewrites": [
     { "source": "/sitemap.xml", "destination": "/api/sitemap" },
     { "source": "/((?!api/).*)", "destination": "/index.html" }

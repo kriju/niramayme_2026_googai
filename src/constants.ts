@@ -1,4 +1,4 @@
-import { Heart, Sparkles, Brain, Zap, ShieldCheck, Moon, Users, Star, GraduationCap, Award, History } from "lucide-react";
+import { Heart, Sparkles, Brain, ShieldCheck, Moon, Users, Star, GraduationCap, Award, History } from "lucide-react";
 
 export const GOOGLE_CALENDAR_URL = "https://calendar.google.com/calendar/appointments/schedules/AcZssZ0bFjK2E2xI3wiT55LqPigmiOHHDxGTghizdBbhy4MSdbw1p6CRUsxVk8gZYqJTnMgoKOAcJjZO?gv=true";
 export const GOOGLE_REVIEW_URL = "https://www.google.com/search?q=Niramay+Ostfildern+reviews";
@@ -1045,11 +1045,21 @@ export const SERVICES = [
       title: "Holistic Yoga",
       description: "Align your body and mind through traditional asanas, breathwork, and meditation tailored to your unique needs.",
       outcome: "Improve flexibility, reduce chronic pain, and find inner stillness.",
+      details: [
+        "Holistic Yoga treats you as a whole person, not just a body in a pose. Each session weaves together gentle asanas, pranayama (breathwork), relaxation and meditation, drawn from the classical S-VYASA tradition of yoga therapy.",
+        "Practice is adapted to where you are today, whether you are a complete beginner, recovering from back or neck pain, managing stress and sleep, or looking to deepen an existing practice. Postures are modified with care so every body can take part safely.",
+        "Sessions are offered one-to-one or in small groups, in person in Ostfildern or online, and you leave with simple routines you can continue at home.",
+      ],
     },
     DE: {
       title: "Ganzheitliches Yoga",
       description: "Bringen Sie Körper und Geist durch traditionelle Asanas, Atemarbeit und Meditation in Einklang, die auf Ihre individuellen Bedürfnisse zugeschnitten sind.",
       outcome: "Verbessern Sie Ihre Flexibilität, lindern Sie chronische Schmerzen und finden Sie innere Ruhe.",
+      details: [
+        "Ganzheitliches Yoga betrachtet Sie als ganzen Menschen – nicht nur als Körper in einer Haltung. Jede Einheit verbindet sanfte Asanas, Pranayama (Atemarbeit), Entspannung und Meditation, basierend auf der klassischen Yogatherapie-Tradition von S-VYASA.",
+        "Die Praxis wird an Ihre aktuelle Situation angepasst – ob Sie ganz neu beginnen, sich von Rücken- oder Nackenschmerzen erholen, Stress und Schlaf in den Griff bekommen oder Ihre bestehende Praxis vertiefen möchten. Haltungen werden achtsam abgewandelt, damit jeder Körper sicher mitmachen kann.",
+        "Die Sitzungen finden einzeln oder in kleinen Gruppen statt, vor Ort in Ostfildern oder online – und Sie nehmen einfache Übungsabläufe für zu Hause mit.",
+      ],
     }
   },
   {
@@ -1061,59 +1071,51 @@ export const SERVICES = [
       title: "Energy Healing (Reiki)",
       description: "Experience deep relaxation and emotional release through gentle touch or distant energy work.",
       outcome: "Balance your energy centers and accelerate your body's natural healing process.",
+      details: [
+        "Reiki is a gentle Japanese energy-healing practice. As a Reiki Master, Richa channels universal life-force energy through light touch or with hands held just above the body, helping to release tension and restore balance across your energy centres (chakras).",
+        "You simply lie fully clothed and relax, and many people feel warmth, tingling or a deep sense of calm. Reiki can support you through stress, anxiety, grief, emotional heaviness, poor sleep and recovery, and works well alongside conventional medical care rather than replacing it.",
+        "Sessions can be held in person in Ostfildern or as distance Reiki from the comfort of your home.",
+      ],
     },
     DE: {
       title: "Energieheilung (Reiki)",
       description: "Erleben Sie tiefe Entspannung und emotionale Befreiung durch sanfte Berührung oder Fernenergiearbeit.",
       outcome: "Bringen Sie Ihre Energiezentren ins Gleichgewicht und beschleunigen Sie den natürlichen Heilungsprozess Ihres Körpers.",
+      details: [
+        "Reiki ist eine sanfte japanische Methode der Energieheilung. Als Reiki-Meisterin leitet Richa universelle Lebensenergie durch leichte Berührung oder mit den Händen knapp über dem Körper weiter – so lösen sich Spannungen und Ihre Energiezentren (Chakren) finden wieder ins Gleichgewicht.",
+        "Sie liegen bekleidet und entspannen einfach; viele Menschen spüren Wärme, ein Kribbeln oder tiefe Ruhe. Reiki kann Sie bei Stress, Ängsten, Trauer, emotionaler Belastung, Schlafproblemen und in Erholungsphasen unterstützen und ergänzt eine schulmedizinische Behandlung, statt sie zu ersetzen.",
+        "Sitzungen finden vor Ort in Ostfildern oder als Fern-Reiki bequem bei Ihnen zu Hause statt.",
+      ],
     }
   },
   {
-    id: "nlp",
+    id: "subconscious-healing",
     icon: Brain,
     color: "bg-stone-100",
     category: "Mental Clarity",
     EN: {
-      title: "NLP Coaching",
-      description: "Reprogram limiting beliefs and behavioral patterns using Neuro-Linguistic Programming techniques.",
-      outcome: "Gain mental resilience, clarity of purpose, and break through personal barriers.",
+      title: "Subconscious Healing",
+      description: "Heal at the root by working with your subconscious mind through NLP Coaching, Hypnotherapy and Past Life Regression.",
+      outcome: "Release limiting beliefs, anxiety and old emotional patterns, and create lasting change from within.",
+      details: [
+        "Most of what we think, feel and do is driven by the subconscious mind, which is why willpower alone often isn't enough to change a habit, a fear or a recurring pattern. Subconscious Healing brings together three complementary approaches to work directly at that deeper level.",
+        "NLP (Neuro-Linguistic Programming) Coaching helps you identify and reframe limiting beliefs, change unhelpful thought and behaviour patterns, and move towards your goals with clarity and confidence.",
+        "Hypnotherapy guides you into a deeply relaxed yet focused state in which you stay aware and in control, where the subconscious becomes open to positive suggestion. It is especially helpful for anxiety, phobias, stress, low self-esteem and unwanted habits.",
+        "Past Life Regression gently explores memories held in the subconscious to understand the roots of present-day fears, relationship patterns and emotional blocks, bringing insight, release and a sense of peace.",
+        "In a free discovery call, Richa will listen to what you'd like to work on and suggest the approach, or blend of approaches, best suited to you.",
+      ],
     },
     DE: {
-      title: "NLP Coaching",
-      description: "Programmieren Sie einschränkende Überzeugungen und Verhaltensmuster mit Techniken des Neuro-Linguistischen Programmierens um.",
-      outcome: "Gewinnen Sie mentale Widerstandsfähigkeit, Klarheit über Ihre Ziele und durchbrechen Sie persönliche Barrieren.",
-    }
-  },
-  {
-    id: "hypnotherapy",
-    icon: Zap,
-    color: "bg-stone-100",
-    category: "Mental Clarity",
-    EN: {
-      title: "Hypnotherapy",
-      description: "Access the power of your subconscious mind to address anxiety, phobias, and deep-seated habits.",
-      outcome: "Overcome anxiety and achieve lasting behavioral transformation.",
-    },
-    DE: {
-      title: "Hypnotherapie",
-      description: "Nutzen Sie die Kraft Ihres Unterbewusstseins, um Ängste, Phobien und tief verwurzelte Gewohnheiten anzugehen.",
-      outcome: "Überwinden Sie Ängste und erreichen Sie eine dauerhafte Verhaltensänderung.",
-    }
-  },
-  {
-    id: "past-life",
-    icon: Sparkles,
-    color: "bg-stone-100",
-    category: "Spiritual Healing",
-    EN: {
-      title: "Past Life Regression",
-      description: "Explore your subconscious memories to understand current life patterns and find spiritual healing.",
-      outcome: "Gain deep insights into your soul's journey and release karmic blocks.",
-    },
-    DE: {
-      title: "Rückführung in vergangene Leben",
-      description: "Erforschen Sie Ihre unterbewussten Erinnerungen, um aktuelle Lebensmuster zu verstehen und spirituelle Heilung zu finden.",
-      outcome: "Gewinnen Sie tiefe Einblicke in die Reise Ihrer Seele und lösen Sie karmische Blockaden.",
+      title: "Heilung des Unterbewusstseins",
+      description: "Heilen Sie an der Wurzel, indem Sie mit Ihrem Unterbewusstsein arbeiten – durch NLP-Coaching, Hypnotherapie und Rückführung in vergangene Leben.",
+      outcome: "Lösen Sie einschränkende Überzeugungen, Ängste und alte emotionale Muster und schaffen Sie nachhaltige Veränderung von innen heraus.",
+      details: [
+        "Der Großteil unseres Denkens, Fühlens und Handelns wird vom Unterbewusstsein gesteuert – deshalb reicht Willenskraft allein oft nicht aus, um eine Gewohnheit, eine Angst oder ein wiederkehrendes Muster zu verändern. Die Heilung des Unterbewusstseins vereint drei sich ergänzende Ansätze, die genau auf dieser tieferen Ebene ansetzen.",
+        "NLP-Coaching (Neuro-Linguistisches Programmieren) hilft Ihnen, einschränkende Überzeugungen zu erkennen und neu zu bewerten, hinderliche Denk- und Verhaltensmuster zu verändern und Ihre Ziele mit Klarheit und Zuversicht anzugehen.",
+        "Hypnotherapie führt Sie in einen tief entspannten und zugleich fokussierten Zustand, in dem Sie jederzeit wach und selbstbestimmt bleiben und Ihr Unterbewusstsein für positive Impulse offen wird. Sie ist besonders hilfreich bei Ängsten, Phobien, Stress, geringem Selbstwertgefühl und unerwünschten Gewohnheiten.",
+        "Die Rückführung in vergangene Leben erforscht behutsam Erinnerungen im Unterbewusstsein, um die Wurzeln heutiger Ängste, Beziehungsmuster und emotionaler Blockaden zu verstehen – für Einsicht, Befreiung und inneren Frieden.",
+        "In einem kostenlosen Kennenlerngespräch hört Richa Ihnen zu und empfiehlt den Ansatz – oder die Kombination von Ansätzen –, der am besten zu Ihnen passt.",
+      ],
     }
   },
   {
