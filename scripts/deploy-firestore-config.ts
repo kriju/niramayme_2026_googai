@@ -15,6 +15,20 @@
 //
 // Also enables the TTL policies listed in TTL_POLICIES below.
 //
+// Required IAM roles for the FIREBASE_SERVICE_ACCOUNT (Google Cloud console →
+// IAM & Admin → IAM → the firebase-adminsdk-…@<project>.iam.gserviceaccount.com
+// principal → Edit → Add role), in BOTH projects — gen-lang-client-0204527161
+// (production) and niramay-me-prev (preview):
+//   - Firebase Rules Admin (roles/firebaserules.admin) — rules. The default
+//     Firebase Admin SDK service account already has this.
+//   - Cloud Datastore Index Admin (roles/datastore.indexAdmin) — composite
+//     indexes and TTL policies. NOT granted by default; without it index/TTL
+//     creation gets a 403, which is logged as a single warning and the
+//     remaining steps still run.
+// Or from a shell:
+//   gcloud projects add-iam-policy-binding <project> \
+//     --member=serviceAccount:<client_email> --role=roles/datastore.indexAdmin
+//
 // Usage (runs automatically on Vercel builds; skipped locally):
 //   FIREBASE_SERVICE_ACCOUNT="$(cat service-account.json)" npx tsx scripts/deploy-firestore-config.ts --force
 
@@ -31,6 +45,7 @@ interface IndexField {
   fieldPath: string;
   order?: string;
   arrayConfig?: string;
+  vectorConfig?: unknown;
 }
 
 interface IndexDef {
@@ -53,6 +68,12 @@ async function api(token: string, method: string, url: string, body?: unknown) {
 function fail(what: string, result: { status: number; data: any }): never {
   throw new Error(`${what} failed (${result.status}): ${JSON.stringify(result.data)}`);
 }
+
+// Index/TTL changes the service account isn't allowed to make. Collected
+// instead of thrown, so one missing role doesn't skip the other steps, and
+// reported once at the end as a single warning.
+const INDEX_ADMIN_ROLE = "roles/datastore.indexAdmin";
+const permissionDenied: string[] = [];
 
 async function deployRules(token: string) {
   const source = readFileSync("firestore.rules", "utf8");
@@ -87,14 +108,16 @@ async function deployRules(token: string) {
   console.log(`[firestore] rules deployed (${rulesetName})`);
 }
 
-// Firestore appends an implicit __name__ field to stored indexes, so it's
-// dropped before comparing against what firestore.indexes.json declares.
+// Firestore appends an implicit __name__ field to stored indexes (with the
+// same direction as the last field), so it's dropped before comparing
+// against what firestore.indexes.json declares. The list API always returns
+// queryScope, but it's optional in firestore.indexes.json (default COLLECTION).
 function indexKey(index: IndexDef) {
   const fields = index.fields
     .filter(f => f.fieldPath !== "__name__")
-    .map(f => `${f.fieldPath}:${f.order ?? f.arrayConfig}`)
+    .map(f => `${f.fieldPath}:${f.order ?? f.arrayConfig ?? (f.vectorConfig ? "VECTOR" : "")}`)
     .join(",");
-  return `${index.collectionGroup}|${index.queryScope}|${fields}`;
+  return `${index.collectionGroup}|${index.queryScope || "COLLECTION"}|${fields}`;
 }
 
 async function deployIndexes(token: string) {
@@ -104,7 +127,8 @@ async function deployIndexes(token: string) {
   const existing = new Set<string>();
   let pageToken = "";
   do {
-    const list = await api(token, "GET", `${dbPath}/collectionGroups/-/indexes${pageToken ? `?pageToken=${pageToken}` : ""}`);
+    const query = pageToken ? `?pageToken=${encodeURIComponent(pageToken)}` : "";
+    const list = await api(token, "GET", `${dbPath}/collectionGroups/-/indexes${query}`);
     if (!list.ok) fail("Listing indexes", list);
     for (const index of list.data.indexes ?? []) {
       // name looks like .../collectionGroups/{group}/indexes/{id}
@@ -114,19 +138,36 @@ async function deployIndexes(token: string) {
     pageToken = list.data.nextPageToken ?? "";
   } while (pageToken);
 
-  let created = 0;
+  let missing = 0;
   for (const index of wanted) {
-    if (existing.has(indexKey(index))) continue;
+    const key = indexKey(index);
+    if (existing.has(key)) continue;
+    missing++;
     const result = await api(token, "POST", `${dbPath}/collectionGroups/${index.collectionGroup}/indexes`, {
-      queryScope: index.queryScope,
+      queryScope: index.queryScope || "COLLECTION",
       fields: index.fields,
     });
-    // 409 = an identical index is already being built from an earlier run.
-    if (!result.ok && result.status !== 409) fail(`Creating index ${indexKey(index)}`, result);
-    console.log(`[firestore] index creation started: ${indexKey(index)}`);
-    created++;
+    if (result.status === 403) {
+      permissionDenied.push(`index ${key}`);
+      continue;
+    }
+    // 409 = an identical index already exists or is being built.
+    if (result.status === 409) {
+      console.log(`[firestore] index already exists (not matched in list): ${key}`);
+      continue;
+    }
+    if (!result.ok) fail(`Creating index ${key}`, result);
+    console.log(`[firestore] index creation started: ${key}`);
   }
-  if (!created) console.log("[firestore] indexes unchanged — skipping");
+  if (!missing) {
+    console.log("[firestore] indexes unchanged — skipping");
+  } else {
+    // Shows what the list API actually returned, so a declared index that
+    // exists under a slightly different definition is easy to spot.
+    const groups = new Set(wanted.map(i => i.collectionGroup));
+    const listed = [...existing].filter(k => groups.has(k.split("|")[0]));
+    console.log(`[firestore] listed indexes: ${listed.length ? listed.join("  ") : "(none)"}`);
+  }
 }
 
 // Firestore TTL policies: docs whose field holds a past timestamp are
@@ -151,6 +192,10 @@ async function deployTtlPolicies(token: string) {
       continue;
     }
     const result = await api(token, "PATCH", `${fieldUrl}?updateMask=ttlConfig`, { ttlConfig: {} });
+    if (result.status === 403) {
+      permissionDenied.push(`TTL ${collectionGroup}.${field}`);
+      continue;
+    }
     // 409 = a TTL change on this field is already in progress.
     if (!result.ok && result.status !== 409) fail(`Enabling TTL ${collectionGroup}.${field}`, result);
     console.log(`[firestore] TTL policy enabling: ${collectionGroup}.${field}`);
@@ -181,9 +226,30 @@ async function main() {
     const credential = getAdminApp().options.credential;
     if (!credential) throw new Error("Firebase admin app has no credential");
     const { access_token } = await credential.getAccessToken();
-    await deployRules(access_token);
-    await deployIndexes(access_token);
-    await deployTtlPolicies(access_token);
+
+    // Each step runs even if an earlier one failed.
+    const steps: [string, (token: string) => Promise<void>][] = [
+      ["rules", deployRules],
+      ["indexes", deployIndexes],
+      ["TTL policies", deployTtlPolicies],
+    ];
+    for (const [name, step] of steps) {
+      try {
+        await step(access_token);
+      } catch (error) {
+        console.warn(`[firestore] WARNING: could not deploy ${name} — the previously deployed ones stay live.`);
+        console.warn(error);
+      }
+    }
+
+    if (permissionDenied.length) {
+      const account = (process.env.FIREBASE_SERVICE_ACCOUNT && JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT).client_email) || "FIREBASE_SERVICE_ACCOUNT";
+      console.warn(
+        `[firestore] WARNING: ${account} lacks permission (403) to create ${permissionDenied.join(", ")} ` +
+          `in project ${PROJECT_ID}. Grant it ${INDEX_ADMIN_ROLE} ("Cloud Datastore Index Admin") to deploy ` +
+          `these automatically (see the header of scripts/deploy-firestore-config.ts).`
+      );
+    }
   } catch (error) {
     console.warn("[firestore] WARNING: could not deploy rules/indexes — the previously deployed ones stay live.");
     console.warn(error);
