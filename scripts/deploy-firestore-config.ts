@@ -17,7 +17,7 @@
 //   FIREBASE_SERVICE_ACCOUNT="$(cat service-account.json)" npx tsx scripts/deploy-firestore-config.ts --force
 
 import { readFileSync } from "node:fs";
-import { getAdminApp, getDatabaseId, getProjectId } from "../api/_lib/firebaseAdmin";
+import { PRODUCTION_PROJECT_ID, getAdminApp, getDatabaseId, getProjectId } from "../api/_lib/firebaseAdmin";
 
 const RULES_API = "https://firebaserules.googleapis.com/v1";
 const FIRESTORE_API = "https://firestore.googleapis.com/v1";
@@ -138,6 +138,12 @@ async function main() {
   try {
     PROJECT_ID = getProjectId();
     DATABASE_ID = getDatabaseId();
+    // A preview build still holding the live project's key must never push
+    // an unmerged branch's rules to the live site.
+    if (vercelEnv === "preview" && PROJECT_ID === PRODUCTION_PROJECT_ID) {
+      console.warn("[firestore] preview build has the live project's FIREBASE_SERVICE_ACCOUNT — skipping rules/index deploy");
+      return;
+    }
     // The (default) database's release is plain cloud.firestore; named ones
     // get their own, the same way firebase-tools names them.
     RELEASE_NAME = `projects/${PROJECT_ID}/releases/cloud.firestore${DATABASE_ID === "(default)" ? "" : `/${DATABASE_ID}`}`;

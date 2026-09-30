@@ -5,7 +5,7 @@ import { getAuth, type Auth } from "firebase-admin/auth";
 // Must match firebase-applet-config.json's firestoreDatabaseId — the live
 // project does NOT use the "(default)" Firestore database. The preview
 // project (niramay-me-prev, see firebase-preview-config.json) does.
-const PRODUCTION_PROJECT_ID = "gen-lang-client-0204527161";
+export const PRODUCTION_PROJECT_ID = "gen-lang-client-0204527161";
 const PRODUCTION_DATABASE_ID = "ai-studio-594cf9c4-79be-46f5-b470-815b908e1d16";
 
 let cachedApp: App | null = null;
