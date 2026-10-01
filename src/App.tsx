@@ -58,6 +58,7 @@ import { Separator } from "@/components/ui/separator";
 import { SERVICES, TESTIMONIALS, FAQS, HEALER_CERTIFICATIONS, HEALER_IMAGES, TRANSLATIONS, ONGOING_SESSIONS, COURSES, EVENTS, GOOGLE_CALENDAR_URL, GOOGLE_REVIEW_URL, BUSINESS_STREET_ADDRESS, BUSINESS_POSTAL_CODE, BUSINESS_CITY, GOOGLE_MAPS_URL, GOOGLE_MAPS_EMBED_URL } from "./constants";
 import { getStoredConsent, grantAnalyticsConsent, denyAnalyticsConsent, initAnalyticsFromStoredConsent, trackPageview } from "./lib/analytics";
 import { SITE_URL, BUSINESS_JSONLD_ID, useJsonLd, useSeo } from "./lib/seo";
+import { responsiveImage } from "./lib/images";
 
 // A single booking dialog, controlled from the App root (see the other
 // ...DetailModal components below for the same lift-state-up pattern).
@@ -563,7 +564,10 @@ const BlogCard = ({ blog, lang }: { blog: any, lang: "EN" | "DE", key?: any }) =
           {blog.image && (
             <div className="relative h-56 overflow-hidden">
               <img
-                src={blog.image}
+                {...responsiveImage(blog.image, 1080)}
+                sizes="(min-width: 1024px) 400px, (min-width: 768px) 50vw, 100vw"
+                loading="lazy"
+                decoding="async"
                 alt={blog.title}
                 className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                 referrerPolicy="no-referrer"
@@ -1460,10 +1464,36 @@ const renderPostContent = (content: string) => {
 // the reads they make) never delays the post itself from rendering.
 const BlogEngagement = lazy(() => import("./components/BlogEngagement"));
 
+// api/blog-share.ts serves /blog/:slug with the post already embedded in
+// the HTML, so the first render needn't wait on a Firestore round trip.
+// Only trusted for the slug+lang it was served for: after client-side
+// navigation to another post the tag is stale and the post is fetched.
+const POST_DATA_ID = "blog-post-data";
+const readEmbeddedPost = (slug: string | undefined, lang: "EN" | "DE"): any => {
+  try {
+    const raw = document.getElementById(POST_DATA_ID)?.textContent;
+    if (!raw) return null;
+    const data = JSON.parse(raw);
+    if (data.slug !== slug || data.lang !== lang) return null;
+    // Rebuild the Timestamp-like shape the rest of the page expects.
+    for (const key of ["createdAt", "updatedAt"]) {
+      const millis = data[key]?.millis;
+      data[key] = typeof millis === "number" ? { toDate: () => new Date(millis) } : undefined;
+    }
+    return data;
+  } catch {
+    return null;
+  }
+};
+
+// Article column width (max-w-3xl minus px-6); keep in sync with
+// COVER_SIZES in api/blog-share.ts so the preload matches the <img>.
+const COVER_SIZES = "(min-width: 768px) 720px, calc(100vw - 48px)";
+
 const BlogPostPage = () => {
   const { slug } = useParams<{ slug: string }>();
   const { lang } = useOutletContext<LayoutContext>();
-  const [post, setPost] = useState<any>(null);
+  const [post, setPost] = useState<any>(() => readEmbeddedPost(slug, lang));
   const [otherPosts, setOtherPosts] = useState<any[]>([]);
   const [notFound, setNotFound] = useState(false);
   const bp = TRANSLATIONS[lang].blogPost;
@@ -1471,7 +1501,10 @@ const BlogPostPage = () => {
   const canonical = `${SITE_URL}${prefix}/blog/${slug}`;
 
   useEffect(() => {
-    setPost(null);
+    // Embedded post shows immediately; the query below still runs to pick
+    // up edits made since the edge cached the HTML.
+    const embedded = readEmbeddedPost(slug, lang);
+    setPost(embedded);
     setNotFound(false);
     if (!slug) return;
     let cancelled = false;
@@ -1485,12 +1518,16 @@ const BlogPostPage = () => {
     getDocs(q).then(snapshot => {
       if (cancelled) return;
       if (snapshot.empty) {
-        setNotFound(true);
+        // Offline, getDocs answers from the (empty) local cache instead of
+        // failing — that's no reason to drop an embedded post the server
+        // just confirmed is published.
+        if (!embedded || !snapshot.metadata.fromCache) setNotFound(true);
       } else {
         const docSnap = snapshot.docs[0];
         setPost({ id: docSnap.id, ...docSnap.data() });
       }
-    }).catch(() => !cancelled && setNotFound(true));
+    // Likewise a failed refresh keeps the embedded post.
+    }).catch(() => !cancelled && !embedded && setNotFound(true));
     return () => { cancelled = true; };
   }, [slug, lang]);
 
@@ -1502,10 +1539,14 @@ const BlogPostPage = () => {
       orderBy("createdAt", "desc"),
       limit(5)
     );
-    const unsubscribe = onSnapshot(q, snapshot => {
+    // A one-off read, not a live listener: holding a realtime channel open
+    // for a "more posts" list isn't worth it on a mobile connection.
+    let cancelled = false;
+    getDocs(q).then(snapshot => {
+      if (cancelled) return;
       setOtherPosts(snapshot.docs.map((d): any => ({ id: d.id, ...d.data() })).filter(p => p.slug !== slug).slice(0, 4));
-    });
-    return () => unsubscribe();
+    }).catch(() => {});
+    return () => { cancelled = true; };
   }, [lang, slug]);
 
   useSeo({
@@ -1568,9 +1609,13 @@ const BlogPostPage = () => {
 
         {post.image && (
           <img
-            src={post.image}
+            {...responsiveImage(post.image)}
+            sizes={COVER_SIZES}
             alt={post.title}
-            className="w-full aspect-video object-cover rounded-2xl mb-8"
+            width={1600}
+            height={900}
+            fetchPriority="high"
+            className="w-full h-auto aspect-video object-cover rounded-2xl mb-8"
             referrerPolicy="no-referrer"
           />
         )}
