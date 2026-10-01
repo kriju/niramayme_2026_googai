@@ -2,6 +2,15 @@
   "functions": {
     "api/blog-share.ts": { "includeFiles": "dist/index.html" }
   },
+  "images": {
+    "sizes": [640, 1080, 1600],
+    "qualities": [75],
+    "formats": ["image/webp"],
+    "minimumCacheTTL": 2678400,
+    "remotePatterns": [
+      { "protocol": "https", "hostname": "cvouvjnsr5c8g0or.public.blob.vercel-storage.com" }
+    ]
+  },
   "redirects": [
     { "source": "/services/:id(nlp|hypnotherapy|past-life)", "destination": "/services/subconscious-healing", "permanent": true },
     { "source": "/de/services/:id(nlp|hypnotherapy|past-life)", "destination": "/de/services/subconscious-healing", "permanent": true }
