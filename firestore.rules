@@ -69,6 +69,22 @@ service cloud.firestore {
           && data.paymentClaimed == false;
     }
 
+    // Reiki booking/request helper (ReikiIntakeModal in src/App.tsx)
+    function isValidReikiRequest(data) {
+      return data.keys().hasAll(['package', 'name', 'email', 'whatsapp', 'reason', 'consentAccepted', 'lang', 'createdAt', 'paymentClaimed'])
+          && data.keys().size() == 9
+          && data.package in ['in-person', 'distance-single', 'distance-renewal']
+          && data.name is string && data.name.size() > 0 && data.name.size() <= 100
+          && data.email is string && data.email.size() > 0 && data.email.size() <= 200
+          && data.email.matches('^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$')
+          && data.whatsapp is string && data.whatsapp.size() > 0 && data.whatsapp.size() <= 40
+          && data.reason is string && data.reason.size() > 0 && data.reason.size() <= 2000
+          && data.consentAccepted == true
+          && data.lang in ['EN', 'DE']
+          && data.createdAt is timestamp
+          && data.paymentClaimed == false;
+    }
+
     // User account helper
     function isValidUser(data) {
       return data.keys().hasAll(['displayName', 'email', 'createdAt'])
@@ -148,6 +164,21 @@ service cloud.firestore {
       // own "I've paid" flag once, from false to true — nothing else about
       // the submission can be changed after the fact.
       allow update: if existing().paymentClaimed == false
+                    && incoming().paymentClaimed == true
+                    && incoming().diff(existing()).affectedKeys().hasOnly(['paymentClaimed']);
+      allow delete: if false;
+    }
+
+    match /reikiRequests/{requestId} {
+      // Never client-readable, same as astrologyRequests — names, contact
+      // details and health-related notes. Read via the Firebase console or
+      // the admin-SDK notify endpoint (api/notify-reiki-request.ts).
+      allow get, list: if false;
+      allow create: if isValidId(requestId) && isValidReikiRequest(incoming());
+      // Only in-person bookings take payment up front; the visitor can flip
+      // their own "I've paid" flag once, and nothing else.
+      allow update: if existing().package == 'in-person'
+                    && existing().paymentClaimed == false
                     && incoming().paymentClaimed == true
                     && incoming().diff(existing()).affectedKeys().hasOnly(['paymentClaimed']);
       allow delete: if false;
