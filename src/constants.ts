@@ -1,4 +1,4 @@
-import { Heart, Sparkles, Brain, ShieldCheck, Moon, Users, Star, GraduationCap, Award, History } from "lucide-react";
+import { Heart, Sparkles, Brain, ShieldCheck, Moon, Users, Star, GraduationCap, Award, History, WandSparkles } from "lucide-react";
 
 export const GOOGLE_CALENDAR_URL = "https://calendar.google.com/calendar/appointments/schedules/AcZssZ0bFjK2E2xI3wiT55LqPigmiOHHDxGTghizdBbhy4MSdbw1p6CRUsxVk8gZYqJTnMgoKOAcJjZO?gv=true";
 export const GOOGLE_REVIEW_URL = "https://www.google.com/search?q=Niramay+Ostfildern+reviews";
@@ -1132,6 +1132,52 @@ export const SERVICES = [
       title: "Vedische Astrologie & Kundali-Lesung",
       description: "1:1 Beratung auf Basis Ihres Geburtshoroskops, verwurzelt in der vedischen Astrologie (Jyotish), für ein tieferes Verständnis Ihrer Natur, wiederkehrender Lebensmuster und wichtiger Übergangsphasen.",
       outcome: "Erhalten Sie einen persönlichen Fahrplan für Karriere, Beziehungen und Ihr nächstes Lebenskapitel, basierend auf Ihrem individuellen Geburtshoroskop.",
+    }
+  },
+  {
+    id: "tarot",
+    icon: WandSparkles,
+    color: "bg-stone-100",
+    category: "Mental Clarity",
+    EN: {
+      title: "Tarot Guidance & Clarity Session",
+      description: "Feeling stuck, overthinking, or looking for a sign? A focused tarot reading that mirrors your subconscious, uncovers hidden blind spots, and shows you where your energy is truly flowing.",
+      outcome: "Leave with clarity on your question and direct, grounded action steps to move forward with confidence.",
+      details: [
+        "When your mind is crowded with questions, making a simple decision can feel heavy. Sometimes you don't need all the answers at once, you just need a quiet pause and a moment of clarity to see the road ahead.",
+        "The cards don't just predict; they mirror your subconscious, uncover hidden blind spots, and show you where your energy is truly flowing.",
+      ],
+      highlightsTitle: "What we explore",
+      highlights: [
+        "Uncover the root of current emotional or mental blocks",
+        "Clarify choices around career, personal growth, or relationships",
+        "Receive direct, grounded action steps to move forward with confidence",
+      ],
+      facts: [
+        { label: "Investment", value: "€10 / ₹1,000" },
+        { label: "Format", value: "Online (focused question reading + detailed intuitive guidance)" },
+      ],
+      ctaLabel: "Book Your Reading Now",
+    },
+    DE: {
+      title: "Tarot-Beratung & Klarheits-Sitzung",
+      description: "Fühlen Sie sich festgefahren, grübeln Sie zu viel oder warten Sie auf ein Zeichen? Eine fokussierte Tarot-Lesung, die Ihr Unterbewusstsein spiegelt, blinde Flecken sichtbar macht und zeigt, wohin Ihre Energie wirklich fließt.",
+      outcome: "Gewinnen Sie Klarheit zu Ihrer Frage und erhalten Sie konkrete, bodenständige Handlungsschritte, um zuversichtlich weiterzugehen.",
+      details: [
+        "Wenn der Kopf voller Fragen ist, kann selbst eine einfache Entscheidung schwer wiegen. Manchmal brauchen Sie nicht alle Antworten auf einmal – sondern nur eine stille Pause und einen Moment der Klarheit, um den Weg vor sich zu sehen.",
+        "Die Karten sagen nicht nur voraus: Sie spiegeln Ihr Unterbewusstsein, decken verborgene blinde Flecken auf und zeigen, wohin Ihre Energie wirklich fließt.",
+      ],
+      highlightsTitle: "Was wir gemeinsam erkunden",
+      highlights: [
+        "Die Wurzel aktueller emotionaler oder mentaler Blockaden aufdecken",
+        "Klarheit bei Entscheidungen rund um Beruf, persönliche Entwicklung oder Beziehungen gewinnen",
+        "Konkrete, bodenständige Handlungsschritte erhalten, um zuversichtlich weiterzugehen",
+      ],
+      facts: [
+        { label: "Investition", value: "10 € / 1.000 ₹" },
+        { label: "Format", value: "Online (fokussierte Lesung zu Ihrer Frage + ausführliche intuitive Begleitung)" },
+      ],
+      ctaLabel: "Jetzt Lesung buchen",
     }
   },
   {

@@ -1321,10 +1321,35 @@ const ServicePage = () => {
           </div>
         )}
 
+        {"highlights" in content && content.highlights && (
+          <div className="mb-10">
+            <h2 className="text-2xl font-serif font-bold mb-4">{content.highlightsTitle}</h2>
+            <ul className="space-y-3">
+              {content.highlights.map((item, idx) => (
+                <li key={idx} className="flex items-start gap-3">
+                  <CheckCircle2 className="w-5 h-5 text-primary mt-0.5 shrink-0" />
+                  <span className="text-muted-foreground leading-relaxed">{item}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
         <div className="bg-stone-50 p-6 rounded-2xl border border-stone-100 mb-10">
           <p className="text-xs font-bold uppercase tracking-wider text-primary/50 mb-2">{t.outcomeLabel}</p>
           <p className="text-lg font-medium">{content.outcome}</p>
         </div>
+
+        {"facts" in content && content.facts && (
+          <div className="grid sm:grid-cols-2 gap-4 mb-10">
+            {content.facts.map((fact, idx) => (
+              <div key={idx} className="bg-stone-50 p-4 rounded-xl border border-stone-100">
+                <p className="text-xs font-bold uppercase tracking-wider text-primary/50 mb-1">{fact.label}</p>
+                <p className="font-semibold">{fact.value}</p>
+              </div>
+            ))}
+          </div>
+        )}
 
         {isAstrology && (
           <div className="space-y-10 mb-10 pt-4 border-t border-stone-100">
@@ -1378,7 +1403,7 @@ const ServicePage = () => {
         <div className="flex flex-wrap items-center gap-4 mb-20">
           <Button size="lg" className="rounded-full px-8 gap-2" onClick={handleBook}>
             <Sparkles className="w-4 h-4" />
-            {isAstrology ? ta.cta : nav.bookNow}
+            {isAstrology ? ta.cta : ("ctaLabel" in content && content.ctaLabel) || nav.bookNow}
           </Button>
           <a
             href={`https://wa.me/4915175315761?text=${encodeURIComponent(`Hi, I'm interested in "${content.title}".`)}`}
