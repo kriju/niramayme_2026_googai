@@ -602,7 +602,7 @@ const BlogCard = ({ blog, lang }: { blog: any, lang: "EN" | "DE", key?: any }) =
   );
 };
 
-// The two "openInModal" service cards (external interactive tools hosted on
+// The "openInModal" service cards (external interactive tools hosted on
 // lovable.app) preview in a plain iframe modal — not Niramay's own content,
 // so unlike blog posts they don't get a page of their own.
 const ToolPreviewModal = ({ tool, open, onOpenChange }: { tool: { title: string; link: string } | null, open: boolean, onOpenChange: (o: boolean) => void }) => {
@@ -1212,7 +1212,7 @@ const ServiceCard = ({ service, index, lang, onLearnMore }: { service: any, inde
 // Each in-house service's own indexable page at /services/:id — replaces
 // the old ServiceDetailModal (a same-content popup with no URL of its own,
 // so Google had nothing to rank "Reiki Ostfildern" or "Vedic Astrology
-// Germany" against). Services with an external `link` (the two
+// Germany" against). Services with an external `link` (the
 // "openInModal" interactive-tool cards) don't get one: they're not content
 // Niramay owns, so a dedicated page for them would just be thin/duplicate.
 // NLP Coaching, Hypnotherapy and Past Life Regression were merged into one
@@ -1318,6 +1318,54 @@ const ServicePage = () => {
             {content.details.map((para, idx) => (
               <p key={idx} className="text-muted-foreground leading-relaxed">{para}</p>
             ))}
+          </div>
+        )}
+
+        {"receive" in content && content.receive && (
+          <div className="mb-10">
+            <h2 className="text-2xl font-serif font-bold mb-6">{content.receiveTitle}</h2>
+            <ul className="space-y-4">
+              {content.receive.map((item, idx) => (
+                <li key={idx} className="flex items-start gap-3">
+                  <CheckCircle2 className="w-5 h-5 text-primary mt-0.5 shrink-0" />
+                  <span className="text-muted-foreground leading-relaxed">
+                    <span className="font-bold text-foreground">{item.title}:</span> {item.description}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {"offerings" in content && content.offerings && (
+          <div className="mb-10">
+            <h2 className="text-2xl font-serif font-bold mb-6">{content.offeringsTitle}</h2>
+            <div className="grid sm:grid-cols-2 gap-4">
+              {content.offerings.map((offer, idx) => (
+                <div key={idx} className="bg-stone-50 p-6 rounded-2xl border border-stone-100 flex flex-col">
+                  <p className="font-serif text-xl font-bold mb-4">{idx + 1}. {offer.title}</p>
+                  <dl className="space-y-2 text-sm mb-4">
+                    <div>
+                      <dt className="inline font-bold">{sp.formatLabel}: </dt>
+                      <dd className="inline text-muted-foreground">{offer.format}</dd>
+                    </div>
+                    <div>
+                      <dt className="inline font-bold">{sp.priceLabel}: </dt>
+                      <dd className="inline text-primary font-semibold">{offer.price}</dd>
+                    </div>
+                  </dl>
+                  <p className="text-xs font-bold uppercase tracking-wider text-primary/50 mb-2">{sp.inclusionsLabel}</p>
+                  <ul className="space-y-2">
+                    {offer.inclusions.map((inc, i) => (
+                      <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground leading-relaxed">
+                        <CheckCircle2 className="w-4 h-4 text-primary mt-0.5 shrink-0" />
+                        <span>{inc}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
           </div>
         )}
 
@@ -2765,7 +2813,7 @@ const AppLayout = () => {
       "https://www.youtube.com/@richaniramayme",
       GOOGLE_MAPS_URL,
     ],
-    // Only the sessions Niramay delivers directly — the two "openInModal"
+    // Only the sessions Niramay delivers directly — the "openInModal"
     // entries just link out to standalone third-party tools, not a service
     // Niramay itself provides, so they don't belong in this list.
     makesOffer: SERVICES.filter(s => !s.openInModal).map(s => ({
@@ -2830,7 +2878,7 @@ const HomePage = () => {
     alternates: { en: `${SITE_URL}/`, de: `${SITE_URL}/de` },
   });
 
-  // The two "openInModal" service cards link to standalone third-party
+  // The "openInModal" service cards link to standalone third-party
   // tools rather than a page of Niramay's own, so they still open as an
   // iframe preview here instead of routing to /services/:id.
   const handleServiceToolPreview = (service: any) => {
