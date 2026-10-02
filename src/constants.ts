@@ -164,6 +164,9 @@ export const TRANSLATIONS = {
       by: "by",
       registerVia: "Register via",
       courseNo: "Course No.",
+      pastTitle: "Past Courses",
+      pastDescription: "Courses we've already taught — a look at our track record.",
+      pastBadge: "Completed",
       contactNote: "Questions about a course? Reach out via WhatsApp or email us at richa@niramay.me",
     },
     booking: {
@@ -784,6 +787,9 @@ export const TRANSLATIONS = {
       by: "von",
       registerVia: "Anmelden über",
       courseNo: "Kursnr.",
+      pastTitle: "Vergangene Kurse",
+      pastDescription: "Kurse, die wir bereits geleitet haben – ein Einblick in unsere Erfahrung.",
+      pastBadge: "Abgeschlossen",
       contactNote: "Fragen zu einem Kurs? Schreiben Sie uns über WhatsApp oder per E-Mail an richa@niramay.me",
     },
     booking: {
@@ -1972,11 +1978,23 @@ export const ONGOING_SESSIONS = [
 // cards link out to the provider instead of offering a direct WhatsApp booking.
 // A future Niramay-run course can simply omit `provider`/`kursnr`/`registrationUrl`
 // and CoursesSection falls back to the WhatsApp booking flow (see App.tsx).
-export const COURSES = [
+// Set `past: true` once a course has finished: it moves out of the bookable
+// grid into the "Past Courses" strip (no registration link), so it still
+// shows our track record.
+export const COURSES: Array<{
+  id: string;
+  provider?: string;
+  kursnr?: string;
+  registrationUrl?: string;
+  past?: boolean;
+  EN: { title: string; time: string; location: string; instructor: string; description: string };
+  DE: { title: string; time: string; location: string; instructor: string; description: string };
+}> = [
   {
     id: "yoga-kids",
     provider: "VHS Ostfildern",
     kursnr: "262-301111",
+    past: true,
     registrationUrl: "https://vhs-ostfildern.de/programm/kw/bereich/kursdetails/kurs/262-301111/",
     EN: {
       title: "Yoga Kids",
@@ -1997,6 +2015,7 @@ export const COURSES = [
     id: "teen-yoga",
     provider: "VHS Ostfildern",
     kursnr: "262-301112",
+    past: true,
     registrationUrl: "https://vhs-ostfildern.de/programm/kw/bereich/kursdetails/kurs/262-301112/",
     EN: {
       title: "Teen Yoga",
@@ -2017,6 +2036,7 @@ export const COURSES = [
     id: "yin-yoga",
     provider: "VHS Ostfildern",
     kursnr: "262-301113",
+    past: true,
     registrationUrl: "https://vhs-ostfildern.de/programm/kw/bereich/kursdetails/kurs/262-301113/",
     EN: {
       title: "Yin Yoga",
@@ -2037,6 +2057,7 @@ export const COURSES = [
     id: "stuhlyoga",
     provider: "VHS Ostfildern",
     kursnr: "262-301114",
+    past: true,
     registrationUrl: "https://vhs-ostfildern.de/programm/kw/bereich/kursdetails/kurs/262-301114/",
     EN: {
       title: "Chair Yoga",

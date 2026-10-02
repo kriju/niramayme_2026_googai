@@ -2294,6 +2294,8 @@ const OngoingSessionsSection = ({ lang }: { lang: "EN" | "DE" }) => {
 const CoursesSection = ({ lang }: { lang: "EN" | "DE" }) => {
   const t = TRANSLATIONS[lang].courses;
   const sessionsT = TRANSLATIONS[lang].sessions;
+  const upcomingCourses = COURSES.filter((c) => !c.past);
+  const pastCourses = COURSES.filter((c) => c.past);
   return (
     <section id="courses" className="py-24 bg-stone-50/50">
       <div className="container mx-auto px-6">
@@ -2305,7 +2307,7 @@ const CoursesSection = ({ lang }: { lang: "EN" | "DE" }) => {
         </div>
 
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-          {COURSES.map((course, idx) => {
+          {upcomingCourses.map((course, idx) => {
             const content = course[lang];
             return (
               <motion.div
@@ -2375,6 +2377,48 @@ const CoursesSection = ({ lang }: { lang: "EN" | "DE" }) => {
         <p className="text-center text-muted-foreground text-sm mt-10">
           {t.contactNote}
         </p>
+
+        {pastCourses.length > 0 && (
+          <div className="mt-20">
+            <div className="text-center max-w-2xl mx-auto mb-10">
+              <h3 className="text-2xl md:text-3xl font-serif font-bold mb-3">{t.pastTitle}</h3>
+              <p className="text-muted-foreground">{t.pastDescription}</p>
+            </div>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {pastCourses.map((course, idx) => {
+                const content = course[lang];
+                return (
+                  <motion.div
+                    key={course.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: idx * 0.06 }}
+                  >
+                    <div className="h-full rounded-xl border border-stone-200 bg-stone-100/60 p-5 flex flex-col">
+                      <div className="flex items-center justify-between gap-2 mb-3">
+                        {course.provider && (
+                          <span className="text-xs text-stone-500">{course.provider}</span>
+                        )}
+                        <span className="inline-flex items-center gap-1 text-xs font-medium text-primary">
+                          <CheckCircle2 className="w-3.5 h-3.5" />
+                          {t.pastBadge}
+                        </span>
+                      </div>
+                      <h4 className="text-lg font-serif text-stone-700">{content.title}</h4>
+                      <p className="text-stone-500 text-sm mt-2 leading-relaxed flex-1">
+                        {content.description}
+                      </p>
+                      <p className="text-stone-400 text-xs mt-4">
+                        {t.by} {content.instructor}
+                      </p>
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </div>
     </section>
   );
