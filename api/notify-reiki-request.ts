@@ -17,8 +17,8 @@ type Lang = "EN" | "DE";
 
 const PACKAGES: Record<PackageId, Record<Lang, { title: string; price: string }>> = {
   "in-person": {
-    EN: { title: "In-Person Reiki Immersion (45–60 mins)", price: "€40 – €60" },
-    DE: { title: "Reiki-Immersion vor Ort (45–60 Min.)", price: "40 – 60 €" },
+    EN: { title: "In-Person Reiki Immersion (45 mins)", price: "€40" },
+    DE: { title: "Reiki-Immersion vor Ort (45 Min.)", price: "40 €" },
   },
   "distance-single": {
     EN: { title: "Distance Reiki — Single Session (30 mins)", price: "€20 / ₹2,000" },
@@ -205,8 +205,8 @@ function customerParagraphs({ refCode, kind, lang, pkgTitle, price, isInPerson }
       de ? `vielen Dank für Ihre Buchung: ${pkgTitle}. Ihr Referenzcode ist:` : `Thank you for booking: ${pkgTitle}. Your reference code is:`,
       { code: refCode },
       de
-        ? `Bitte geben Sie diesen Code bei Ihrer Zahlung (${price}, je nach Sitzungsdauer) als Verwendungszweck an, wie auf unserer Website beschrieben. Sobald Ihre Zahlung eingegangen ist, bestätigen wir Ihren Termin innerhalb von 24–48 Stunden.`
-        : `Please include this code as the note/reference on your payment (${price}, depending on session length), as shown on our website. Once your payment is received, we'll confirm your session within 24–48 hours.`,
+        ? `Bitte geben Sie diesen Code bei Ihrer Zahlung (${price}) als Verwendungszweck an, wie auf unserer Website beschrieben. Sobald Ihre Zahlung eingegangen ist, bestätigen wir Ihren Termin innerhalb von 24–48 Stunden.`
+        : `Please include this code as the note/reference on your payment (${price}), as shown on our website. Once your payment is received, we'll confirm your session within 24–48 hours.`,
       de ? "Bei Fragen antworten Sie einfach auf diese E-Mail oder schreiben Sie uns über WhatsApp." : "If you have any questions, just reply to this email or message us on WhatsApp.",
     ];
   }

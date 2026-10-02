@@ -31,12 +31,12 @@ const COURSES: Record<CourseId, CourseInfo> = {
   "yoga-stress-immunity-sleep": {
     EN: {
       title: "Yoga for Stress, Immunity & Sleep: 8-Session Series",
-      schedule: "every Tuesday & Thursday, 8:00–9:00 pm (German time), for 4 weeks",
+      schedule: "every Tuesday & Thursday, 8:00–9:00 pm (German time), for 4 weeks starting Tuesday, 3 November 2026",
       price: "€79",
     },
     DE: {
       title: "Yoga für Stress, Immunität & Schlaf: Serie mit 8 Einheiten",
-      schedule: "jeden Dienstag & Donnerstag, 20:00–21:00 Uhr (deutsche Zeit), 4 Wochen lang",
+      schedule: "jeden Dienstag & Donnerstag, 20:00–21:00 Uhr (deutsche Zeit), 4 Wochen lang ab Dienstag, 3. November 2026",
       price: "79 €",
     },
   },
