@@ -795,6 +795,7 @@ const ReikiIntakeModal = ({ lang, pkg, onClose, onOpenPrivacy }: { lang: "EN" | 
 type CourseStep = "details" | "payment" | "done";
 type CourseForm = { name: string; email: string; whatsapp: string; notes: string; session: string; consent: boolean };
 const EMPTY_COURSE_FORM: CourseForm = { name: "", email: "", whatsapp: "", notes: "", session: "", consent: false };
+// Default address for course questions; a course may set its own `contactEmail`.
 const COURSE_CONTACT_EMAIL = "riju.kansal@niramay.me";
 type Course = (typeof COURSES)[number];
 
@@ -836,6 +837,7 @@ const CourseIntakeModal = ({ lang, courseId, onClose, onOpenPrivacy }: { lang: "
   // Multi-date workshops (`sessions`) need one date picked.
   const sessions = course?.sessions;
   const chosenSession = sessions?.find(s => s.id === form.session);
+  const contactEmail = course?.contactEmail ?? COURSE_CONTACT_EMAIL;
   const isValid = Boolean(form.name.trim() && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim()) && form.whatsapp.trim() && form.consent && (!sessions || chosenSession));
 
   const resetAndClose = () => {
@@ -895,7 +897,7 @@ const CourseIntakeModal = ({ lang, courseId, onClose, onOpenPrivacy }: { lang: "
       notify(requestId, "payment_claimed");
     } catch (err) {
       console.error("Error confirming course payment claim:", err);
-      setError(t.paidError);
+      setError(t.paidError.replace("{email}", contactEmail));
     } finally {
       setPaying(false);
     }
@@ -916,7 +918,7 @@ const CourseIntakeModal = ({ lang, courseId, onClose, onOpenPrivacy }: { lang: "
   const questions = (
     <p className="text-xs text-muted-foreground">
       {t.questionsNote}{" "}
-      <a href={`mailto:${COURSE_CONTACT_EMAIL}`} className="underline underline-offset-2 hover:text-primary">{COURSE_CONTACT_EMAIL}</a>
+      <a href={`mailto:${contactEmail}`} className="underline underline-offset-2 hover:text-primary">{contactEmail}</a>
     </p>
   );
 
@@ -3995,7 +3997,7 @@ const CoursePage = () => {
           </Button>
           <p className="text-sm text-muted-foreground">
             {ys.questionsNote}{" "}
-            <a href={`mailto:${COURSE_CONTACT_EMAIL}`} className="underline underline-offset-2 hover:text-primary">{COURSE_CONTACT_EMAIL}</a>
+            <a href={`mailto:${course.contactEmail ?? COURSE_CONTACT_EMAIL}`} className="underline underline-offset-2 hover:text-primary">{course.contactEmail ?? COURSE_CONTACT_EMAIL}</a>
           </p>
         </div>
       </div>

@@ -19,9 +19,12 @@ type Lang = "EN" | "DE";
 // Kept in sync by hand with the bookable COURSES entries in src/constants.ts
 // (duplicated rather than imported, same reasoning as api/sitemap.ts).
 // `sessions` (multi-date workshops) maps the booking's chosen `session` id to
-// its schedule, overriding the course-level one; `inrPrice` adds UPI payment.
+// its schedule, overriding the course-level one; `inrPrice` adds UPI payment;
+// `contactEmail` overrides CONTACT_EMAIL for questions/replies (keep in sync
+// with the COURSES entry in src/constants.ts).
 type CourseInfo = Record<Lang, { title: string; schedule: string; price: string }> & {
   inrPrice?: string;
+  contactEmail?: string;
   sessions?: Record<string, Record<Lang, string>>;
 };
 const COURSES: Record<CourseId, CourseInfo> = {
@@ -49,14 +52,15 @@ const COURSES: Record<CourseId, CourseInfo> = {
       price: "15 €",
     },
     inrPrice: "₹1500",
+    contactEmail: "richa@niramay.me",
     sessions: {
       "2026-10-24": {
         EN: "on Saturday, 24 October, 12:30–2:00 pm European time (4:00–5:30 pm IST)",
         DE: "am Samstag, 24. Oktober, 12:30–14:00 Uhr europäische Zeit (16:00–17:30 Uhr IST)",
       },
       "2026-10-29": {
-        EN: "on Thursday, 29 October, 11:30 am–1:00 pm European time (3:00–4:30 pm IST)",
-        DE: "am Donnerstag, 29. Oktober, 11:30–13:00 Uhr europäische Zeit (15:00–16:30 Uhr IST)",
+        EN: "on Thursday, 29 October, 11:30 am–1:00 pm European time (4:00–5:30 pm IST)",
+        DE: "am Donnerstag, 29. Oktober, 11:30–13:00 Uhr europäische Zeit (16:00–17:30 Uhr IST)",
       },
     },
   },
@@ -132,11 +136,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         refCode, kind, lang, name: booking.name, ...course[lang],
         schedule: session?.[lang] ?? course[lang].schedule,
         inrPrice: course.inrPrice,
+        contactEmail: course.contactEmail ?? CONTACT_EMAIL,
       };
       await transporter.sendMail({
         from: process.env.GMAIL_USER,
         to: booking.email,
-        replyTo: CONTACT_EMAIL,
+        replyTo: course.contactEmail ?? CONTACT_EMAIL,
         subject: customerSubject(customerParams),
         text: renderCustomerEmailText(customerParams),
         html: renderCustomerEmailHtml(customerParams),
@@ -221,6 +226,7 @@ type CustomerParams = {
   schedule: string;
   price: string;
   inrPrice?: string;
+  contactEmail: string;
 };
 
 function customerSubject({ refCode, kind, lang, title }: CustomerParams) {
@@ -230,11 +236,11 @@ function customerSubject({ refCode, kind, lang, title }: CustomerParams) {
 
 // Paragraphs shared by the text and HTML bodies; `code` marks where the
 // reference code is shown on a line of its own.
-function customerParagraphs({ refCode, kind, lang, title, schedule, price, inrPrice }: CustomerParams): (string | { code: string })[] {
+function customerParagraphs({ refCode, kind, lang, title, schedule, price, inrPrice, contactEmail }: CustomerParams): (string | { code: string })[] {
   const de = lang === "DE";
   const questions = de
-    ? `Bei Fragen schreiben Sie uns jederzeit an ${CONTACT_EMAIL} (oder antworten Sie einfach auf diese E-Mail).`
-    : `If you have any questions, email us at ${CONTACT_EMAIL} (or simply reply to this email).`;
+    ? `Bei Fragen schreiben Sie uns jederzeit an ${contactEmail} (oder antworten Sie einfach auf diese E-Mail).`
+    : `If you have any questions, email us at ${contactEmail} (or simply reply to this email).`;
   if (kind === "payment_claimed") {
     return [
       de
