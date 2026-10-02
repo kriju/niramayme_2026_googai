@@ -96,7 +96,7 @@ function ScrollManager() {
 type LayoutContext = {
   lang: "EN" | "DE";
   onBook: (ctx?: BookingContext) => void;
-  onBookAstrology: () => void;
+  onBookPaid: (service: PaidService) => void;
   onOpenLegal: (type: "impressum" | "privacy") => void;
 };
 
@@ -155,9 +155,10 @@ const BookingDialog = ({ context, lang, open, onOpenChange }: { context: Booking
   );
 };
 
-// The Vedic Astrology tile's own intake flow: it replaces self-serve
-// calendar booking with (1) collecting the birth details a chart actually
-// needs, with an explicit consent checkbox, then (2) advance-payment
+// The pay-first intake flow used by the Vedic Astrology and Tarot tiles: it
+// replaces self-serve calendar booking with (1) collecting what the session
+// actually needs (birth details for a chart, the question for a tarot
+// reading), with an explicit consent checkbox, then (2) advance-payment
 // instructions keyed to a reference code, so the visitor and Richa share
 // one canonical, receipted record instead of coordinating over email/
 // WhatsApp with no paper trail. See firestore.rules for what's enforced
@@ -165,15 +166,30 @@ const BookingDialog = ({ context, lang, open, onOpenChange }: { context: Booking
 // paymentClaimed flag, nothing else).
 const ASTROLOGY_WHATSAPP_NUMBER = "4915175315761";
 
-type AstrologyStep = "details" | "payment" | "done";
-type AstrologyForm = { name: string; placeOfBirth: string; dateOfBirth: string; timeOfBirth: string; contact: string; consent: boolean };
-const EMPTY_ASTROLOGY_FORM: AstrologyForm = { name: "", placeOfBirth: "", dateOfBirth: "", timeOfBirth: "", contact: "", consent: false };
+type PaidService = "astrology" | "tarot";
+// Firestore collection + reference-code prefix per service. The prefix is
+// re-derived the same way in api/notify-astrology-request.ts.
+const PAID_SERVICES: Record<PaidService, { collection: string; refPrefix: string }> = {
+  astrology: { collection: "astrologyRequests", refPrefix: "AST" },
+  tarot: { collection: "tarotRequests", refPrefix: "TAR" },
+};
 
-const AstrologyIntakeModal = ({ lang, open, onOpenChange, onOpenPrivacy }: { lang: "EN" | "DE", open: boolean, onOpenChange: (o: boolean) => void, onOpenPrivacy: () => void }) => {
-  const t = TRANSLATIONS[lang].astrologyIntake;
+type IntakeStep = "details" | "payment" | "done";
+type IntakeForm = { name: string; placeOfBirth: string; dateOfBirth: string; timeOfBirth: string; question: string; contact: string; consent: boolean };
+const EMPTY_INTAKE_FORM: IntakeForm = { name: "", placeOfBirth: "", dateOfBirth: "", timeOfBirth: "", question: "", contact: "", consent: false };
+
+const PaidIntakeModal = ({ service, lang, open, onOpenChange, onOpenPrivacy }: { service: PaidService, lang: "EN" | "DE", open: boolean, onOpenChange: (o: boolean) => void, onOpenPrivacy: () => void }) => {
+  const isTarot = service === "tarot";
+  const base = TRANSLATIONS[lang].astrologyIntake;
+  const tarot = TRANSLATIONS[lang].tarotIntake;
+  // tarotIntake only holds the strings that differ from the astrology flow.
+  // Its extra field labels are merged in either way, since only the tarot
+  // form renders them.
+  const t = { ...base, ...(isTarot ? tarot : {}), fields: { ...base.fields, ...tarot.fields } };
+  const { collection: collectionName, refPrefix } = PAID_SERVICES[service];
   const { profile } = useAuth();
-  const [step, setStep] = useState<AstrologyStep>("details");
-  const [form, setForm] = useState<AstrologyForm>(EMPTY_ASTROLOGY_FORM);
+  const [step, setStep] = useState<IntakeStep>("details");
+  const [form, setForm] = useState<IntakeForm>(EMPTY_INTAKE_FORM);
   const [requestId, setRequestId] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [paying, setPaying] = useState(false);
@@ -193,8 +209,11 @@ const AstrologyIntakeModal = ({ lang, open, onOpenChange, onOpenPrivacy }: { lan
   // Short human-quotable code derived from the Firestore doc ID, shown to
   // the visitor and re-derived server-side (see api/notify-astrology-request.ts)
   // from the same ID — never stored separately, so the two can't drift.
-  const refCode = requestId ? `AST-${requestId.slice(-6).toUpperCase()}` : "";
-  const isValid = Boolean(form.name.trim() && form.placeOfBirth.trim() && form.dateOfBirth && form.timeOfBirth && form.contact.trim() && form.consent);
+  const refCode = requestId ? `${refPrefix}-${requestId.slice(-6).toUpperCase()}` : "";
+  const hasServiceDetails = isTarot
+    ? Boolean(form.question.trim())
+    : Boolean(form.placeOfBirth.trim() && form.dateOfBirth && form.timeOfBirth);
+  const isValid = Boolean(form.name.trim() && hasServiceDetails && form.contact.trim() && form.consent);
   const whatsappHref = `https://wa.me/${ASTROLOGY_WHATSAPP_NUMBER}?text=${encodeURIComponent(t.whatsappTemplate)}`;
 
   const resetAndClose = () => {
@@ -203,7 +222,7 @@ const AstrologyIntakeModal = ({ lang, open, onOpenChange, onOpenPrivacy }: { lan
     // visibly snap back to step 1 while it's still fading out.
     setTimeout(() => {
       setStep("details");
-      setForm(EMPTY_ASTROLOGY_FORM);
+      setForm(EMPTY_INTAKE_FORM);
       setRequestId(null);
       setError(null);
     }, 300);
@@ -215,11 +234,15 @@ const AstrologyIntakeModal = ({ lang, open, onOpenChange, onOpenPrivacy }: { lan
     setSubmitting(true);
     setError(null);
     try {
-      const docRef = await addDoc(collection(db, "astrologyRequests"), {
+      const docRef = await addDoc(collection(db, collectionName), {
         name: form.name.trim(),
-        placeOfBirth: form.placeOfBirth.trim(),
-        dateOfBirth: form.dateOfBirth,
-        timeOfBirth: form.timeOfBirth,
+        ...(isTarot
+          ? { question: form.question.trim() }
+          : {
+              placeOfBirth: form.placeOfBirth.trim(),
+              dateOfBirth: form.dateOfBirth,
+              timeOfBirth: form.timeOfBirth,
+            }),
         contact: form.contact.trim(),
         consentAccepted: true,
         lang,
@@ -233,10 +256,10 @@ const AstrologyIntakeModal = ({ lang, open, onOpenChange, onOpenPrivacy }: { lan
       fetch("/api/notify-astrology-request", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ requestId: docRef.id, kind: "submitted" }),
-      }).catch(err => console.error("Failed to notify admin of new astrology request:", err));
+        body: JSON.stringify({ requestId: docRef.id, kind: "submitted", service }),
+      }).catch(err => console.error(`Failed to notify admin of new ${service} request:`, err));
     } catch (err) {
-      console.error("Error submitting astrology request:", err);
+      console.error(`Error submitting ${service} request:`, err);
       setError(t.submitError);
     } finally {
       setSubmitting(false);
@@ -248,15 +271,15 @@ const AstrologyIntakeModal = ({ lang, open, onOpenChange, onOpenPrivacy }: { lan
     setPaying(true);
     setError(null);
     try {
-      await updateDoc(doc(db, "astrologyRequests", requestId), { paymentClaimed: true });
+      await updateDoc(doc(db, collectionName, requestId), { paymentClaimed: true });
       setStep("done");
       fetch("/api/notify-astrology-request", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ requestId, kind: "payment_claimed" }),
-      }).catch(err => console.error("Failed to notify admin of astrology payment claim:", err));
+        body: JSON.stringify({ requestId, kind: "payment_claimed", service }),
+      }).catch(err => console.error(`Failed to notify admin of ${service} payment claim:`, err));
     } catch (err) {
-      console.error("Error confirming astrology payment claim:", err);
+      console.error(`Error confirming ${service} payment claim:`, err);
       setError(t.paidError);
     } finally {
       setPaying(false);
@@ -281,6 +304,21 @@ const AstrologyIntakeModal = ({ lang, open, onOpenChange, onOpenPrivacy }: { lan
                   onChange={e => setForm({ ...form, name: e.target.value })}
                 />
               </div>
+              {isTarot ? (
+                <div className="grid gap-2">
+                  <label className="text-sm font-medium">{t.fields.question}</label>
+                  <textarea
+                    required
+                    rows={4}
+                    maxLength={1000}
+                    placeholder={t.fields.questionPlaceholder}
+                    className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                    value={form.question}
+                    onChange={e => setForm({ ...form, question: e.target.value })}
+                  />
+                  <p className="text-xs text-muted-foreground">{t.fields.questionHint}</p>
+                </div>
+              ) : (<>
               <div className="grid gap-2">
                 <label className="text-sm font-medium">{t.fields.placeOfBirth}</label>
                 <input
@@ -314,6 +352,7 @@ const AstrologyIntakeModal = ({ lang, open, onOpenChange, onOpenPrivacy }: { lan
                 </div>
               </div>
               <p className="text-xs text-muted-foreground -mt-2">{t.fields.timeOfBirthHint}</p>
+              </>)}
               <div className="grid gap-2">
                 <label className="text-sm font-medium">{t.fields.contact}</label>
                 <input
@@ -1226,7 +1265,7 @@ const MERGED_SERVICE_IDS: Record<string, string> = {
 
 const ServicePage = () => {
   const { id } = useParams<{ id: string }>();
-  const { lang, onBook, onBookAstrology } = useOutletContext<LayoutContext>();
+  const { lang, onBook, onBookPaid } = useOutletContext<LayoutContext>();
   const service = SERVICES.find(s => s.id === id && !s.openInModal);
 
   const t = TRANSLATIONS[lang].services;
@@ -1281,11 +1320,11 @@ const ServicePage = () => {
 
   const otherServices = SERVICES.filter(s => !s.openInModal && s.id !== service.id);
   const handleBook = () => {
-    if (isAstrology) {
-      // Astrology doesn't use the self-serve calendar: an appointment can't
-      // be offered until birth details and advance payment are in, so it
-      // gets its own intake flow.
-      onBookAstrology();
+    if (service.id === "astrology" || service.id === "tarot") {
+      // Astrology and Tarot don't use the self-serve calendar: an
+      // appointment can't be offered until the session details and advance
+      // payment are in, so they get their own pay-first intake flow.
+      onBookPaid(service.id);
     } else {
       onBook({
         title: content.title,
@@ -2742,7 +2781,9 @@ const AppLayout = () => {
   const [legalModal, setLegalModal] = useState<"impressum" | "privacy" | null>(null);
   const [bookingContext, setBookingContext] = useState<BookingContext | null>(null);
   const openBooking = (ctx: BookingContext = {}) => setBookingContext(ctx);
-  const [astrologyIntakeOpen, setAstrologyIntakeOpen] = useState(false);
+  const [paidIntake, setPaidIntake] = useState<PaidService | null>(null);
+  // Kept after close so the dialog doesn't swap content mid-fade-out.
+  const [paidIntakeService, setPaidIntakeService] = useState<PaidService>("astrology");
 
   useEffect(() => {
     document.documentElement.lang = lang.toLowerCase();
@@ -2810,7 +2851,7 @@ const AppLayout = () => {
     <div className="min-h-screen selection:bg-primary/20">
       <ScrollManager />
       <Navbar lang={lang} onToggleLang={toggleLang} onBook={openBooking} />
-      <Outlet context={{ lang, onBook: openBooking, onBookAstrology: () => setAstrologyIntakeOpen(true), onOpenLegal: setLegalModal } satisfies LayoutContext} />
+      <Outlet context={{ lang, onBook: openBooking, onBookPaid: (svc) => { setPaidIntakeService(svc); setPaidIntake(svc); }, onOpenLegal: setLegalModal } satisfies LayoutContext} />
       <Footer lang={lang} onOpenLegal={setLegalModal} />
 
       <LegalModal
@@ -2827,10 +2868,11 @@ const AppLayout = () => {
         lang={lang}
       />
 
-      <AstrologyIntakeModal
+      <PaidIntakeModal
+        service={paidIntakeService}
         lang={lang}
-        open={astrologyIntakeOpen}
-        onOpenChange={setAstrologyIntakeOpen}
+        open={!!paidIntake}
+        onOpenChange={(o) => !o && setPaidIntake(null)}
         onOpenPrivacy={() => setLegalModal("privacy")}
       />
 
