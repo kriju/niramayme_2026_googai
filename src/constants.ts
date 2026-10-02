@@ -2562,24 +2562,62 @@ export const COURSES = [
   }
 ];
 
-// Short items for the announcement bar at the top of every page (see
-// AnnouncementBar in App.tsx). `href` is a site path without the /de prefix
-// (it's added for German pages); `until` is the last day (YYYY-MM-DD, German
-// time) the item is shown, so it drops out on its own once it's over.
+// Upcoming workshops promoted in the announcement bar at the top of every
+// page and the "Coming up" cards in the home page hero (see AnnouncementBar
+// and Hero in App.tsx). `href` is a site path without the /de prefix (it's
+// added for German pages); `until` is the last day (YYYY-MM-DD, German time)
+// the item is shown, so it drops out on its own once booking is over.
+// `label` is the bar text on laptops, `short` its phone version (keep it under
+// ~38 characters); `title`, `when` and `detail` make up the hero card.
+type Announcement = { label: string; short: string; cta: string; title: string; when: string; detail: string };
 export const ANNOUNCEMENTS: {
   id: string;
   href: string;
   until: string;
-  // `short` is the phone version of `label`; keep it under ~38 characters.
-  EN: { label: string; short: string; cta: string };
-  DE: { label: string; short: string; cta: string };
+  EN: Announcement;
+  DE: Announcement;
 }[] = [
+  {
+    id: "yoga-adventure-2026-10",
+    href: "/courses/yoga-adventure",
+    until: "2026-10-20",
+    EN: {
+      label: "New kids workshop: Yoga Adventure (ages 9–14) · 24 or 29 Oct",
+      short: "Kids Yoga Adventure · 24/29 Oct",
+      cta: "Book now",
+      title: "Yoga Adventure for Kids",
+      when: "Sat 24 or Thu 29 Oct",
+      detail: "Ages 9–14 · online · €15",
+    },
+    DE: {
+      label: "Neuer Kinder-Workshop: Yoga-Abenteuer (9–14 J.) · 24. oder 29. Okt.",
+      short: "Yoga-Abenteuer für Kinder · 24./29.10.",
+      cta: "Jetzt buchen",
+      title: "Yoga-Abenteuer für Kinder",
+      when: "Sa, 24. oder Do, 29. Okt.",
+      detail: "9–14 Jahre · online · 15 €",
+    },
+  },
   {
     id: "yoga-stress-immunity-sleep-2026-11",
     href: "/courses/yoga-stress-immunity-sleep",
     until: "2026-11-03",
-    EN: { label: "New online series: Yoga for Stress, Immunity & Sleep · starts 3 Nov", short: "New: Yoga for Stress & Sleep · 3 Nov", cta: "Book now" },
-    DE: { label: "Neue Online-Serie: Yoga für Stress, Immunität & Schlaf · ab 3. Nov.", short: "Neu: Yoga für Stress & Schlaf · 3.11.", cta: "Jetzt buchen" },
+    EN: {
+      label: "New online series: Yoga for Stress, Immunity & Sleep · starts 3 Nov",
+      short: "New: Yoga for Stress & Sleep · 3 Nov",
+      cta: "Book now",
+      title: "Yoga for Stress, Immunity & Sleep",
+      when: "Starts Tue 3 Nov · Tue & Thu evenings",
+      detail: "8 sessions · online · €79",
+    },
+    DE: {
+      label: "Neue Online-Serie: Yoga für Stress, Immunität & Schlaf · ab 3. Nov.",
+      short: "Neu: Yoga für Stress & Schlaf · 3.11.",
+      cta: "Jetzt buchen",
+      title: "Yoga für Stress, Immunität & Schlaf",
+      when: "Ab Di, 3. Nov. · Di & Do abends",
+      detail: "8 Einheiten · online · 79 €",
+    },
   },
 ];
 

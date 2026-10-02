@@ -1408,10 +1408,14 @@ const NavFlatLink = ({ to, children }: { to: string, children: React.ReactNode }
 const ANNOUNCEMENT_DISMISS_KEY = "niramay-announcement-dismissed";
 const ANNOUNCEMENT_BAR_HEIGHT = "2.5rem";
 
-const useActiveAnnouncements = () => {
-  // Compare calendar days in German time, matching how dates are listed.
+// Compare calendar days in German time, matching how dates are listed.
+const activeAnnouncements = () => {
   const today = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Berlin" }).format(new Date());
-  const active = ANNOUNCEMENTS.filter(a => a.until >= today);
+  return ANNOUNCEMENTS.filter(a => a.until >= today);
+};
+
+const useActiveAnnouncements = () => {
+  const active = activeAnnouncements();
   const signature = active.map(a => a.id).join("|");
   const [dismissed, setDismissed] = useState(() => {
     try {
@@ -1798,6 +1802,7 @@ const Hero = ({ lang, onBook }: { lang: "EN" | "DE", onBook: (ctx?: BookingConte
   const t = TRANSLATIONS[lang].hero;
   const tBook = TRANSLATIONS[lang].book;
   const prefix = langPrefix(lang);
+  const upcoming = activeAnnouncements();
   const [latestPosts, setLatestPosts] = useState<any[]>([]);
   const [approvedReviews, setApprovedReviews] = useState<any[]>([]);
   const [reviewIndex, setReviewIndex] = useState(0);
@@ -1876,7 +1881,7 @@ const Hero = ({ lang, onBook }: { lang: "EN" | "DE", onBook: (ctx?: BookingConte
 
       <div className="container mx-auto px-6 grid lg:grid-cols-[1.1fr_1fr] gap-10 lg:gap-14 items-center">
         {/* Left: promise + actions */}
-        <div>
+        <div className="min-w-0">
           <motion.div {...reveal(0)}>
             <Badge variant="secondary" className="mb-5 px-4 py-1 rounded-full bg-white/70 backdrop-blur text-primary font-medium ring-1 ring-stone-200/70">
               <MapPin className="w-3.5 h-3.5 mr-1.5" />{t.badge}
@@ -1900,6 +1905,29 @@ const Hero = ({ lang, onBook }: { lang: "EN" | "DE", onBook: (ctx?: BookingConte
               </Button>
             </a>
           </motion.div>
+          {upcoming.length > 0 && (
+            <motion.div {...reveal(0.3)} className="mt-8 max-w-xl">
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-stone-500 flex items-center gap-2 mb-3">
+                <Sparkles className="w-3.5 h-3.5 text-amber-600" />{lang === "EN" ? "Coming up" : "Demnächst"}
+              </p>
+              <div className="grid sm:grid-cols-2 gap-3">
+                {upcoming.map(item => (
+                  <Link
+                    key={item.id}
+                    to={`${prefix}${item.href}`}
+                    className="group rounded-2xl bg-white/70 backdrop-blur-xl ring-1 ring-stone-200/80 shadow-[0_8px_30px_-14px_rgba(28,25,23,0.25)] p-4 flex flex-col gap-1.5 hover:bg-white transition-colors"
+                  >
+                    <p className="font-serif text-lg leading-snug">{item[lang].title}</p>
+                    <p className="text-sm text-stone-600 flex items-center gap-1.5"><Calendar className="w-3.5 h-3.5 shrink-0" />{item[lang].when}</p>
+                    <p className="text-xs text-stone-500">{item[lang].detail}</p>
+                    <span className="mt-1.5 text-sm font-semibold text-primary inline-flex items-center gap-1">
+                      {item[lang].cta}<ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                    </span>
+                  </Link>
+                ))}
+              </div>
+            </motion.div>
+          )}
         </div>
 
         {/* Right: bento of the site's most valuable content. On phones it
