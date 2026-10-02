@@ -488,7 +488,7 @@ export const TRANSLATIONS = {
       refCodeLabel: "Your reference code",
       refCodeNote: "Include this in your payment note so we can match it to your request quickly.",
       priceLabel: "Price",
-      priceValue: "20 EUR or 2000 INR",
+      priceValue: "25 EUR or 2500 INR",
       paymentEURTitle: "Pay in EUR",
       paypalLabel: "PayPal",
       paypalNote: "Usually confirmed within hours.",
@@ -1249,7 +1249,7 @@ export const TRANSLATIONS = {
       refCodeLabel: "Ihr Referenzcode",
       refCodeNote: "Geben Sie diesen bei Ihrer Zahlung als Verwendungszweck an, damit wir sie schnell zuordnen können.",
       priceLabel: "Preis",
-      priceValue: "20 EUR oder 2000 INR",
+      priceValue: "25 EUR oder 2500 INR",
       paymentEURTitle: "Zahlung in EUR",
       paypalLabel: "PayPal",
       paypalNote: "Meist innerhalb weniger Stunden bestätigt.",
@@ -1645,11 +1645,15 @@ export const SERVICES = [
       title: "Vedic Astrology & Kundali Reading",
       description: "1:1 birth-chart guidance rooted in Vedic Astrology (Jyotish) to help you understand your core nature, decode repeating life patterns, and navigate major transitions with clarity.",
       outcome: "Gain a personalized roadmap for your career, relationships, and next chapter, grounded in your unique birth chart.",
+      originalPrice: "€50 / ₹5,000",
+      price: "€25 / ₹2,500",
     },
     DE: {
       title: "Vedische Astrologie & Kundali-Lesung",
       description: "1:1 Beratung auf Basis Ihres Geburtshoroskops, verwurzelt in der vedischen Astrologie (Jyotish), für ein tieferes Verständnis Ihrer Natur, wiederkehrender Lebensmuster und wichtiger Übergangsphasen.",
       outcome: "Erhalten Sie einen persönlichen Fahrplan für Karriere, Beziehungen und Ihr nächstes Lebenskapitel, basierend auf Ihrem individuellen Geburtshoroskop.",
+      originalPrice: "50 € / 5.000 ₹",
+      price: "25 € / 2.500 ₹",
     }
   },
   {
@@ -2160,11 +2164,11 @@ export const FAQS = [
     category: "services",
     EN: {
       question: "How much is a Vedic Astrology reading, and how do I pay?",
-      answer: "A reading costs 20 EUR or 2000 INR, paid in advance via PayPal or SEPA bank transfer (EUR) or UPI (INR). Include your reference code in the payment note — your slot is confirmed within 24–48 hours.",
+      answer: "A reading costs 25 EUR or 2500 INR (special offer — usually 50 EUR or 5000 INR), paid in advance via PayPal or SEPA bank transfer (EUR) or UPI (INR). Include your reference code in the payment note — your slot is confirmed within 24–48 hours.",
     },
     DE: {
       question: "Was kostet eine Vedische Astrologie-Lesung, und wie bezahle ich?",
-      answer: "Eine Lesung kostet 20 EUR oder 2000 INR, zahlbar im Voraus per PayPal oder SEPA-Überweisung (EUR) bzw. UPI (INR). Geben Sie Ihren Referenzcode im Verwendungszweck an – Ihr Termin wird innerhalb von 24–48 Stunden bestätigt.",
+      answer: "Eine Lesung kostet 25 EUR oder 2500 INR (Sonderangebot – regulär 50 EUR oder 5000 INR), zahlbar im Voraus per PayPal oder SEPA-Überweisung (EUR) bzw. UPI (INR). Geben Sie Ihren Referenzcode im Verwendungszweck an – Ihr Termin wird innerhalb von 24–48 Stunden bestätigt.",
     }
   },
   {
@@ -2474,86 +2478,6 @@ export const COURSES = [
       description: "Ein lustiger, interaktiver Yoga-Workshop für Kinder von 9–14 Jahren – Bewegung, Atmung, Konzentration, Spiele und Selbstentdeckung in kleiner Gruppe (max. 12). Einen Termin wählen; Anmeldung bis 20. Oktober.",
       nameLabel: "Vollständiger Name (Elternteil)",
       notesPlaceholder: "Name und Alter Ihres Kindes sowie alles, was wir wissen sollten (Gesundheit, Yoga-Erfahrung…)",
-    }
-  },
-  {
-    id: "yoga-kids",
-    provider: "VHS Ostfildern",
-    kursnr: "262-301111",
-    registrationUrl: "https://vhs-ostfildern.de/programm/kw/bereich/kursdetails/kurs/262-301111/",
-    EN: {
-      title: "Yoga Kids",
-      time: "Fridays, 16:30–17:15",
-      location: "Stadthaus Scharnhauser Park, R. 2.13",
-      instructor: "Richa",
-      description: "A playful yoga class for children ages 7–11 to move, breathe, and unwind after school.",
-    },
-    DE: {
-      title: "Yoga Kids",
-      time: "Freitags, 16:30–17:15 Uhr",
-      location: "Stadthaus Scharnhauser Park, R. 2.13",
-      instructor: "Richa",
-      description: "Spielerisches Yoga für Kinder von 7 bis 11 Jahren – bewegen, atmen und nach der Schule entspannen.",
-    }
-  },
-  {
-    id: "teen-yoga",
-    provider: "VHS Ostfildern",
-    kursnr: "262-301112",
-    registrationUrl: "https://vhs-ostfildern.de/programm/kw/bereich/kursdetails/kurs/262-301112/",
-    EN: {
-      title: "Teen Yoga",
-      time: "Tuesdays, 17:00–18:00",
-      location: "An der Halle, Nellingen, R. 18/19",
-      instructor: "Richa",
-      description: "A pressure-free space for 12–14 year olds to unwind from school stress and build flexibility.",
-    },
-    DE: {
-      title: "Teen Yoga",
-      time: "Dienstags, 17:00–18:00 Uhr",
-      location: "An der Halle, Nellingen, R. 18/19",
-      instructor: "Richa",
-      description: "Ein druckfreier Raum für 12- bis 14-Jährige, um vom Schulstress abzuschalten und beweglicher zu werden.",
-    }
-  },
-  {
-    id: "yin-yoga",
-    provider: "VHS Ostfildern",
-    kursnr: "262-301113",
-    registrationUrl: "https://vhs-ostfildern.de/programm/kw/bereich/kursdetails/kurs/262-301113/",
-    EN: {
-      title: "Yin Yoga",
-      time: "Thursdays, 17:00",
-      location: "An der Halle, Nellingen, R. 18/19",
-      instructor: "Richa",
-      description: "Slow down, hold space, and recharge — a restorative practice to find calm and renewed energy.",
-    },
-    DE: {
-      title: "Yin-Yoga",
-      time: "Donnerstags, 17:00 Uhr",
-      location: "An der Halle, Nellingen, R. 18/19",
-      instructor: "Richa",
-      description: "Zur Ruhe kommen und neue Energie tanken – eine regenerative Praxis für mehr Gelassenheit.",
-    }
-  },
-  {
-    id: "stuhlyoga",
-    provider: "VHS Ostfildern",
-    kursnr: "262-301114",
-    registrationUrl: "https://vhs-ostfildern.de/programm/kw/bereich/kursdetails/kurs/262-301114/",
-    EN: {
-      title: "Chair Yoga",
-      time: "Mondays, 16:45–17:30",
-      location: "An der Halle, Nellingen, R. 18/19",
-      instructor: "Richa",
-      description: "Gentle movement and breathing for anyone who'd rather skip the floor — no mat needed.",
-    },
-    DE: {
-      title: "Stuhlyoga",
-      time: "Montags, 16:45–17:30 Uhr",
-      location: "An der Halle, Nellingen, R. 18/19",
-      instructor: "Richa",
-      description: "Sanfte Bewegung und Atmung für alle ohne Bodenkontakt – bewegen, atmen, wohlfühlen.",
     }
   },
   {

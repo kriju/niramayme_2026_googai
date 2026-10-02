@@ -1915,6 +1915,9 @@ const ServiceCard = ({ service, index, lang, onLearnMore }: { service: any, inde
           {content.price && (
             <p className="mt-4 text-sm">
               <span className="text-xs font-bold uppercase tracking-wider text-primary/50 mr-2">{t.priceLabel}</span>
+              {content.originalPrice && (
+                <span className="line-through text-muted-foreground mr-2">{content.originalPrice}</span>
+              )}
               <span className="font-semibold">{content.price}</span>
             </p>
           )}
