@@ -2086,12 +2086,27 @@ const renderInline = (text: string): React.ReactNode[] =>
     return part;
   });
 
+// Splits a "| a | b |" table row into its trimmed cells. Outer pipes are
+// optional and "\|" stays a literal pipe inside a cell.
+const splitTableRow = (row: string): string[] =>
+  row
+    .replace(/\\\|/g, '\u0000')
+    .replace(/^\|/, '')
+    .replace(/\|$/, '')
+    .split('|')
+    .map(cell => cell.replace(/\u0000/g, '|').trim());
+
+// The "|---|:---:|" line under a table's header row.
+const isTableSeparator = (row: string) => /^\|?\s*:?-{3,}:?\s*(\|\s*:?-{3,}:?\s*)*\|?$/.test(row);
+
 // Turns the plain-text editor's content into blocks: "## " subheadings,
-// consecutive "- " lines grouped into one bullet list, everything else a
-// paragraph. The matching cheat sheet lives on the /write page.
+// consecutive "- " lines grouped into one bullet list, consecutive "|" lines
+// grouped into one table, everything else a paragraph. The matching cheat
+// sheet lives on the /write page.
 const renderPostContent = (content: string) => {
   const blocks: React.ReactNode[] = [];
   let listItems: string[] = [];
+  let tableRows: string[] = [];
   const flushList = () => {
     if (!listItems.length) return;
     blocks.push(
@@ -2101,8 +2116,48 @@ const renderPostContent = (content: string) => {
     );
     listItems = [];
   };
+  const flushTable = () => {
+    if (!tableRows.length) return;
+    // A separator as the second row marks the first row as the header;
+    // without one, every row is a body row.
+    const hasHeader = tableRows.length > 1 && isTableSeparator(tableRows[1]);
+    const header = hasHeader ? splitTableRow(tableRows[0]) : null;
+    const body = (hasHeader ? tableRows.slice(2) : tableRows)
+      .filter(row => !isTableSeparator(row))
+      .map(splitTableRow);
+    blocks.push(
+      <div key={`table-${blocks.length}`} className="mb-6 overflow-x-auto rounded-xl border border-stone-200">
+        <table className="w-full text-left text-base text-stone-600 leading-relaxed">
+          {header && (
+            <thead className="bg-stone-50 text-stone-800">
+              <tr>
+                {header.map((cell, j) => <th key={j} className="px-4 py-3 font-semibold">{renderInline(cell)}</th>)}
+              </tr>
+            </thead>
+          )}
+          <tbody>
+            {body.map((cells, r) => (
+              <tr key={r} className="border-t border-stone-100 first:border-t-0">
+                {cells.map((cell, j) => <td key={j} className="px-4 py-3 align-top">{renderInline(cell)}</td>)}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    );
+    tableRows = [];
+  };
   content.split('\n').forEach((line, i) => {
     const trimmed = line.trim();
+    if (trimmed.startsWith('|')) {
+      flushList();
+      tableRows.push(trimmed);
+      return;
+    }
+    // Blank lines between rows (common when pasting from a PDF or Word)
+    // don't end a table; only a line of other content does.
+    if (!trimmed && tableRows.length) return;
+    flushTable();
     if (trimmed.startsWith('- ')) {
       listItems.push(trimmed.slice(2));
       return;
@@ -2116,6 +2171,7 @@ const renderPostContent = (content: string) => {
     blocks.push(<p key={i} className="text-lg text-stone-600 leading-relaxed mb-5">{renderInline(trimmed)}</p>);
   });
   flushList();
+  flushTable();
   return blocks;
 };
 

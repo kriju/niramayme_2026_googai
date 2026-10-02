@@ -148,6 +148,7 @@ const FORMATTING_GUIDE: [string, string][] = [
   ["**bold text**", "Bold"],
   ["*italic text*", "Italic"],
   ["- item", "Bullet point (one per line)"],
+  ["| A | B |", "Table row; put |---|---| under the first row to make it the header"],
   ["Enter", "Starts a new paragraph"],
 ];
 // iPhone Safari is inconsistent about File.type for audio — an .m4a from
