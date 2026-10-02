@@ -529,8 +529,8 @@ export const TRANSLATIONS = {
       packages: {
         "in-person": {
           title: "In-Person Reiki Immersion",
-          format: "In-Person (45–60 mins)",
-          investment: "€40 – €60",
+          format: "In-Person (45 mins)",
+          investment: "€40",
           focus: "Deep somatic reset, tactile energetic recalibration, and localized tension release.",
           cta: "Book In-Person Session",
         },
@@ -577,7 +577,6 @@ export const TRANSLATIONS = {
       refCodeLabel: "Your reference code",
       refCodeNote: "Include this in your payment note so we can match it to your booking quickly.",
       priceLabel: "Price",
-      inPersonPriceNote: "€40 for 45 minutes, up to €60 for 60 minutes — please pay the amount matching the slot you booked.",
       paymentEURTitle: "Pay in EUR",
       paypalLabel: "PayPal",
       paypalNote: "Usually confirmed within hours.",
@@ -1243,8 +1242,8 @@ export const TRANSLATIONS = {
       packages: {
         "in-person": {
           title: "Reiki-Immersion vor Ort",
-          format: "Vor Ort (45–60 Min.)",
-          investment: "40 – 60 €",
+          format: "Vor Ort (45 Min.)",
+          investment: "40 €",
           focus: "Tiefe somatische Neuausrichtung, spürbare energetische Rekalibrierung und gezieltes Lösen von Verspannungen.",
           cta: "Sitzung vor Ort buchen",
         },
@@ -1291,7 +1290,6 @@ export const TRANSLATIONS = {
       refCodeLabel: "Ihr Referenzcode",
       refCodeNote: "Geben Sie diesen Code als Verwendungszweck an, damit wir die Zahlung schnell Ihrer Buchung zuordnen können.",
       priceLabel: "Preis",
-      inPersonPriceNote: "40 € für 45 Minuten, bis zu 60 € für 60 Minuten — bitte zahlen Sie den Betrag, der zu Ihrem gebuchten Termin passt.",
       paymentEURTitle: "Zahlung in EUR",
       paypalLabel: "PayPal",
       paypalNote: "In der Regel innerhalb weniger Stunden bestätigt.",
@@ -1497,7 +1495,7 @@ export const SERVICES = [
       title: "Reiki Energy Healing",
       description: "Harmonize mind, body & spirit with gentle Japanese energy healing, in person in Ostfildern or as distance Reiki wherever you are in the world.",
       outcome: "Dissolve energetic blockages, calm your nervous system and awaken your body's natural capacity to heal.",
-      price: "Distance from €20 / ₹2,000 · In-person €40 – €60",
+      price: "Distance from €20 / ₹2,000 · In-person €40",
       details: [
         "Reiki is a gentle, non-invasive Japanese energy healing practice that channels universal life force energy (Prana or Ki) to dissolve energetic blockages, calm the nervous system, and awaken your body's natural capacity to heal. When our energy flow is stagnant or disrupted by stress, suppressed emotions, or physical strain, it often manifests as fatigue, emotional heaviness, or physical tension. Reiki restores this sacred balance across your subtle energy centers (chakras), bringing profound lightness and peace.",
       ],
@@ -1506,7 +1504,7 @@ export const SERVICES = [
       title: "Reiki-Energieheilung",
       description: "Bringen Sie Geist, Körper & Seele in Einklang – mit sanfter japanischer Energieheilung, vor Ort in Ostfildern oder als Fern-Reiki, wo auch immer Sie auf der Welt sind.",
       outcome: "Lösen Sie energetische Blockaden, beruhigen Sie Ihr Nervensystem und wecken Sie die natürliche Heilkraft Ihres Körpers.",
-      price: "Fern-Reiki ab 20 € / 2.000 ₹ · Vor Ort 40 – 60 €",
+      price: "Fern-Reiki ab 20 € / 2.000 ₹ · Vor Ort 40 €",
       details: [
         "Reiki ist eine sanfte, nicht-invasive japanische Methode der Energieheilung, die universelle Lebensenergie (Prana oder Ki) leitet, um energetische Blockaden zu lösen, das Nervensystem zu beruhigen und die natürliche Heilkraft Ihres Körpers zu wecken. Wenn unser Energiefluss durch Stress, unterdrückte Gefühle oder körperliche Belastung ins Stocken gerät, zeigt sich das oft als Erschöpfung, emotionale Schwere oder körperliche Anspannung. Reiki stellt dieses heilige Gleichgewicht in Ihren feinstofflichen Energiezentren (Chakren) wieder her und schenkt tiefe Leichtigkeit und Frieden.",
       ],

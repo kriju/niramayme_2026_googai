@@ -740,7 +740,6 @@ const ReikiIntakeModal = ({ lang, pkg, onClose, onOpenPrivacy }: { lang: "EN" | 
               <div>
                 <p className="text-xs font-bold uppercase tracking-wider text-primary/50 mb-1">{t.priceLabel}</p>
                 <p className="text-lg font-semibold">{pkgContent.investment}</p>
-                <p className="text-xs text-muted-foreground">{t.inPersonPriceNote}</p>
               </div>
               <div className="p-4 rounded-xl border border-stone-100 space-y-2">
                 <p className="font-bold text-sm">{t.paymentEURTitle}</p>
