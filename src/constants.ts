@@ -1,4 +1,4 @@
-import { Heart, Sparkles, Brain, ShieldCheck, Moon, Users, Star, GraduationCap, Award, History } from "lucide-react";
+import { Heart, Sparkles, Brain, ShieldCheck, Moon, Star, GraduationCap, Award, History } from "lucide-react";
 
 export const GOOGLE_CALENDAR_URL = "https://calendar.google.com/calendar/appointments/schedules/AcZssZ0bFjK2E2xI3wiT55LqPigmiOHHDxGTghizdBbhy4MSdbw1p6CRUsxVk8gZYqJTnMgoKOAcJjZO?gv=true";
 export const GOOGLE_REVIEW_URL = "https://www.google.com/search?q=Niramay+Ostfildern+reviews";
@@ -77,6 +77,9 @@ export const TRANSLATIONS = {
       breadcrumbServices: "Services",
       otherServicesTitle: "Explore Other Services",
       whatsappCta: "Or message us on WhatsApp",
+      formatLabel: "Format",
+      priceLabel: "Investment",
+      inclusionsLabel: "Inclusions",
     },
     about: {
       title: "Meet Your Healers",
@@ -485,6 +488,21 @@ export const TRANSLATIONS = {
       whatsappTemplate: "Hi Richa, I'd like to book a Vedic Astrology reading.\nName:\nPlace of Birth:\nDate of Birth:\nTime of Birth:",
       closeBtn: "Close",
     },
+    guidanceIntake: {
+      cta: "Book Your Session",
+      step1Title: "Book Your Session",
+      packageLabel: "Choose your session",
+      packages: {
+        individual: { title: "Individual Soul Counseling & Guidance", price: "€50 / ₹5,000", priceValue: "50 EUR or 5000 INR" },
+        couple: { title: "Relationship & Couple Guidance", price: "€90 / ₹9,000", priceValue: "90 EUR or 9000 INR" },
+      },
+      yourDetailsTitle: "Your birth details",
+      partnerDetailsTitle: "Your partner's birth details",
+      partnerName: "Partner's Full Name",
+      consentPrefix: "I agree to Niramay storing these details to prepare my session, per the",
+      whatsappTemplate: "Hi Richa, I'd like to book an Intuitive Guidance & Soul Counseling session.\nSession (individual / couple):\nName:\nPlace of Birth:\nDate of Birth:\nTime of Birth:",
+      bookThisBtn: "Book this session",
+    },
     book: {
       title: "Journey from Body to Bliss",
       subtitle: "The Niramay Path to Pancha Koshas",
@@ -575,6 +593,9 @@ export const TRANSLATIONS = {
       breadcrumbServices: "Leistungen",
       otherServicesTitle: "Weitere Angebote entdecken",
       whatsappCta: "Oder schreiben Sie uns auf WhatsApp",
+      formatLabel: "Format",
+      priceLabel: "Investition",
+      inclusionsLabel: "Enthalten",
     },
     about: {
       title: "Lernen Sie Ihre Therapeuten kennen",
@@ -985,6 +1006,21 @@ export const TRANSLATIONS = {
       whatsappTemplate: "Hallo Richa, ich möchte eine vedische Astrologie-Lesung buchen.\nName:\nGeburtsort:\nGeburtsdatum:\nGeburtszeit:",
       closeBtn: "Schließen",
     },
+    guidanceIntake: {
+      cta: "Sitzung buchen",
+      step1Title: "Ihre Sitzung buchen",
+      packageLabel: "Wählen Sie Ihre Sitzung",
+      packages: {
+        individual: { title: "Individuelle Seelenberatung & Begleitung", price: "50 € / ₹5.000", priceValue: "50 EUR oder 5000 INR" },
+        couple: { title: "Beziehungs- & Paarbegleitung", price: "90 € / ₹9.000", priceValue: "90 EUR oder 9000 INR" },
+      },
+      yourDetailsTitle: "Ihre Geburtsdaten",
+      partnerDetailsTitle: "Geburtsdaten Ihres Partners / Ihrer Partnerin",
+      partnerName: "Vollständiger Name des Partners / der Partnerin",
+      consentPrefix: "Ich stimme zu, dass Niramay diese Angaben zur Vorbereitung meiner Sitzung speichert, gemäß der",
+      whatsappTemplate: "Hallo Richa, ich möchte eine Sitzung für Intuitive Begleitung & Seelenberatung buchen.\nSitzung (einzeln / Paar):\nName:\nGeburtsort:\nGeburtsdatum:\nGeburtszeit:",
+      bookThisBtn: "Diese Sitzung buchen",
+    },
     book: {
       title: "Reise vom Körper zur Glückseligkeit",
       subtitle: "Der Niramay-Pfad zu den Pancha Koshas",
@@ -1155,23 +1191,81 @@ export const SERVICES = [
     }
   },
   {
-    id: "relationship-counselling",
-    icon: Users,
+    id: "intuitive-guidance",
+    icon: Sparkles,
     color: "bg-stone-100",
-    category: "Mental Clarity",
-    link: "https://better-relationships.lovable.app/",
-    openInModal: true,
+    category: "Spiritual Healing",
     EN: {
-      title: "Relationship Counselling",
-      description: "Navigate relationship challenges and strengthen your emotional bonds through specialized counselling and coaching techniques.",
-      outcome: "Improved communication, deeper intimacy, and healthier relationship patterns.",
-      linkLabel: "Try this interactive tool to learn more",
+      title: "Intuitive Guidance & Soul Counseling",
+      description: "Are you facing big life changes, inner stress, or relationship challenges? These sessions combine astrology, tarot cards, and caring counseling to help you find clarity, peace, and direction in your life.",
+      outcome: "Find clarity, peace, and direction, with simple, grounded steps forward.",
+      receiveTitle: "What You Receive in These Sessions",
+      receive: [
+        { title: "Astrology Guidance (Your Cosmic Map)", description: "Learn about your planetary cycles and the best timing for important life decisions." },
+        { title: "Tarot Card Reading (Clear Direction)", description: "Discover hidden feelings, current energies, and what is truly influencing your life right now." },
+        { title: "Compassionate Soul Counseling", description: "A safe, friendly space to talk about your feelings, release stress, and find simple steps forward." },
+      ],
+      offeringsTitle: "Intuitive Guidance & Soul Counseling Offerings",
+      offerings: [
+        {
+          package: "individual" as const,
+          title: "Individual Soul Counseling & Guidance",
+          format: "Online / Video Call (60 mins)",
+          price: "€50 / ₹5,000",
+          inclusions: [
+            "Astrological chart analysis for cosmic alignment & timing",
+            "1 In-depth tarot reading for intuitive clarity",
+            "1-hour personalized counseling & emotional mentoring",
+          ],
+        },
+        {
+          package: "couple" as const,
+          title: "Relationship & Couple Guidance",
+          format: "Online / Video Call (60 mins)",
+          price: "€90 / ₹9,000",
+          inclusions: [
+            "Dual astrological chart analysis for energetic synergy & patterns",
+            "2 Tarot readings exploring both individual perspectives and shared dynamics",
+            "1-hour joint counseling & conflict navigation",
+          ],
+        },
+      ],
     },
     DE: {
-      title: "Beziehungsberatung",
-      description: "Bewältigen Sie Beziehungsherausforderungen und stärken Sie Ihre emotionalen Bindungen durch spezialisierte Beratungs- und Coaching-Techniken.",
-      outcome: "Verbesserte Kommunikation, tiefere Intimität und gesündere Beziehungsmuster.",
-      linkLabel: "Probieren Sie dieses interaktive Tool aus, um mehr zu erfahren",
+      title: "Intuitive Begleitung & Seelenberatung",
+      description: "Stehen Sie vor großen Veränderungen, innerem Stress oder Herausforderungen in Ihrer Beziehung? Diese Sitzungen verbinden Astrologie, Tarotkarten und einfühlsame Beratung, damit Sie Klarheit, Frieden und Orientierung in Ihrem Leben finden.",
+      outcome: "Finden Sie Klarheit, Frieden und Orientierung – mit einfachen, geerdeten nächsten Schritten.",
+      receiveTitle: "Was Sie in diesen Sitzungen erhalten",
+      receive: [
+        { title: "Astrologische Begleitung (Ihre kosmische Landkarte)", description: "Erfahren Sie mehr über Ihre planetaren Zyklen und den besten Zeitpunkt für wichtige Lebensentscheidungen." },
+        { title: "Tarot-Lesung (Klare Richtung)", description: "Entdecken Sie verborgene Gefühle, aktuelle Energien und das, was Ihr Leben gerade wirklich beeinflusst." },
+        { title: "Einfühlsame Seelenberatung", description: "Ein sicherer, vertrauensvoller Raum, um über Ihre Gefühle zu sprechen, Stress loszulassen und einfache nächste Schritte zu finden." },
+      ],
+      offeringsTitle: "Angebote: Intuitive Begleitung & Seelenberatung",
+      offerings: [
+        {
+          package: "individual" as const,
+          title: "Individuelle Seelenberatung & Begleitung",
+          format: "Online / Videoanruf (60 Min.)",
+          price: "50 € / ₹5.000",
+          inclusions: [
+            "Astrologische Horoskopanalyse für kosmische Ausrichtung & Timing",
+            "1 ausführliche Tarot-Lesung für intuitive Klarheit",
+            "1 Stunde persönliche Beratung & emotionales Mentoring",
+          ],
+        },
+        {
+          package: "couple" as const,
+          title: "Beziehungs- & Paarbegleitung",
+          format: "Online / Videoanruf (60 Min.)",
+          price: "90 € / ₹9.000",
+          inclusions: [
+            "Doppelte Horoskopanalyse für energetische Synergien & Muster",
+            "2 Tarot-Lesungen zu beiden individuellen Perspektiven und der gemeinsamen Dynamik",
+            "1 Stunde gemeinsame Beratung & Konfliktbegleitung",
+          ],
+        },
+      ],
     }
   },
 ];
