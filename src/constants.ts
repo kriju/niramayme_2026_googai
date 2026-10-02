@@ -333,6 +333,8 @@ export const TRANSLATIONS = {
       breadcrumbBlog: "Blog",
       listenLabel: "Listen to this article",
       otherPostsTitle: "More Posts",
+      byline: "Written by",
+      authoredBy: "Article authored by",
     },
     engagement: {
       like: "Like",
@@ -963,6 +965,8 @@ export const TRANSLATIONS = {
       breadcrumbBlog: "Blog",
       listenLabel: "Diesen Artikel anhören",
       otherPostsTitle: "Weitere Beiträge",
+      byline: "Geschrieben von",
+      authoredBy: "Artikel verfasst von",
     },
     engagement: {
       like: "Gefällt mir",

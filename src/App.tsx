@@ -2298,6 +2298,7 @@ const BlogPostPage = () => {
   // false "not found" flash while that's in flight.
   if (!post) return null;
 
+  const authorName = post.author?.trim() || "Niramay";
   const dateStr = post.createdAt?.toDate
     ? post.createdAt.toDate().toLocaleDateString(lang === "DE" ? "de-DE" : "en-US")
     : "";
@@ -2318,6 +2319,9 @@ const BlogPostPage = () => {
           {dateStr && <span className="text-sm text-stone-400">{dateStr}</span>}
         </div>
         <h1 className="text-4xl md:text-5xl font-serif font-bold mb-4 leading-tight">{post.title}</h1>
+        <p className="text-base text-stone-500 mb-4">
+          {bp.byline} <span className="font-semibold text-stone-800">{authorName}</span>
+        </p>
         {post.excerpt && (
           <p className="text-xl text-muted-foreground leading-relaxed mb-8">{post.excerpt}</p>
         )}
@@ -2353,10 +2357,13 @@ const BlogPostPage = () => {
         </div>
 
         <div className="flex items-center gap-4 pt-8 border-t border-stone-100 mb-8">
-          <div className="w-12 h-12 rounded-full bg-stone-100 flex items-center justify-center font-bold text-stone-600">
-            {post.author?.[0] || "N"}
+          <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center font-bold text-primary" aria-hidden="true">
+            {authorName[0]}
           </div>
-          <p className="font-bold">{post.author || "Niramay"}</p>
+          <div>
+            <p className="text-xs uppercase tracking-wider text-stone-500">{bp.authoredBy}</p>
+            <p className="text-lg font-bold text-stone-800">{authorName}</p>
+          </div>
         </div>
 
         <Suspense fallback={null}>
