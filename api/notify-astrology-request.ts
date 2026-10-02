@@ -13,6 +13,44 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 type NotifyKind = "submitted" | "payment_claimed";
 
+// Per-service wording for the emails. Requests without a `service` field are
+// Vedic Astrology readings (the original, and still default, use of this
+// collection); Intuitive Guidance & Soul Counseling requests also carry a
+// `package`, and couple requests the partner's birth details.
+type ServiceInfo = { refPrefix: string; adminLabel: string; nameEN: string; nameDE: string; priceEN: string; priceDE: string };
+
+const PACKAGE_INFO: Record<string, { adminLabel: string; nameEN: string; nameDE: string; priceEN: string; priceDE: string }> = {
+  individual: {
+    adminLabel: "Individual Soul Counseling & Guidance",
+    nameEN: "Individual Soul Counseling & Guidance session",
+    nameDE: "Sitzung „Individuelle Seelenberatung & Begleitung“",
+    priceEN: "50 EUR or 5000 INR",
+    priceDE: "50 EUR oder 5000 INR",
+  },
+  couple: {
+    adminLabel: "Relationship & Couple Guidance",
+    nameEN: "Relationship & Couple Guidance session",
+    nameDE: "Sitzung „Beziehungs- & Paarbegleitung“",
+    priceEN: "90 EUR or 9000 INR",
+    priceDE: "90 EUR oder 9000 INR",
+  },
+};
+
+function serviceInfo(request: Record<string, any>): ServiceInfo {
+  if (request.service === "intuitive-guidance") {
+    const pkg = PACKAGE_INFO[request.package] ?? PACKAGE_INFO.individual;
+    return { refPrefix: "IGS", ...pkg, adminLabel: `Intuitive Guidance & Soul Counseling — ${pkg.adminLabel}` };
+  }
+  return {
+    refPrefix: "AST",
+    adminLabel: "Vedic Astrology reading",
+    nameEN: "Vedic Astrology reading",
+    nameDE: "vedische Astrologie-Lesung",
+    priceEN: "20 EUR or 2000 INR",
+    priceDE: "20 EUR oder 2000 INR",
+  };
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== "POST") {
     res.setHeader("Allow", "POST");
@@ -35,7 +73,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // Derived the same way the client derives it (src/App.tsx) — never
     // stored separately, so the two can't drift.
-    const refCode = `AST-${requestId.slice(-6).toUpperCase()}`;
+    const svc = serviceInfo(request);
+    const refCode = `${svc.refPrefix}-${requestId.slice(-6).toUpperCase()}`;
     const lang: "EN" | "DE" = request.lang === "DE" ? "DE" : "EN";
     const isEmailContact = EMAIL_RE.test(String(request.contact || "").trim());
 
@@ -58,10 +97,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       from: process.env.GMAIL_USER,
       to: process.env.ADMIN_NOTIFY_EMAIL || "riju.kansal@niramay.me",
       subject: adminSubject(kind === "submitted"
-        ? `New astrology chart request — ${refCode}`
-        : `Payment claimed for astrology request — ${refCode}`),
-      text: renderAdminEmailText({ refCode, kind, request, formattedDate, isEmailContact }),
-      html: renderAdminEmailHtml({ refCode, kind, request, formattedDate, isEmailContact }),
+        ? `New ${svc.adminLabel} request — ${refCode}`
+        : `Payment claimed for ${svc.adminLabel} request — ${refCode}`),
+      text: renderAdminEmailText({ refCode, kind, request, formattedDate, isEmailContact, svc }),
+      html: renderAdminEmailHtml({ refCode, kind, request, formattedDate, isEmailContact, svc }),
     });
 
     // Only send a customer receipt when the contact they gave us is an
@@ -74,8 +113,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         subject: kind === "submitted"
           ? (lang === "DE" ? `Wir haben Ihre Geburtsdaten erhalten — ${refCode}` : `We've received your birth details — ${refCode}`)
           : (lang === "DE" ? `Zahlung erhalten — ${refCode}` : `Payment received — ${refCode}`),
-        text: renderCustomerEmailText({ refCode, kind, lang, name: request.name }),
-        html: renderCustomerEmailHtml({ refCode, kind, lang, name: request.name }),
+        text: renderCustomerEmailText({ refCode, kind, lang, name: request.name, svc }),
+        html: renderCustomerEmailHtml({ refCode, kind, lang, name: request.name, svc }),
       });
     }
 
@@ -95,16 +134,24 @@ function renderAdminEmailText(params: {
   request: Record<string, any>;
   formattedDate: string;
   isEmailContact: boolean;
+  svc: ServiceInfo;
 }) {
-  const { refCode, kind, request, formattedDate, isEmailContact } = params;
+  const { refCode, kind, request, formattedDate, isEmailContact, svc } = params;
   const lines = [
-    kind === "submitted" ? "New astrology chart request" : "Payment claimed for an astrology request",
+    kind === "submitted" ? `New request: ${svc.adminLabel}` : `Payment claimed: ${svc.adminLabel}`,
     `Submitted ${formattedDate} (Europe/Berlin) — ref ${refCode} — language: ${request.lang}`,
+    `Price: ${svc.priceEN}`,
     "",
     `Name: ${request.name}`,
     `Place of birth: ${request.placeOfBirth}`,
     `Date of birth: ${request.dateOfBirth}`,
     `Time of birth: ${request.timeOfBirth}`,
+    ...(request.partnerName ? [
+      `Partner's name: ${request.partnerName}`,
+      `Partner's place of birth: ${request.partnerPlaceOfBirth}`,
+      `Partner's date of birth: ${request.partnerDateOfBirth}`,
+      `Partner's time of birth: ${request.partnerTimeOfBirth}`,
+    ] : []),
     `Contact: ${request.contact}${isEmailContact ? "" : " (not an email — reply via WhatsApp)"}`,
     `Payment claimed: ${request.paymentClaimed ? "Yes" : "No"}`,
     "",
@@ -113,8 +160,8 @@ function renderAdminEmailText(params: {
   return lines.join("\n");
 }
 
-function renderCustomerEmailText(params: { refCode: string; kind: NotifyKind; lang: "EN" | "DE"; name: string }) {
-  const { refCode, kind, lang, name } = params;
+function renderCustomerEmailText(params: { refCode: string; kind: NotifyKind; lang: "EN" | "DE"; name: string; svc: ServiceInfo }) {
+  const { refCode, kind, lang, name, svc } = params;
   const greeting = lang === "DE" ? `Hallo ${name},` : `Hi ${name},`;
 
   if (kind === "submitted") {
@@ -122,11 +169,11 @@ function renderCustomerEmailText(params: { refCode: string; kind: NotifyKind; la
       ? [
           greeting,
           "",
-          "vielen Dank für Ihre Geburtsdaten für Ihre vedische Astrologie-Lesung. Ihr Referenzcode ist:",
+          `vielen Dank für Ihre Geburtsdaten für Ihre ${svc.nameDE}. Ihr Referenzcode ist:`,
           "",
           refCode,
           "",
-          "Bitte geben Sie diesen Code bei Ihrer Zahlung (20 EUR oder 2000 INR) als Verwendungszweck an, wie auf unserer Website beschrieben. Sobald Ihre Zahlung eingegangen ist, bestätigen wir Ihren Termin innerhalb von 24–48 Stunden.",
+          `Bitte geben Sie diesen Code bei Ihrer Zahlung (${svc.priceDE}) als Verwendungszweck an, wie auf unserer Website beschrieben. Sobald Ihre Zahlung eingegangen ist, bestätigen wir Ihren Termin innerhalb von 24–48 Stunden.`,
           "",
           "Bei Fragen antworten Sie einfach auf diese E-Mail oder schreiben Sie uns über WhatsApp.",
           "",
@@ -135,11 +182,11 @@ function renderCustomerEmailText(params: { refCode: string; kind: NotifyKind; la
       : [
           greeting,
           "",
-          "Thank you for sharing your birth details for your Vedic Astrology reading. Your reference code is:",
+          `Thank you for sharing your birth details for your ${svc.nameEN}. Your reference code is:`,
           "",
           refCode,
           "",
-          "Please include this code as the note/reference on your payment (20 EUR or 2000 INR), as shown on our website. Once your payment is received, we'll confirm your appointment within 24–48 hours.",
+          `Please include this code as the note/reference on your payment (${svc.priceEN}), as shown on our website. Once your payment is received, we'll confirm your appointment within 24–48 hours.`,
           "",
           "If you have any questions, just reply to this email or message us on WhatsApp.",
           "",
@@ -170,14 +217,32 @@ function renderAdminEmailHtml(params: {
   request: Record<string, any>;
   formattedDate: string;
   isEmailContact: boolean;
+  svc: ServiceInfo;
 }) {
-  const { refCode, kind, request, formattedDate, isEmailContact } = params;
+  const { refCode, kind, request, formattedDate, isEmailContact, svc } = params;
+  const partnerRows = request.partnerName ? `
+      <tr>
+        <td style="padding: 6px 0; color: #78716c;">Partner's name</td>
+        <td style="padding: 6px 0; font-weight: 600;">${escapeHtml(request.partnerName)}</td>
+      </tr>
+      <tr>
+        <td style="padding: 6px 0; color: #78716c;">Partner's place of birth</td>
+        <td style="padding: 6px 0;">${escapeHtml(request.partnerPlaceOfBirth)}</td>
+      </tr>
+      <tr>
+        <td style="padding: 6px 0; color: #78716c;">Partner's date of birth</td>
+        <td style="padding: 6px 0;">${escapeHtml(request.partnerDateOfBirth)}</td>
+      </tr>
+      <tr>
+        <td style="padding: 6px 0; color: #78716c;">Partner's time of birth</td>
+        <td style="padding: 6px 0;">${escapeHtml(request.partnerTimeOfBirth)}</td>
+      </tr>` : "";
   return `
   <div style="font-family: -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; max-width: 560px; margin: 0 auto; color: #292524;">
     <h2 style="font-size: 20px; margin-bottom: 4px;">
-      ${kind === "submitted" ? "New astrology chart request" : "Payment claimed for an astrology request"}
+      ${kind === "submitted" ? "New request" : "Payment claimed"}: ${escapeHtml(svc.adminLabel)}
     </h2>
-    <p style="color: #78716c; margin-top: 0;">Submitted ${escapeHtml(formattedDate)} (Europe/Berlin) &middot; ref ${escapeHtml(refCode)} &middot; language: ${escapeHtml(request.lang)}</p>
+    <p style="color: #78716c; margin-top: 0;">Submitted ${escapeHtml(formattedDate)} (Europe/Berlin) &middot; ref ${escapeHtml(refCode)} &middot; language: ${escapeHtml(request.lang)} &middot; price: ${escapeHtml(svc.priceEN)}</p>
 
     <table style="width: 100%; border-collapse: collapse; margin: 16px 0;">
       <tr>
@@ -195,7 +260,7 @@ function renderAdminEmailHtml(params: {
       <tr>
         <td style="padding: 6px 0; color: #78716c;">Time of birth</td>
         <td style="padding: 6px 0;">${escapeHtml(request.timeOfBirth)}</td>
-      </tr>
+      </tr>${partnerRows}
       <tr>
         <td style="padding: 6px 0; color: #78716c;">Contact</td>
         <td style="padding: 6px 0;">${escapeHtml(request.contact)}${isEmailContact ? "" : " (not an email — reply via WhatsApp)"}</td>
@@ -211,33 +276,33 @@ function renderAdminEmailHtml(params: {
     </div>
 
     <p style="color: #a8a29e; font-size: 12px; margin-top: 24px;">
-      You're getting this because you're the admin contact for Niramay's astrology bookings.
+      You're getting this because you're the admin contact for Niramay's pay-first bookings.
       Full details are also stored in the astrologyRequests collection in Firestore.
     </p>
   </div>
   `;
 }
 
-function renderCustomerEmailHtml(params: { refCode: string; kind: NotifyKind; lang: "EN" | "DE"; name: string }) {
-  const { refCode, kind, lang, name } = params;
+function renderCustomerEmailHtml(params: { refCode: string; kind: NotifyKind; lang: "EN" | "DE"; name: string; svc: ServiceInfo }) {
+  const { refCode, kind, lang, name, svc } = params;
   const greeting = lang === "DE" ? `Hallo ${escapeHtml(name)},` : `Hi ${escapeHtml(name)},`;
 
   if (kind === "submitted") {
     return lang === "DE" ? `
     <div style="font-family: -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; max-width: 560px; margin: 0 auto; color: #292524;">
       <p>${greeting}</p>
-      <p>vielen Dank für Ihre Geburtsdaten für Ihre vedische Astrologie-Lesung. Ihr Referenzcode ist:</p>
+      <p>vielen Dank für Ihre Geburtsdaten für Ihre ${svc.nameDE}. Ihr Referenzcode ist:</p>
       <p style="font-size: 22px; font-weight: 700; letter-spacing: 1px;">${escapeHtml(refCode)}</p>
-      <p>Bitte geben Sie diesen Code bei Ihrer Zahlung (20 EUR oder 2000 INR) als Verwendungszweck an, wie auf unserer Website beschrieben. Sobald Ihre Zahlung eingegangen ist, bestätigen wir Ihren Termin innerhalb von 24–48 Stunden.</p>
+      <p>Bitte geben Sie diesen Code bei Ihrer Zahlung (${svc.priceDE}) als Verwendungszweck an, wie auf unserer Website beschrieben. Sobald Ihre Zahlung eingegangen ist, bestätigen wir Ihren Termin innerhalb von 24–48 Stunden.</p>
       <p>Bei Fragen antworten Sie einfach auf diese E-Mail oder schreiben Sie uns über WhatsApp.</p>
       <p>Herzliche Grüße,<br/>Richa</p>
     </div>
     ` : `
     <div style="font-family: -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; max-width: 560px; margin: 0 auto; color: #292524;">
       <p>${greeting}</p>
-      <p>Thank you for sharing your birth details for your Vedic Astrology reading. Your reference code is:</p>
+      <p>Thank you for sharing your birth details for your ${svc.nameEN}. Your reference code is:</p>
       <p style="font-size: 22px; font-weight: 700; letter-spacing: 1px;">${escapeHtml(refCode)}</p>
-      <p>Please include this code as the note/reference on your payment (20 EUR or 2000 INR), as shown on our website. Once your payment is received, we'll confirm your appointment within 24–48 hours.</p>
+      <p>Please include this code as the note/reference on your payment (${svc.priceEN}), as shown on our website. Once your payment is received, we'll confirm your appointment within 24–48 hours.</p>
       <p>If you have any questions, just reply to this email or message us on WhatsApp.</p>
       <p>Warmly,<br/>Richa</p>
     </div>
