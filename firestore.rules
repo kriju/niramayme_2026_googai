@@ -106,6 +106,20 @@ service cloud.firestore {
                       && data.partnerTimeOfBirth is string && data.partnerTimeOfBirth.size() > 0 && data.partnerTimeOfBirth.size() <= 20)));
     }
 
+    // Tarot intake helper — same pay-first flow as astrology, but holds the
+    // visitor's question instead of birth details.
+    function isValidTarotRequest(data) {
+      return data.keys().hasAll(['name', 'question', 'contact', 'consentAccepted', 'lang', 'createdAt', 'paymentClaimed'])
+          && data.keys().size() <= 7
+          && data.name is string && data.name.size() > 0 && data.name.size() <= 100
+          && data.question is string && data.question.size() > 0 && data.question.size() <= 1000
+          && data.contact is string && data.contact.size() > 0 && data.contact.size() <= 200
+          && data.consentAccepted == true
+          && data.lang in ['EN', 'DE']
+          && data.createdAt is timestamp
+          && data.paymentClaimed == false;
+    }
+
     // User account helper
     function isValidUser(data) {
       return data.keys().hasAll(['displayName', 'email', 'createdAt'])
@@ -200,6 +214,17 @@ service cloud.firestore {
       // their own "I've paid" flag once, and nothing else.
       allow update: if existing()['package'] == 'in-person'
                     && existing().paymentClaimed == false
+                    && incoming().paymentClaimed == true
+                    && incoming().diff(existing()).affectedKeys().hasOnly(['paymentClaimed']);
+      allow delete: if false;
+    }
+
+    match /tarotRequests/{requestId} {
+      // Same access model as astrologyRequests above: never client-readable,
+      // create-only, plus the visitor's one-way "I've paid" flag.
+      allow get, list: if false;
+      allow create: if isValidId(requestId) && isValidTarotRequest(incoming());
+      allow update: if existing().paymentClaimed == false
                     && incoming().paymentClaimed == true
                     && incoming().diff(existing()).affectedKeys().hasOnly(['paymentClaimed']);
       allow delete: if false;

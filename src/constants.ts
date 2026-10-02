@@ -1,4 +1,4 @@
-import { Heart, Sparkles, Brain, ShieldCheck, Moon, Star, GraduationCap, Award, History } from "lucide-react";
+import { Heart, Sparkles, Brain, ShieldCheck, Moon, Star, GraduationCap, Award, History, WandSparkles } from "lucide-react";
 
 export const GOOGLE_CALENDAR_URL = "https://calendar.google.com/calendar/appointments/schedules/AcZssZ0bFjK2E2xI3wiT55LqPigmiOHHDxGTghizdBbhy4MSdbw1p6CRUsxVk8gZYqJTnMgoKOAcJjZO?gv=true";
 export const GOOGLE_REVIEW_URL = "https://www.google.com/search?q=Niramay+Ostfildern+reviews";
@@ -234,8 +234,8 @@ export const TRANSLATIONS = {
               content: "We occasionally take photographs at our workshops, classes, and community events (e.g. International Yoga Day) to share on this website and our social media channels. We select images that favor group or candid shots over close-ups of individuals, and we obtain consent from clearly identifiable attendees where practicable. If you appear in a photo on this site and would like it removed, please contact us at richa@niramay.me and we will take it down promptly."
             },
             {
-              title: "7. Vedic Astrology Chart Requests",
-              content: "If you request a Vedic Astrology reading, we collect your name, place of birth, date of birth, time of birth, and an email address or WhatsApp number through our booking form (or, if you contact us directly, via email or WhatsApp) solely to prepare your birth chart and coordinate your session. This data is stored only for as long as needed to prepare your chart and deliver your session, and is not shared with third parties. You must actively confirm your consent before this data is submitted, and you may withdraw consent and request deletion of this data at any time by contacting richa@niramay.me."
+              title: "7. Vedic Astrology & Tarot Requests",
+              content: "If you request a Vedic Astrology reading, we collect your name, place of birth, date of birth, time of birth, and an email address or WhatsApp number through our booking form (or, if you contact us directly, via email or WhatsApp) solely to prepare your birth chart and coordinate your session. This data is stored only for as long as needed to prepare your chart and deliver your session, and is not shared with third parties. Likewise, if you book a Tarot Guidance & Clarity Session, we collect your name, the question you would like guidance on, and an email address or WhatsApp number solely to prepare your reading and coordinate your session, under the same terms. You must actively confirm your consent before this data is submitted, and you may withdraw consent and request deletion of this data at any time by contacting richa@niramay.me."
             },
             {
               title: "8. Analytics (Google Analytics)",
@@ -592,6 +592,20 @@ export const TRANSLATIONS = {
       whatsappTemplate: "Hi Richa, I'd like to book an Intuitive Guidance & Soul Counseling session.\nSession (individual / couple):\nName:\nPlace of Birth:\nDate of Birth:\nTime of Birth:",
       bookThisBtn: "Book this session",
     },
+    // Tarot reuses the astrology intake's pay-first flow (see
+    // AstrologyIntakeModal in src/App.tsx); only the keys that differ live here.
+    tarotIntake: {
+      step1Title: "Your Reading Details",
+      fields: {
+        question: "Your Question",
+        questionPlaceholder: "What would you like clarity on? (career, relationships, a decision...)",
+        questionHint: "One focused question works best. You can add a little background if it helps.",
+      },
+      consentPrefix: "I agree to Niramay storing these details to prepare my reading, per the",
+      priceValue: "€10 / ₹1,000",
+      confirmationBody: "We've noted your payment claim and will be in touch within 24–48 hours to schedule your online reading.",
+      whatsappTemplate: "Hi Richa, I'd like to book a Tarot Guidance & Clarity Session.\nName:\nMy question:",
+    },
     book: {
       title: "Journey from Body to Bliss",
       subtitle: "The Niramay Path to Pancha Koshas",
@@ -840,8 +854,8 @@ export const TRANSLATIONS = {
               content: "Wir fertigen gelegentlich Fotos bei unseren Workshops, Kursen und Gemeinschaftsveranstaltungen (z. B. Internationaler Tag des Yoga) an, um diese auf dieser Website und in unseren Social-Media-Kanälen zu teilen. Wir bevorzugen dabei Gruppen- und Spontanaufnahmen gegenüber Nahaufnahmen einzelner Personen und holen, soweit praktikabel, die Einwilligung deutlich erkennbarer Teilnehmer:innen ein. Falls Sie auf einem Foto dieser Website zu erkennen sind und dessen Entfernung wünschen, kontaktieren Sie uns bitte unter richa@niramay.me — wir nehmen es umgehend herunter."
             },
             {
-              title: "7. Anfragen für vedische Astrologie-Horoskope",
-              content: "Wenn Sie eine vedische Astrologie-Lesung anfragen, erfassen wir über unser Buchungsformular (oder, falls Sie uns direkt kontaktieren, per E-Mail oder WhatsApp) Ihren Namen, Geburtsort, Ihr Geburtsdatum, Ihre Geburtszeit sowie eine E-Mail-Adresse oder WhatsApp-Nummer, ausschließlich zur Erstellung Ihres Geburtshoroskops und zur Koordination Ihrer Sitzung. Diese Daten werden nur so lange gespeichert, wie es für die Vorbereitung Ihres Horoskops und die Durchführung Ihrer Sitzung erforderlich ist, und nicht an Dritte weitergegeben. Sie müssen Ihre Einwilligung vor dem Absenden dieser Daten aktiv bestätigen; Sie können Ihre Einwilligung jederzeit widerrufen und die Löschung dieser Daten verlangen, indem Sie uns unter richa@niramay.me kontaktieren."
+              title: "7. Anfragen für vedische Astrologie & Tarot",
+              content: "Wenn Sie eine vedische Astrologie-Lesung anfragen, erfassen wir über unser Buchungsformular (oder, falls Sie uns direkt kontaktieren, per E-Mail oder WhatsApp) Ihren Namen, Geburtsort, Ihr Geburtsdatum, Ihre Geburtszeit sowie eine E-Mail-Adresse oder WhatsApp-Nummer, ausschließlich zur Erstellung Ihres Geburtshoroskops und zur Koordination Ihrer Sitzung. Diese Daten werden nur so lange gespeichert, wie es für die Vorbereitung Ihres Horoskops und die Durchführung Ihrer Sitzung erforderlich ist, und nicht an Dritte weitergegeben. Ebenso erfassen wir, wenn Sie eine Tarot-Beratung & Klarheits-Sitzung buchen, Ihren Namen, die Frage, zu der Sie sich Begleitung wünschen, sowie eine E-Mail-Adresse oder WhatsApp-Nummer, ausschließlich zur Vorbereitung Ihrer Lesung und zur Koordination Ihrer Sitzung, zu denselben Bedingungen. Sie müssen Ihre Einwilligung vor dem Absenden dieser Daten aktiv bestätigen; Sie können Ihre Einwilligung jederzeit widerrufen und die Löschung dieser Daten verlangen, indem Sie uns unter richa@niramay.me kontaktieren."
             },
             {
               title: "8. Analyse (Google Analytics)",
@@ -1199,6 +1213,18 @@ export const TRANSLATIONS = {
       whatsappTemplate: "Hallo Richa, ich möchte eine Sitzung für Intuitive Begleitung & Seelenberatung buchen.\nSitzung (einzeln / Paar):\nName:\nGeburtsort:\nGeburtsdatum:\nGeburtszeit:",
       bookThisBtn: "Diese Sitzung buchen",
     },
+    tarotIntake: {
+      step1Title: "Angaben zu Ihrer Lesung",
+      fields: {
+        question: "Ihre Frage",
+        questionPlaceholder: "Wozu wünschen Sie sich Klarheit? (Beruf, Beziehungen, eine Entscheidung...)",
+        questionHint: "Eine fokussierte Frage eignet sich am besten. Gerne können Sie etwas Hintergrund ergänzen.",
+      },
+      consentPrefix: "Ich stimme zu, dass Niramay diese Angaben zur Vorbereitung meiner Lesung speichert, gemäß der",
+      priceValue: "10 € / 1.000 ₹",
+      confirmationBody: "Wir haben Ihre Zahlungsmeldung erhalten und melden uns innerhalb von 24–48 Stunden, um Ihre Online-Lesung zu vereinbaren.",
+      whatsappTemplate: "Hallo Richa, ich möchte eine Tarot-Beratung & Klarheits-Sitzung buchen.\nName:\nMeine Frage:",
+    },
     book: {
       title: "Reise vom Körper zur Glückseligkeit",
       subtitle: "Der Niramay-Pfad zu den Pancha Koshas",
@@ -1344,6 +1370,52 @@ export const SERVICES = [
       title: "Vedische Astrologie & Kundali-Lesung",
       description: "1:1 Beratung auf Basis Ihres Geburtshoroskops, verwurzelt in der vedischen Astrologie (Jyotish), für ein tieferes Verständnis Ihrer Natur, wiederkehrender Lebensmuster und wichtiger Übergangsphasen.",
       outcome: "Erhalten Sie einen persönlichen Fahrplan für Karriere, Beziehungen und Ihr nächstes Lebenskapitel, basierend auf Ihrem individuellen Geburtshoroskop.",
+    }
+  },
+  {
+    id: "tarot",
+    icon: WandSparkles,
+    color: "bg-stone-100",
+    category: "Mental Clarity",
+    EN: {
+      title: "Tarot Guidance & Clarity Session",
+      description: "Feeling stuck, overthinking, or looking for a sign? A focused tarot reading that mirrors your subconscious, uncovers hidden blind spots, and shows you where your energy is truly flowing.",
+      outcome: "Leave with clarity on your question and direct, grounded action steps to move forward with confidence.",
+      details: [
+        "When your mind is crowded with questions, making a simple decision can feel heavy. Sometimes you don't need all the answers at once, you just need a quiet pause and a moment of clarity to see the road ahead.",
+        "The cards don't just predict; they mirror your subconscious, uncover hidden blind spots, and show you where your energy is truly flowing.",
+      ],
+      highlightsTitle: "What we explore",
+      highlights: [
+        "Uncover the root of current emotional or mental blocks",
+        "Clarify choices around career, personal growth, or relationships",
+        "Receive direct, grounded action steps to move forward with confidence",
+      ],
+      facts: [
+        { label: "Investment", value: "€10 / ₹1,000" },
+        { label: "Format", value: "Online (focused question reading + detailed intuitive guidance)" },
+      ],
+      ctaLabel: "Book Your Reading Now",
+    },
+    DE: {
+      title: "Tarot-Beratung & Klarheits-Sitzung",
+      description: "Fühlen Sie sich festgefahren, grübeln Sie zu viel oder warten Sie auf ein Zeichen? Eine fokussierte Tarot-Lesung, die Ihr Unterbewusstsein spiegelt, blinde Flecken sichtbar macht und zeigt, wohin Ihre Energie wirklich fließt.",
+      outcome: "Gewinnen Sie Klarheit zu Ihrer Frage und erhalten Sie konkrete, bodenständige Handlungsschritte, um zuversichtlich weiterzugehen.",
+      details: [
+        "Wenn der Kopf voller Fragen ist, kann selbst eine einfache Entscheidung schwer wiegen. Manchmal brauchen Sie nicht alle Antworten auf einmal – sondern nur eine stille Pause und einen Moment der Klarheit, um den Weg vor sich zu sehen.",
+        "Die Karten sagen nicht nur voraus: Sie spiegeln Ihr Unterbewusstsein, decken verborgene blinde Flecken auf und zeigen, wohin Ihre Energie wirklich fließt.",
+      ],
+      highlightsTitle: "Was wir gemeinsam erkunden",
+      highlights: [
+        "Die Wurzel aktueller emotionaler oder mentaler Blockaden aufdecken",
+        "Klarheit bei Entscheidungen rund um Beruf, persönliche Entwicklung oder Beziehungen gewinnen",
+        "Konkrete, bodenständige Handlungsschritte erhalten, um zuversichtlich weiterzugehen",
+      ],
+      facts: [
+        { label: "Investition", value: "10 € / 1.000 ₹" },
+        { label: "Format", value: "Online (fokussierte Lesung zu Ihrer Frage + ausführliche intuitive Begleitung)" },
+      ],
+      ctaLabel: "Jetzt Lesung buchen",
     }
   },
   {

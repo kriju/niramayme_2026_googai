@@ -99,6 +99,7 @@ type LayoutContext = {
   onBookAstrology: () => void;
   onBookReiki: (pkg: ReikiPackageId) => void;
   onBookGuidance: (pkg?: GuidancePackage) => void;
+  onBookTarot: () => void;
   onOpenLegal: (type: "impressum" | "privacy") => void;
 };
 
@@ -170,18 +171,23 @@ const BookingDialog = ({ context, lang, open, onOpenChange }: { context: Booking
 // collects the partner's birth details too (it includes a dual chart
 // analysis). Requests share the astrologyRequests collection, tagged with
 // `service`, so the rules and notify endpoint stay in one place.
+// The "tarot" variant asks for a question instead of birth details, so it
+// has its own tarotRequests collection (and rules) rather than loosening the
+// astrology ones; the notify endpoint is told which collection to read.
 const ASTROLOGY_WHATSAPP_NUMBER = "4915175315761";
 
-type IntakeVariant = "astrology" | "guidance";
+type IntakeVariant = "astrology" | "guidance" | "tarot";
 type GuidancePackage = "individual" | "couple";
 type AstrologyStep = "details" | "payment" | "done";
 type AstrologyForm = {
   name: string; placeOfBirth: string; dateOfBirth: string; timeOfBirth: string; contact: string; consent: boolean;
   partnerName: string; partnerPlaceOfBirth: string; partnerDateOfBirth: string; partnerTimeOfBirth: string;
+  question: string;
 };
 const EMPTY_ASTROLOGY_FORM: AstrologyForm = {
   name: "", placeOfBirth: "", dateOfBirth: "", timeOfBirth: "", contact: "", consent: false,
   partnerName: "", partnerPlaceOfBirth: "", partnerDateOfBirth: "", partnerTimeOfBirth: "",
+  question: "",
 };
 const INPUT_CLASS = "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2";
 
@@ -214,6 +220,9 @@ const AstrologyIntakeModal = ({ lang, open, onOpenChange, onOpenPrivacy, variant
   const t = TRANSLATIONS[lang].astrologyIntake;
   const tg = TRANSLATIONS[lang].guidanceIntake;
   const isGuidance = variant === "guidance";
+  const isTarot = variant === "tarot";
+  const tt = TRANSLATIONS[lang].tarotIntake;
+  const requestCollection = isTarot ? "tarotRequests" : "astrologyRequests";
   const { profile } = useAuth();
   const [step, setStep] = useState<AstrologyStep>("details");
   const [form, setForm] = useState<AstrologyForm>(EMPTY_ASTROLOGY_FORM);
@@ -245,11 +254,14 @@ const AstrologyIntakeModal = ({ lang, open, onOpenChange, onOpenPrivacy, variant
   // Short human-quotable code derived from the Firestore doc ID, shown to
   // the visitor and re-derived server-side (see api/notify-astrology-request.ts)
   // from the same ID — never stored separately, so the two can't drift.
-  const refCode = requestId ? `${isGuidance ? "IGS" : "AST"}-${requestId.slice(-6).toUpperCase()}` : "";
+  const refCode = requestId ? `${isGuidance ? "IGS" : isTarot ? "TAR" : "AST"}-${requestId.slice(-6).toUpperCase()}` : "";
   const partnerValid = !isCouple || Boolean(form.partnerName.trim() && form.partnerPlaceOfBirth.trim() && form.partnerDateOfBirth && form.partnerTimeOfBirth);
-  const isValid = Boolean(form.name.trim() && form.placeOfBirth.trim() && form.dateOfBirth && form.timeOfBirth && form.contact.trim() && form.consent && partnerValid);
-  const whatsappHref = `https://wa.me/${ASTROLOGY_WHATSAPP_NUMBER}?text=${encodeURIComponent(isGuidance ? tg.whatsappTemplate : t.whatsappTemplate)}`;
-  const priceValue = isGuidance ? tg.packages[pkg].priceValue : t.priceValue;
+  const detailsValid = isTarot
+    ? Boolean(form.question.trim())
+    : Boolean(form.placeOfBirth.trim() && form.dateOfBirth && form.timeOfBirth && partnerValid);
+  const isValid = Boolean(form.name.trim() && detailsValid && form.contact.trim() && form.consent);
+  const whatsappHref = `https://wa.me/${ASTROLOGY_WHATSAPP_NUMBER}?text=${encodeURIComponent(isGuidance ? tg.whatsappTemplate : isTarot ? tt.whatsappTemplate : t.whatsappTemplate)}`;
+  const priceValue = isGuidance ? tg.packages[pkg].priceValue : isTarot ? tt.priceValue : t.priceValue;
 
   const resetAndClose = () => {
     onOpenChange(false);
@@ -269,11 +281,15 @@ const AstrologyIntakeModal = ({ lang, open, onOpenChange, onOpenPrivacy, variant
     setSubmitting(true);
     setError(null);
     try {
-      const docRef = await addDoc(collection(db, "astrologyRequests"), {
+      const docRef = await addDoc(collection(db, requestCollection), {
         name: form.name.trim(),
-        placeOfBirth: form.placeOfBirth.trim(),
-        dateOfBirth: form.dateOfBirth,
-        timeOfBirth: form.timeOfBirth,
+        ...(isTarot
+          ? { question: form.question.trim() }
+          : {
+              placeOfBirth: form.placeOfBirth.trim(),
+              dateOfBirth: form.dateOfBirth,
+              timeOfBirth: form.timeOfBirth,
+            }),
         contact: form.contact.trim(),
         consentAccepted: true,
         lang,
@@ -297,7 +313,7 @@ const AstrologyIntakeModal = ({ lang, open, onOpenChange, onOpenPrivacy, variant
       fetch("/api/notify-astrology-request", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ requestId: docRef.id, kind: "submitted" }),
+        body: JSON.stringify({ requestId: docRef.id, kind: "submitted", ...(isTarot && { collection: "tarotRequests" }) }),
       }).catch(err => console.error("Failed to notify admin of new astrology request:", err));
     } catch (err) {
       console.error("Error submitting astrology request:", err);
@@ -312,12 +328,12 @@ const AstrologyIntakeModal = ({ lang, open, onOpenChange, onOpenPrivacy, variant
     setPaying(true);
     setError(null);
     try {
-      await updateDoc(doc(db, "astrologyRequests", requestId), { paymentClaimed: true });
+      await updateDoc(doc(db, requestCollection, requestId), { paymentClaimed: true });
       setStep("done");
       fetch("/api/notify-astrology-request", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ requestId, kind: "payment_claimed" }),
+        body: JSON.stringify({ requestId, kind: "payment_claimed", ...(isTarot && { collection: "tarotRequests" }) }),
       }).catch(err => console.error("Failed to notify admin of astrology payment claim:", err));
     } catch (err) {
       console.error("Error confirming astrology payment claim:", err);
@@ -333,7 +349,7 @@ const AstrologyIntakeModal = ({ lang, open, onOpenChange, onOpenPrivacy, variant
         {step === "details" && (
           <>
             <DialogHeader>
-              <DialogTitle className="text-2xl font-serif">{isGuidance ? tg.step1Title : t.step1Title}</DialogTitle>
+              <DialogTitle className="text-2xl font-serif">{isGuidance ? tg.step1Title : isTarot ? tt.step1Title : t.step1Title}</DialogTitle>
             </DialogHeader>
             <form onSubmit={handleSubmitDetails} className="grid gap-4 py-2">
               {isGuidance && (
@@ -354,12 +370,34 @@ const AstrologyIntakeModal = ({ lang, open, onOpenChange, onOpenPrivacy, variant
                 </fieldset>
               )}
               {isCouple && <p className="text-sm font-bold -mb-2">{tg.yourDetailsTitle}</p>}
-              <BirthDetailsFields
-                t={t}
-                nameLabel={t.fields.name}
-                values={{ name: form.name, placeOfBirth: form.placeOfBirth, dateOfBirth: form.dateOfBirth, timeOfBirth: form.timeOfBirth }}
-                onChange={v => setForm(f => ({ ...f, ...v }))}
-              />
+              {isTarot ? (
+                <>
+                  <div className="grid gap-2">
+                    <label className="text-sm font-medium">{t.fields.name}</label>
+                    <input required className={INPUT_CLASS} value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} />
+                  </div>
+                  <div className="grid gap-2">
+                    <label className="text-sm font-medium">{tt.fields.question}</label>
+                    <textarea
+                      required
+                      rows={4}
+                      maxLength={1000}
+                      placeholder={tt.fields.questionPlaceholder}
+                      className={`${INPUT_CLASS} h-auto min-h-[80px]`}
+                      value={form.question}
+                      onChange={e => setForm({ ...form, question: e.target.value })}
+                    />
+                    <p className="text-xs text-muted-foreground">{tt.fields.questionHint}</p>
+                  </div>
+                </>
+              ) : (
+                <BirthDetailsFields
+                  t={t}
+                  nameLabel={t.fields.name}
+                  values={{ name: form.name, placeOfBirth: form.placeOfBirth, dateOfBirth: form.dateOfBirth, timeOfBirth: form.timeOfBirth }}
+                  onChange={v => setForm(f => ({ ...f, ...v }))}
+                />
+              )}
               {isCouple && (
                 <>
                   <p className="text-sm font-bold -mb-2 pt-2">{tg.partnerDetailsTitle}</p>
@@ -396,7 +434,7 @@ const AstrologyIntakeModal = ({ lang, open, onOpenChange, onOpenPrivacy, variant
                   onChange={e => setForm({ ...form, consent: e.target.checked })}
                 />
                 <span>
-                  {isGuidance ? tg.consentPrefix : t.consentPrefix}{" "}
+                  {isGuidance ? tg.consentPrefix : isTarot ? tt.consentPrefix : t.consentPrefix}{" "}
                   <button type="button" onClick={onOpenPrivacy} className="underline underline-offset-2 hover:text-primary">
                     {t.consentLinkLabel}
                   </button>.
@@ -470,7 +508,7 @@ const AstrologyIntakeModal = ({ lang, open, onOpenChange, onOpenPrivacy, variant
             <div className="space-y-4 py-2">
               <div className="flex items-start gap-3">
                 <CheckCircle2 className="w-6 h-6 text-primary shrink-0 mt-0.5" />
-                <p className="text-muted-foreground">{t.confirmationBody}</p>
+                <p className="text-muted-foreground">{isTarot ? tt.confirmationBody : t.confirmationBody}</p>
               </div>
               <p className="text-sm">
                 <span className="text-muted-foreground">{t.confirmationSentTo}</span>{" "}
@@ -1557,7 +1595,7 @@ const MERGED_SERVICE_IDS: Record<string, string> = {
 
 const ServicePage = () => {
   const { id } = useParams<{ id: string }>();
-  const { lang, onBook, onBookAstrology, onBookReiki, onBookGuidance } = useOutletContext<LayoutContext>();
+  const { lang, onBook, onBookAstrology, onBookReiki, onBookGuidance, onBookTarot } = useOutletContext<LayoutContext>();
   const service = SERVICES.find(s => s.id === id && !s.openInModal);
 
   const t = TRANSLATIONS[lang].services;
@@ -1629,6 +1667,9 @@ const ServicePage = () => {
       onBookAstrology();
     } else if (isGuidance) {
       onBookGuidance();
+    } else if (service.id === "tarot") {
+      // Also pay-first: the reading is scheduled once payment is in.
+      onBookTarot();
     } else {
       onBook({
         title: content.title,
@@ -1662,6 +1703,20 @@ const ServicePage = () => {
             {content.details.map((para, idx) => (
               <p key={idx} className="text-muted-foreground leading-relaxed">{para}</p>
             ))}
+          </div>
+        )}
+
+        {"highlights" in content && content.highlights && (
+          <div className="mb-10">
+            <h2 className="text-2xl font-serif font-bold mb-4">{content.highlightsTitle}</h2>
+            <ul className="space-y-3">
+              {content.highlights.map((item, idx) => (
+                <li key={idx} className="flex items-start gap-3">
+                  <CheckCircle2 className="w-5 h-5 text-primary mt-0.5 shrink-0" />
+                  <span className="text-muted-foreground leading-relaxed">{item}</span>
+                </li>
+              ))}
+            </ul>
           </div>
         )}
 
@@ -1724,6 +1779,17 @@ const ServicePage = () => {
           <p className="text-xs font-bold uppercase tracking-wider text-primary/50 mb-2">{t.outcomeLabel}</p>
           <p className="text-lg font-medium">{content.outcome}</p>
         </div>
+
+        {"facts" in content && content.facts && (
+          <div className="grid sm:grid-cols-2 gap-4 mb-10">
+            {content.facts.map((fact, idx) => (
+              <div key={idx} className="bg-stone-50 p-4 rounded-xl border border-stone-100">
+                <p className="text-xs font-bold uppercase tracking-wider text-primary/50 mb-1">{fact.label}</p>
+                <p className="font-semibold">{fact.value}</p>
+              </div>
+            ))}
+          </div>
+        )}
 
         {isAstrology && (
           <div className="space-y-10 mb-10 pt-4 border-t border-stone-100">
@@ -1838,7 +1904,7 @@ const ServicePage = () => {
         <div className="flex flex-wrap items-center gap-4 mb-20">
           <Button size="lg" className="rounded-full px-8 gap-2" onClick={handleBook}>
             <Sparkles className="w-4 h-4" />
-            {isReiki ? tr.cta : isAstrology ? ta.cta : isGuidance ? tg.cta : nav.bookNow}
+            {isReiki ? tr.cta : isAstrology ? ta.cta : isGuidance ? tg.cta : ("ctaLabel" in content && content.ctaLabel) || nav.bookNow}
           </Button>
           <a
             href={`https://wa.me/4915175315761?text=${encodeURIComponent(`Hi, I'm interested in "${content.title}".`)}`}
@@ -3181,6 +3247,7 @@ const AppLayout = () => {
   const [reikiPackage, setReikiPackage] = useState<ReikiPackageId | null>(null);
   const [guidanceIntakeOpen, setGuidanceIntakeOpen] = useState(false);
   const [guidancePackage, setGuidancePackage] = useState<GuidancePackage>("individual");
+  const [tarotIntakeOpen, setTarotIntakeOpen] = useState(false);
 
   useEffect(() => {
     document.documentElement.lang = lang.toLowerCase();
@@ -3248,7 +3315,7 @@ const AppLayout = () => {
     <div className="min-h-screen selection:bg-primary/20">
       <ScrollManager />
       <Navbar lang={lang} onToggleLang={toggleLang} onBook={openBooking} />
-      <Outlet context={{ lang, onBook: openBooking, onBookAstrology: () => setAstrologyIntakeOpen(true), onBookReiki: setReikiPackage, onBookGuidance: (pkg = "individual") => { setGuidancePackage(pkg); setGuidanceIntakeOpen(true); }, onOpenLegal: setLegalModal } satisfies LayoutContext} />
+      <Outlet context={{ lang, onBook: openBooking, onBookAstrology: () => setAstrologyIntakeOpen(true), onBookReiki: setReikiPackage, onBookGuidance: (pkg = "individual") => { setGuidancePackage(pkg); setGuidanceIntakeOpen(true); }, onBookTarot: () => setTarotIntakeOpen(true), onOpenLegal: setLegalModal } satisfies LayoutContext} />
       <Footer lang={lang} onOpenLegal={setLegalModal} />
 
       <LegalModal
@@ -3285,6 +3352,14 @@ const AppLayout = () => {
         lang={lang}
         open={guidanceIntakeOpen}
         onOpenChange={setGuidanceIntakeOpen}
+        onOpenPrivacy={() => setLegalModal("privacy")}
+      />
+
+      <AstrologyIntakeModal
+        variant="tarot"
+        lang={lang}
+        open={tarotIntakeOpen}
+        onOpenChange={setTarotIntakeOpen}
         onOpenPrivacy={() => setLegalModal("privacy")}
       />
 

@@ -7,7 +7,7 @@ const SITE_URL = "https://www.niramay.me";
 // list is duplicated rather than importing the React app's constants
 // module (which drags lucide-react and friends into a serverless bundle)
 // since service pages are added rarely and deliberately.
-const SERVICE_IDS = ["yoga", "reiki", "subconscious-healing", "astrology", "intuitive-guidance"];
+const SERVICE_IDS = ["yoga", "reiki", "subconscious-healing", "astrology", "intuitive-guidance", "tarot"];
 
 type LocalizedPair = { en: string; de: string; changefreq: string; priority: string };
 
