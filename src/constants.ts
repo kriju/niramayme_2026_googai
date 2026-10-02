@@ -488,7 +488,7 @@ export const TRANSLATIONS = {
       refCodeLabel: "Your reference code",
       refCodeNote: "Include this in your payment note so we can match it to your request quickly.",
       priceLabel: "Price",
-      priceValue: "20 EUR or 2000 INR",
+      priceValue: "25 EUR or 2500 INR",
       paymentEURTitle: "Pay in EUR",
       paypalLabel: "PayPal",
       paypalNote: "Usually confirmed within hours.",
@@ -1201,7 +1201,7 @@ export const TRANSLATIONS = {
       refCodeLabel: "Ihr Referenzcode",
       refCodeNote: "Geben Sie diesen bei Ihrer Zahlung als Verwendungszweck an, damit wir sie schnell zuordnen können.",
       priceLabel: "Preis",
-      priceValue: "20 EUR oder 2000 INR",
+      priceValue: "25 EUR oder 2500 INR",
       paymentEURTitle: "Zahlung in EUR",
       paypalLabel: "PayPal",
       paypalNote: "Meist innerhalb weniger Stunden bestätigt.",
@@ -1549,11 +1549,15 @@ export const SERVICES = [
       title: "Vedic Astrology & Kundali Reading",
       description: "1:1 birth-chart guidance rooted in Vedic Astrology (Jyotish) to help you understand your core nature, decode repeating life patterns, and navigate major transitions with clarity.",
       outcome: "Gain a personalized roadmap for your career, relationships, and next chapter, grounded in your unique birth chart.",
+      originalPrice: "€50 / ₹5,000",
+      price: "€25 / ₹2,500",
     },
     DE: {
       title: "Vedische Astrologie & Kundali-Lesung",
       description: "1:1 Beratung auf Basis Ihres Geburtshoroskops, verwurzelt in der vedischen Astrologie (Jyotish), für ein tieferes Verständnis Ihrer Natur, wiederkehrender Lebensmuster und wichtiger Übergangsphasen.",
       outcome: "Erhalten Sie einen persönlichen Fahrplan für Karriere, Beziehungen und Ihr nächstes Lebenskapitel, basierend auf Ihrem individuellen Geburtshoroskop.",
+      originalPrice: "50 € / 5.000 ₹",
+      price: "25 € / 2.500 ₹",
     }
   },
   {
@@ -2064,11 +2068,11 @@ export const FAQS = [
     category: "services",
     EN: {
       question: "How much is a Vedic Astrology reading, and how do I pay?",
-      answer: "A reading costs 20 EUR or 2000 INR, paid in advance via PayPal or SEPA bank transfer (EUR) or UPI (INR). Include your reference code in the payment note — your slot is confirmed within 24–48 hours.",
+      answer: "A reading costs 25 EUR or 2500 INR (special offer — usually 50 EUR or 5000 INR), paid in advance via PayPal or SEPA bank transfer (EUR) or UPI (INR). Include your reference code in the payment note — your slot is confirmed within 24–48 hours.",
     },
     DE: {
       question: "Was kostet eine Vedische Astrologie-Lesung, und wie bezahle ich?",
-      answer: "Eine Lesung kostet 20 EUR oder 2000 INR, zahlbar im Voraus per PayPal oder SEPA-Überweisung (EUR) bzw. UPI (INR). Geben Sie Ihren Referenzcode im Verwendungszweck an – Ihr Termin wird innerhalb von 24–48 Stunden bestätigt.",
+      answer: "Eine Lesung kostet 25 EUR oder 2500 INR (Sonderangebot – regulär 50 EUR oder 5000 INR), zahlbar im Voraus per PayPal oder SEPA-Überweisung (EUR) bzw. UPI (INR). Geben Sie Ihren Referenzcode im Verwendungszweck an – Ihr Termin wird innerhalb von 24–48 Stunden bestätigt.",
     }
   },
   {

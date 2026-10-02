@@ -77,8 +77,8 @@ function serviceInfo(request: Record<string, any>, collectionName: RequestCollec
     adminLabel: "Vedic Astrology reading",
     nameEN: "Vedic Astrology reading",
     nameDE: "vedische Astrologie-Lesung",
-    priceEN: "20 EUR or 2000 INR",
-    priceDE: "20 EUR oder 2000 INR",
+    priceEN: "25 EUR or 2500 INR",
+    priceDE: "25 EUR oder 2500 INR",
     ...birthDetailsCopy("Vedic Astrology reading", "vedische Astrologie-Lesung"),
   };
 }
