@@ -23,7 +23,8 @@ import {
   ChevronDown,
   ExternalLink,
   Heart,
-  Volume2
+  Volume2,
+  Image as ImageIcon
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { db } from "./lib/firebase";
@@ -55,7 +56,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { NavigationMenu } from "@base-ui/react/navigation-menu";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { SERVICES, TESTIMONIALS, FAQS, HEALER_CERTIFICATIONS, HEALER_IMAGES, TRANSLATIONS, ONGOING_SESSIONS, COURSES, EVENTS, GOOGLE_CALENDAR_URL, GOOGLE_REVIEW_URL, BUSINESS_STREET_ADDRESS, BUSINESS_POSTAL_CODE, BUSINESS_CITY, GOOGLE_MAPS_URL, GOOGLE_MAPS_EMBED_URL } from "./constants";
+import { SERVICES, TESTIMONIALS, type ClientStory, FAQS, HEALER_CERTIFICATIONS, HEALER_IMAGES, TRANSLATIONS, ONGOING_SESSIONS, COURSES, EVENTS, GOOGLE_CALENDAR_URL, GOOGLE_REVIEW_URL, BUSINESS_STREET_ADDRESS, BUSINESS_POSTAL_CODE, BUSINESS_CITY, GOOGLE_MAPS_URL, GOOGLE_MAPS_EMBED_URL } from "./constants";
 import { getStoredConsent, grantAnalyticsConsent, denyAnalyticsConsent, initAnalyticsFromStoredConsent, trackPageview } from "./lib/analytics";
 import { SITE_URL, BUSINESS_JSONLD_ID, useJsonLd, useSeo } from "./lib/seo";
 import { responsiveImage } from "./lib/images";
@@ -967,6 +968,103 @@ const Navbar = ({ lang, onToggleLang, onBook }: { lang: "EN" | "DE", onToggleLan
   );
 };
 
+// What every review card renders: the curated client stories in constants.ts
+// (verbatim messages, with source and date) and the moderated reviews
+// visitors submit on the site (Firestore), normalised to one shape.
+type DisplayReview = {
+  id: string;
+  name: string;
+  category?: string;
+  rating?: number;
+  content: string;
+  role?: string;
+  source?: string;
+  date?: string;
+  quoteLang?: "EN" | "DE" | "HI";
+  translation?: string;
+  screenshot?: string;
+};
+
+const storyToReview = (s: ClientStory, lang: "EN" | "DE"): DisplayReview => ({
+  id: s.id,
+  name: s.name ?? TRANSLATIONS[lang].testimonials.client,
+  category: s.category,
+  rating: s.rating,
+  content: s.quote,
+  role: s[lang].role,
+  source: s.source,
+  date: s.date,
+  quoteLang: s.quoteLang,
+  translation: s.translation?.[lang],
+  screenshot: s.screenshot,
+});
+
+const firestoreToReview = (r: any): DisplayReview => ({
+  id: r.id,
+  name: r.name,
+  category: r.category,
+  rating: r.rating || 5,
+  content: r.content,
+  role: r.role,
+});
+
+// "via Instagram · Aug 2025" — where and when a client story was sent.
+const reviewSourceLine = (r: DisplayReview, lang: "EN" | "DE") => {
+  const t = TRANSLATIONS[lang].testimonials;
+  const date = r.date
+    ? new Date(`${r.date}-01T12:00:00`).toLocaleDateString(lang === "DE" ? "de-DE" : "en-GB", { month: "short", year: "numeric" })
+    : undefined;
+  return [r.source && `${t.via} ${r.source}`, date].filter(Boolean).join(" · ");
+};
+
+const ReviewStars = ({ rating, className }: { rating: number, className: string }) => (
+  <div className="flex gap-0.5" aria-label={`${rating}/5`}>
+    {[1,2,3,4,5].map(i => <Star key={i} className={`w-4 h-4 ${i <= rating ? className : "opacity-25"}`} />)}
+  </div>
+);
+
+const SeeOriginalButton = ({ src, lang, className }: { src: string, lang: "EN" | "DE", className: string }) => {
+  const t = TRANSLATIONS[lang].testimonials;
+  return (
+    <Dialog>
+      <DialogTrigger render={
+        <button type="button" className={`inline-flex items-center gap-1.5 text-xs font-medium underline-offset-4 hover:underline ${className}`}>
+          <ImageIcon className="w-3.5 h-3.5" /> {t.seeOriginal}
+        </button>
+      } />
+      <DialogContent className="sm:max-w-md p-3">
+        <DialogTitle className="sr-only">{t.seeOriginal}</DialogTitle>
+        <img src={src} alt={t.originalAlt} className="w-full h-auto rounded-lg" loading="lazy" />
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+// The quote itself, clamped with a Read more toggle, plus a note when it's in
+// another language than the page (and the translation, when there is one).
+const ReviewQuote = ({ review, lang, clampClass, muted }: { review: DisplayReview, lang: "EN" | "DE", clampClass: string, muted: string }) => {
+  const t = TRANSLATIONS[lang].testimonials;
+  const [expanded, setExpanded] = useState(false);
+  const isLong = review.content.length > 220;
+  const foreign = review.quoteLang && review.quoteLang !== lang ? review.quoteLang : undefined;
+  return (
+    <div>
+      <p className={`font-serif italic leading-relaxed ${expanded ? "" : clampClass}`}>"{review.content}"</p>
+      {isLong && (
+        <button type="button" onClick={() => setExpanded(e => !e)} className={`mt-2 text-xs font-medium underline underline-offset-4 ${muted}`}>
+          {expanded ? t.showLess : t.readMore}
+        </button>
+      )}
+      {foreign && (
+        <p className={`mt-2 text-xs ${muted}`}>{t.originalIn[foreign as keyof typeof t.originalIn]}</p>
+      )}
+      {review.translation && (
+        <p className={`mt-2 text-sm leading-relaxed ${muted} ${expanded ? "" : clampClass}`}><span className="font-semibold">{t.translationLabel}:</span> {review.translation}</p>
+      )}
+    </div>
+  );
+};
+
 // The homepage hero is the only thing most visitors see before deciding to
 // stay, so instead of a big photo taking half the fold it leads with what
 // they came for: the latest articles, what clients say, and the book. The
@@ -1003,12 +1101,18 @@ const Hero = ({ lang, onBook }: { lang: "EN" | "DE", onBook: (ctx?: BookingConte
     return () => { cancelled = true; };
   }, []);
 
-  // Real, moderated reviews first; the seed TESTIMONIALS fill in until there
-  // are enough of them.
-  const reviews = useMemo(() => [
-    ...approvedReviews.map(r => ({ id: r.id, name: r.name, rating: r.rating || 5, content: r.content, role: r.role })),
-    ...TESTIMONIALS.map(r => ({ id: r.id, name: r.name, rating: 5, content: r[lang].content, role: r[lang].role })),
-  ].slice(0, 6), [approvedReviews, lang]);
+  // Featured client stories (one or two per service) alternate with the
+  // latest reviews submitted on the site.
+  const reviews = useMemo(() => {
+    const stories = TESTIMONIALS.filter(s => s.featured).map(s => storyToReview(s, lang));
+    const submitted = approvedReviews.map(firestoreToReview);
+    const mixed: DisplayReview[] = [];
+    for (let i = 0; i < Math.max(stories.length, submitted.length); i++) {
+      if (stories[i]) mixed.push(stories[i]);
+      if (submitted[i]) mixed.push(submitted[i]);
+    }
+    return mixed.slice(0, 6);
+  }, [approvedReviews, lang]);
 
   useEffect(() => {
     if (reviews.length < 2) return;
@@ -1104,9 +1208,7 @@ const Hero = ({ lang, onBook }: { lang: "EN" | "DE", onBook: (ctx?: BookingConte
           {review && (
             <motion.a {...reveal(0.38)} href="#testimonials" className={`${glass} p-5 md:p-6 flex flex-col min-w-[85%] sm:min-w-[60%] lg:min-w-0 snap-start hover:bg-white/70 transition-colors`}>
               <div className="flex items-center justify-between mb-3">
-                <div className="flex gap-0.5">
-                  {[1,2,3,4,5].map(i => <Star key={i} className={`w-4 h-4 ${i <= review.rating ? "text-amber-500 fill-amber-500" : "text-stone-300"}`} />)}
-                </div>
+                {review.rating ? <ReviewStars rating={review.rating} className="text-amber-500 fill-amber-500" /> : <span />}
                 <span className="text-xs font-bold uppercase tracking-[0.18em] text-stone-500">{t.reviewsLabel}</span>
               </div>
               <div className="relative flex-1 min-h-[6.5rem]">
@@ -1120,6 +1222,7 @@ const Hero = ({ lang, onBook }: { lang: "EN" | "DE", onBook: (ctx?: BookingConte
                   >
                     <p className="font-serif italic text-[15px] md:text-base leading-relaxed text-stone-800 line-clamp-4">"{review.content}"</p>
                     <p className="mt-3 text-sm font-semibold text-stone-700">{review.name}{review.role && <span className="font-normal text-stone-500"> · {review.role}</span>}</p>
+                    {review.source && <p className="mt-0.5 text-xs text-stone-500">{reviewSourceLine(review, lang)}</p>}
                   </motion.div>
                 </AnimatePresence>
               </div>
@@ -1280,6 +1383,10 @@ const ServicePage = () => {
   if (!service || !content) return <Navigate to={prefix || "/"} replace />;
 
   const otherServices = SERVICES.filter(s => !s.openInModal && s.id !== service.id);
+  const clientStories = TESTIMONIALS
+    .filter(s => s.serviceId === service.id)
+    .sort((a, b) => Number(!!b.featured) - Number(!!a.featured))
+    .map(s => storyToReview(s, lang));
   const handleBook = () => {
     if (isAstrology) {
       // Astrology doesn't use the self-serve calendar: an appointment can't
@@ -1371,6 +1478,32 @@ const ServicePage = () => {
                   </div>
                 ))}
               </div>
+            </div>
+          </div>
+        )}
+
+        {clientStories.length > 0 && (
+          <div className="mb-10">
+            <h2 className="text-2xl font-serif font-bold mb-6">{sp.clientsSayTitle}</h2>
+            <div className="grid gap-4">
+              {clientStories.map(story => {
+                const sourceLine = reviewSourceLine(story, lang);
+                return (
+                  <figure key={story.id} className="bg-stone-50 p-6 rounded-2xl border border-stone-100">
+                    {story.rating && <div className="mb-3"><ReviewStars rating={story.rating} className="text-amber-500 fill-amber-500" /></div>}
+                    <blockquote className="text-stone-800">
+                      <ReviewQuote review={story} lang={lang} clampClass="line-clamp-5" muted="text-muted-foreground" />
+                    </blockquote>
+                    <figcaption className="mt-4 flex flex-wrap items-center justify-between gap-x-4 gap-y-2 text-sm">
+                      <span>
+                        <span className="font-semibold">{story.name}</span>
+                        <span className="text-muted-foreground"> · {[story.role, sourceLine].filter(Boolean).join(" · ")}</span>
+                      </span>
+                      {story.screenshot && <SeeOriginalButton src={story.screenshot} lang={lang} className="text-primary" />}
+                    </figcaption>
+                  </figure>
+                );
+              })}
             </div>
           </div>
         )}
@@ -2108,17 +2241,20 @@ const TestimonialsSection = ({ lang }: { lang: "EN" | "DE" }) => {
     return () => unsubscribe();
   }, []); // Remove lang from dependency to avoid unnecessary re-triggers, though it works either way
 
-  const allReviews = useMemo(() => [...TESTIMONIALS, ...dynamicReviews], [dynamicReviews]);
+  const allReviews = useMemo(
+    () => [...TESTIMONIALS.map(s => storyToReview(s, lang)), ...dynamicReviews.map(firestoreToReview)],
+    [dynamicReviews, lang]
+  );
   const filtered = filter === "all" ? allReviews : allReviews.filter(t => t.category === filter);
 
   const reviewsJsonLd = useMemo(() => {
     // Only the Firestore-backed reviews go through the site's own moderation
-    // (an admin approves each one — see notify-review.ts), so only those are
-    // genuine, verifiable reviews. TESTIMONIALS in constants.ts are seed/
-    // placeholder copy with no such trail; marking those up as schema.org
-    // Review/AggregateRating data would risk tripping Google's fake-review
-    // structured-data policy, so they're deliberately excluded here even
-    // though they still render on the page like any other testimonial.
+    // (an admin approves each one — see notify-review.ts) and carry a rating
+    // the reviewer chose. TESTIMONIALS in constants.ts are real client
+    // messages from WhatsApp/Instagram/Facebook, but mostly unrated and
+    // curated by us, so marking them up as schema.org Review/AggregateRating
+    // data would be self-selected reviews with invented stars — they're
+    // deliberately excluded here even though they render on the page.
     if (dynamicReviews.length === 0) return null;
     const ratings = dynamicReviews.map(r => r.rating || 5);
     const avgRating = ratings.reduce((sum, r) => sum + r, 0) / ratings.length;
@@ -2194,7 +2330,7 @@ const TestimonialsSection = ({ lang }: { lang: "EN" | "DE" }) => {
           >
             <AnimatePresence mode="popLayout">
               {filtered.map((test, idx) => {
-                const content = test[lang] || test["EN"] || test["DE"];
+                const sourceLine = reviewSourceLine(test, lang);
                 return (
                   <motion.div
                     key={test.id || idx}
@@ -2205,29 +2341,31 @@ const TestimonialsSection = ({ lang }: { lang: "EN" | "DE" }) => {
                     transition={{ duration: 0.4 }}
                     className="min-w-[280px] md:min-w-[380px] flex-shrink-0 snap-start"
                   >
-                    <Card className="bg-white/10 border-white/10 backdrop-blur-sm text-white h-[400px] hover:bg-white/15 transition-colors flex flex-col">
+                    <Card className="bg-white/10 border-white/10 backdrop-blur-sm text-white min-h-[400px] h-full hover:bg-white/15 transition-colors flex flex-col">
                       <CardHeader className="flex-grow flex flex-col">
-                        <div className="flex gap-1 mb-4">
-                          {[1,2,3,4,5].map(i => (
-                            <Star
-                              key={i} 
-                              className={`w-4 h-4 ${i <= (test.rating || 5) ? 'text-yellow-400 fill-yellow-400' : 'text-white/20'}`} 
-                            />
-                          ))}
-                        </div>
-                        <div className="flex-grow overflow-y-auto no-scrollbar mb-6">
-                           <p className="text-lg italic font-serif leading-relaxed line-clamp-6">"{content.content}"</p>
+                        {test.rating ? (
+                          <div className="mb-4"><ReviewStars rating={test.rating} className="text-yellow-400 fill-yellow-400" /></div>
+                        ) : (
+                          <p className="text-xs uppercase tracking-[0.18em] text-white/50 mb-4">{test.role}</p>
+                        )}
+                        <div className="flex-grow mb-6 text-lg">
+                          <ReviewQuote review={test} lang={lang} clampClass="line-clamp-6" muted="text-white/60" />
                         </div>
                         <Separator className="bg-white/10 mb-6" />
                         <div className="flex items-center gap-4">
                           <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center font-bold text-sm flex-shrink-0">
-                            {test.name ? test.name[0] : "N"}
+                            {test.name ? test.name.replace(/^@/, "")[0].toUpperCase() : "N"}
                           </div>
                           <div className="min-w-0">
                             <p className="font-bold text-lg leading-none mb-1 truncate">{test.name}</p>
-                            <p className="text-sm text-white/60 truncate">{content.role}</p>
+                            <p className="text-sm text-white/60 truncate">{test.rating ? [test.role, sourceLine].filter(Boolean).join(" · ") : sourceLine}</p>
                           </div>
                         </div>
+                        {test.screenshot && (
+                          <div className="mt-4">
+                            <SeeOriginalButton src={test.screenshot} lang={lang} className="text-white/70 hover:text-white" />
+                          </div>
+                        )}
                       </CardHeader>
                     </Card>
                   </motion.div>
