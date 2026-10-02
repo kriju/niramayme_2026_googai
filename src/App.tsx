@@ -97,6 +97,7 @@ type LayoutContext = {
   lang: "EN" | "DE";
   onBook: (ctx?: BookingContext) => void;
   onBookAstrology: () => void;
+  onBookReiki: (pkg: ReikiPackageId) => void;
   onBookGuidance: (pkg?: GuidancePackage) => void;
   onOpenLegal: (type: "impressum" | "privacy") => void;
 };
@@ -474,6 +475,267 @@ const AstrologyIntakeModal = ({ lang, open, onOpenChange, onOpenPrivacy, variant
               <p className="text-sm">
                 <span className="text-muted-foreground">{t.confirmationSentTo}</span>{" "}
                 <span className="font-medium">{form.contact}</span>
+              </p>
+              <Button className="rounded-full w-full" onClick={resetAndClose}>{t.closeBtn}</Button>
+            </div>
+          </>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+// The Reiki tile's booking flow, one modal for all three packages (see
+// TRANSLATIONS.reiki.packages). Prices are shown on the service page before
+// this ever opens. In-person mirrors the astrology flow — details, then a
+// calendar slot, then advance-payment instructions keyed to a reference
+// code and an "I've paid" claim. The two distance packages are just a
+// request form: it's emailed to Richa, the visitor gets a confirmation
+// email, and Richa follows up with next steps herself. See firestore.rules
+// for what's enforced server-side.
+type ReikiPackageId = "in-person" | "distance-single" | "distance-renewal";
+type ReikiStep = "details" | "calendar" | "payment" | "done";
+type ReikiForm = { name: string; email: string; whatsapp: string; reason: string; consent: boolean };
+const EMPTY_REIKI_FORM: ReikiForm = { name: "", email: "", whatsapp: "", reason: "", consent: false };
+const REIKI_PACKAGE_IDS: ReikiPackageId[] = ["in-person", "distance-single", "distance-renewal"];
+
+const ReikiIntakeModal = ({ lang, pkg, onClose, onOpenPrivacy }: { lang: "EN" | "DE", pkg: ReikiPackageId | null, onClose: () => void, onOpenPrivacy: () => void }) => {
+  const t = TRANSLATIONS[lang].reikiIntake;
+  const tr = TRANSLATIONS[lang].reiki;
+  const { profile } = useAuth();
+  // Keep the last package around while the dialog fades out, so its
+  // content doesn't vanish mid-animation once the parent clears `pkg`.
+  const [shownPkg, setShownPkg] = useState<ReikiPackageId>("in-person");
+  const [step, setStep] = useState<ReikiStep>("details");
+  const [form, setForm] = useState<ReikiForm>(EMPTY_REIKI_FORM);
+  const [requestId, setRequestId] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [paying, setPaying] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const open = pkg !== null;
+
+  useEffect(() => {
+    if (pkg) setShownPkg(pkg);
+  }, [pkg]);
+
+  // Prefill from the signed-in user's saved profile, without overwriting
+  // anything they've already typed into the form themselves.
+  useEffect(() => {
+    if (!open || !profile) return;
+    setForm(f => ({
+      ...f,
+      name: f.name || profile.displayName,
+      email: f.email || profile.email,
+    }));
+  }, [open, profile]);
+
+  const isInPerson = shownPkg === "in-person";
+  const pkgContent = tr.packages[shownPkg];
+  // Derived from the Firestore doc ID, the same way api/notify-reiki-request.ts
+  // derives it — never stored separately, so the two can't drift.
+  const refCode = requestId ? `RKI-${requestId.slice(-6).toUpperCase()}` : "";
+  const isValid = Boolean(form.name.trim() && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim()) && form.whatsapp.trim() && form.reason.trim() && form.consent);
+
+  const resetAndClose = () => {
+    onClose();
+    // Delay the reset past the close animation so the dialog doesn't
+    // visibly snap back to step 1 while it's still fading out.
+    setTimeout(() => {
+      setStep("details");
+      setForm(EMPTY_REIKI_FORM);
+      setRequestId(null);
+      setError(null);
+    }, 300);
+  };
+
+  const notify = (id: string, kind: "submitted" | "payment_claimed") =>
+    fetch("/api/notify-reiki-request", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ requestId: id, kind }),
+    }).catch(err => console.error(`Failed to send reiki ${kind} notification:`, err));
+
+  const handleSubmitDetails = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!isValid || submitting) return;
+    setSubmitting(true);
+    setError(null);
+    try {
+      const docRef = await addDoc(collection(db, "reikiRequests"), {
+        package: shownPkg,
+        name: form.name.trim(),
+        email: form.email.trim(),
+        whatsapp: form.whatsapp.trim(),
+        reason: form.reason.trim(),
+        consentAccepted: true,
+        lang,
+        createdAt: serverTimestamp(),
+        paymentClaimed: false,
+      });
+      setRequestId(docRef.id);
+      setStep(isInPerson ? "calendar" : "done");
+      // Best-effort — the request is already saved above regardless.
+      notify(docRef.id, "submitted");
+    } catch (err) {
+      console.error("Error submitting reiki request:", err);
+      setError(t.submitError);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handlePaid = async () => {
+    if (!requestId || paying) return;
+    setPaying(true);
+    setError(null);
+    try {
+      await updateDoc(doc(db, "reikiRequests", requestId), { paymentClaimed: true });
+      setStep("done");
+      notify(requestId, "payment_claimed");
+    } catch (err) {
+      console.error("Error confirming reiki payment claim:", err);
+      setError(t.paidError);
+    } finally {
+      setPaying(false);
+    }
+  };
+
+  const inputClass = "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2";
+
+  const summary = (
+    <div className="bg-stone-50 p-4 rounded-xl border border-stone-100">
+      <p className="text-xs uppercase tracking-wider text-muted-foreground mb-1">{t.selectedLabel}</p>
+      <p className="font-bold">{pkgContent.title}</p>
+      <p className="text-sm text-muted-foreground">{pkgContent.format} · <span className="font-semibold text-foreground">{pkgContent.investment}</span></p>
+    </div>
+  );
+
+  return (
+    <Dialog open={open} onOpenChange={(o) => !o && resetAndClose()}>
+      <DialogContent className={step === "calendar" ? "sm:max-w-[900px] h-[90vh] flex flex-col p-0 overflow-hidden" : "sm:max-w-lg max-h-[85vh] overflow-y-auto"}>
+        {step === "details" && (
+          <>
+            <DialogHeader>
+              <DialogTitle className="text-2xl font-serif">{t.detailsTitle}</DialogTitle>
+            </DialogHeader>
+            <form onSubmit={handleSubmitDetails} className="grid gap-4 py-2">
+              {summary}
+              <div className="grid gap-2">
+                <label className="text-sm font-medium">{t.fields.name}</label>
+                <input required maxLength={100} className={inputClass} value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} />
+              </div>
+              <div className="grid gap-2">
+                <label className="text-sm font-medium">{t.fields.email}</label>
+                <input required type="email" maxLength={200} className={inputClass} value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} />
+              </div>
+              <div className="grid gap-2">
+                <label className="text-sm font-medium">{t.fields.whatsapp}</label>
+                <input required type="tel" maxLength={40} placeholder={t.fields.whatsappPlaceholder} className={inputClass} value={form.whatsapp} onChange={e => setForm({ ...form, whatsapp: e.target.value })} />
+              </div>
+              <div className="grid gap-2">
+                <label className="text-sm font-medium">{t.fields.reason}</label>
+                <textarea
+                  required
+                  maxLength={2000}
+                  rows={3}
+                  placeholder={t.fields.reasonPlaceholder}
+                  className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  value={form.reason}
+                  onChange={e => setForm({ ...form, reason: e.target.value })}
+                />
+              </div>
+              <label className="flex items-start gap-2 text-sm">
+                <input type="checkbox" required className="mt-1 h-4 w-4 shrink-0" checked={form.consent} onChange={e => setForm({ ...form, consent: e.target.checked })} />
+                <span>
+                  {t.consentPrefix}{" "}
+                  <button type="button" onClick={onOpenPrivacy} className="underline underline-offset-2 hover:text-primary">
+                    {t.consentLinkLabel}
+                  </button>.
+                </span>
+              </label>
+              {error && <p className="text-sm text-red-600">{error}</p>}
+              <Button type="submit" size="lg" className="rounded-full w-full" disabled={!isValid || submitting}>
+                {submitting ? t.submitting : isInPerson ? t.continueBtn : t.sendBtn}
+              </Button>
+            </form>
+          </>
+        )}
+
+        {step === "calendar" && (
+          <>
+            <DialogHeader className="p-6 pb-4 border-b border-stone-100 space-y-2">
+              <DialogTitle className="text-2xl md:text-3xl font-serif">{t.calendarTitle}</DialogTitle>
+              <p className="text-sm text-muted-foreground">{t.calendarDesc}</p>
+            </DialogHeader>
+            <div className="flex-1 w-full min-h-0 relative">
+              <iframe src={GOOGLE_CALENDAR_URL} className="w-full h-full border-0" title="Google Calendar Appointment Scheduling" />
+              <div className="absolute bottom-4 right-4">
+                <a
+                  href={GOOGLE_CALENDAR_URL.replace('?gv=true', '')}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs text-muted-foreground hover:text-primary underline bg-background/80 backdrop-blur-sm px-2 py-1 rounded"
+                >
+                  {t.calendarOpenTab}
+                </a>
+              </div>
+            </div>
+            <div className="p-4 border-t border-stone-100">
+              <Button size="lg" className="rounded-full w-full" onClick={() => setStep("payment")}>{t.calendarDoneBtn}</Button>
+            </div>
+          </>
+        )}
+
+        {step === "payment" && (
+          <>
+            <DialogHeader>
+              <DialogTitle className="text-2xl font-serif">{t.paymentTitle}</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-5 py-2">
+              <div className="bg-stone-50 p-4 rounded-xl border border-stone-100 text-center">
+                <p className="text-xs uppercase tracking-wider text-muted-foreground mb-1">{t.refCodeLabel}</p>
+                <p className="text-2xl font-bold font-mono tracking-wide">{refCode}</p>
+                <p className="text-xs text-muted-foreground mt-1">{t.refCodeNote}</p>
+              </div>
+              <div>
+                <p className="text-xs font-bold uppercase tracking-wider text-primary/50 mb-1">{t.priceLabel}</p>
+                <p className="text-lg font-semibold">{pkgContent.investment}</p>
+                <p className="text-xs text-muted-foreground">{t.inPersonPriceNote}</p>
+              </div>
+              <div className="p-4 rounded-xl border border-stone-100 space-y-2">
+                <p className="font-bold text-sm">{t.paymentEURTitle}</p>
+                <p className="text-sm">{t.paypalLabel}: <span className="font-mono">richa@niramay.me</span></p>
+                <p className="text-xs text-muted-foreground">{t.paypalNote}</p>
+                <Separator className="my-2" />
+                <p className="text-sm">{t.bankLabel}</p>
+                <p className="text-xs font-mono">IBAN: DE08 1001 1001 2721 9373 31</p>
+                <p className="text-xs font-mono">BIC: NTSBDEB1XXX</p>
+                <p className="text-xs text-muted-foreground">{t.bankNote}</p>
+              </div>
+              {error && <p className="text-sm text-red-600">{error}</p>}
+              <div className="flex gap-3">
+                <Button variant="outline" className="rounded-full" onClick={() => setStep("calendar")}>{t.backBtn}</Button>
+                <Button size="lg" className="rounded-full flex-1" onClick={handlePaid} disabled={paying}>
+                  {paying ? t.paidSubmitting : t.paidBtn}
+                </Button>
+              </div>
+            </div>
+          </>
+        )}
+
+        {step === "done" && (
+          <>
+            <DialogHeader>
+              <DialogTitle className="text-2xl font-serif">{t.confirmationTitle}</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-2">
+              <div className="flex items-start gap-3">
+                <CheckCircle2 className="w-6 h-6 text-primary shrink-0 mt-0.5" />
+                <p className="text-muted-foreground">{isInPerson ? t.inPersonConfirmationBody : t.distanceConfirmationBody}</p>
+              </div>
+              <p className="text-sm">
+                <span className="text-muted-foreground">{t.confirmationSentTo}</span>{" "}
+                <span className="font-medium">{form.email}</span>
               </p>
               <Button className="rounded-full w-full" onClick={resetAndClose}>{t.closeBtn}</Button>
             </div>
@@ -1245,6 +1507,12 @@ const ServiceCard = ({ service, index, lang, onLearnMore }: { service: any, inde
             <p className="text-xs font-bold uppercase tracking-wider text-primary/50 mb-2">{t.outcomeLabel}</p>
             <p className="text-sm font-medium">{content.outcome}</p>
           </div>
+          {content.price && (
+            <p className="mt-4 text-sm">
+              <span className="text-xs font-bold uppercase tracking-wider text-primary/50 mr-2">{t.priceLabel}</span>
+              <span className="font-semibold">{content.price}</span>
+            </p>
+          )}
           {service.link && service.openInModal ? (
             <Button
               variant="link"
@@ -1289,7 +1557,7 @@ const MERGED_SERVICE_IDS: Record<string, string> = {
 
 const ServicePage = () => {
   const { id } = useParams<{ id: string }>();
-  const { lang, onBook, onBookAstrology, onBookGuidance } = useOutletContext<LayoutContext>();
+  const { lang, onBook, onBookAstrology, onBookReiki, onBookGuidance } = useOutletContext<LayoutContext>();
   const service = SERVICES.find(s => s.id === id && !s.openInModal);
 
   const t = TRANSLATIONS[lang].services;
@@ -1298,6 +1566,8 @@ const ServicePage = () => {
   const ta = TRANSLATIONS[lang].astrology;
   const content = service?.[lang];
   const isAstrology = service?.id === "astrology";
+  const isReiki = service?.id === "reiki";
+  const tr = TRANSLATIONS[lang].reiki;
   // Like astrology, this one is pay-first: chart prep needs birth details
   // and the session is confirmed only once payment is in.
   const isGuidance = service?.id === "intuitive-guidance";
@@ -1348,7 +1618,11 @@ const ServicePage = () => {
 
   const otherServices = SERVICES.filter(s => !s.openInModal && s.id !== service.id);
   const handleBook = () => {
-    if (isAstrology) {
+    if (isReiki) {
+      // Reiki is booked per package (each with its own price and flow), so
+      // the generic CTA just takes the visitor to the package cards.
+      document.getElementById("packages")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    } else if (isAstrology) {
       // Astrology doesn't use the self-serve calendar: an appointment can't
       // be offered until birth details and advance payment are in, so it
       // gets its own intake flow.
@@ -1380,6 +1654,7 @@ const ServicePage = () => {
         </div>
         <p className="font-medium text-primary/70 mb-2">{service.category}</p>
         <h1 className="text-4xl md:text-5xl font-serif font-bold mb-6 leading-tight">{content.title}</h1>
+        {isReiki && <p className="text-xl font-serif text-primary/80 -mt-3 mb-6">{tr.badge}</p>}
         <p className="text-lg text-muted-foreground leading-relaxed mb-8">{content.description}</p>
 
         {"details" in content && content.details && (
@@ -1499,10 +1774,71 @@ const ServicePage = () => {
           </div>
         )}
 
+        {isReiki && (
+          <div className="space-y-10 mb-10 pt-4 border-t border-stone-100">
+            <div>
+              <h2 className="text-2xl font-serif font-bold mb-6">{tr.supportsTitle}</h2>
+              <div className="grid sm:grid-cols-2 gap-4">
+                {tr.supportsItems.map((item, idx) => (
+                  <div key={idx} className="bg-stone-50 p-4 rounded-xl border border-stone-100">
+                    <p className="font-bold text-sm mb-1">{item.title}</p>
+                    <p className="text-muted-foreground text-sm leading-relaxed">{item.description}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <h2 className="text-2xl font-serif font-bold mb-6">{tr.howTitle}</h2>
+              <div className="space-y-4">
+                {tr.howItems.map((item, idx) => (
+                  <div key={idx} className="flex gap-4">
+                    <div className="w-9 h-9 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                      {idx === 0 ? <MapPin className="w-4 h-4" /> : <Globe className="w-4 h-4" />}
+                    </div>
+                    <div>
+                      <p className="font-bold text-sm mb-1">{item.title}</p>
+                      <p className="text-muted-foreground text-sm leading-relaxed">{item.description}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div id="packages" className="scroll-mt-28">
+              <h2 className="text-2xl font-serif font-bold mb-6">{tr.packagesTitle}</h2>
+              <div className="grid gap-4">
+                {REIKI_PACKAGE_IDS.map(pkgId => {
+                  const p = tr.packages[pkgId];
+                  return (
+                    <div key={pkgId} className="p-6 rounded-2xl border border-stone-200 bg-white shadow-sm flex flex-col sm:flex-row sm:items-center gap-6">
+                      <div className="flex-1 space-y-2">
+                        <p className="font-serif font-bold text-xl">{p.title}</p>
+                        <p className="text-sm"><span className="text-muted-foreground">{tr.formatLabel}:</span> {p.format}</p>
+                        <p className="text-sm"><span className="text-muted-foreground">{tr.focusLabel}:</span> {p.focus}</p>
+                      </div>
+                      <div className="sm:text-right shrink-0 space-y-3">
+                        <div>
+                          <p className="text-xs font-bold uppercase tracking-wider text-primary/50">{tr.investmentLabel}</p>
+                          <p className="text-2xl font-bold">{p.investment}</p>
+                        </div>
+                        <Button className="rounded-full gap-2" onClick={() => onBookReiki(pkgId)}>
+                          <Sparkles className="w-4 h-4" />
+                          {p.cta}
+                        </Button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="flex flex-wrap items-center gap-4 mb-20">
           <Button size="lg" className="rounded-full px-8 gap-2" onClick={handleBook}>
             <Sparkles className="w-4 h-4" />
-            {isAstrology ? ta.cta : isGuidance ? tg.cta : nav.bookNow}
+            {isReiki ? tr.cta : isAstrology ? ta.cta : isGuidance ? tg.cta : nav.bookNow}
           </Button>
           <a
             href={`https://wa.me/4915175315761?text=${encodeURIComponent(`Hi, I'm interested in "${content.title}".`)}`}
@@ -2822,7 +3158,7 @@ const BookSection = ({ lang }: { lang: "EN" | "DE" }) => {
   );
 };
 
-// Shared shell (nav, footer, the booking/legal/astrology-intake modals, and
+// Shared shell (nav, footer, the booking/legal/astrology/reiki-intake modals, and
 // the site-wide LocalBusiness JSON-LD) rendered on every route. Per-route
 // content — the homepage sections, or a single service's page — comes in
 // through <Outlet>, and gets the state it needs (lang, the booking
@@ -2842,6 +3178,7 @@ const AppLayout = () => {
   const [bookingContext, setBookingContext] = useState<BookingContext | null>(null);
   const openBooking = (ctx: BookingContext = {}) => setBookingContext(ctx);
   const [astrologyIntakeOpen, setAstrologyIntakeOpen] = useState(false);
+  const [reikiPackage, setReikiPackage] = useState<ReikiPackageId | null>(null);
   const [guidanceIntakeOpen, setGuidanceIntakeOpen] = useState(false);
   const [guidancePackage, setGuidancePackage] = useState<GuidancePackage>("individual");
 
@@ -2911,7 +3248,7 @@ const AppLayout = () => {
     <div className="min-h-screen selection:bg-primary/20">
       <ScrollManager />
       <Navbar lang={lang} onToggleLang={toggleLang} onBook={openBooking} />
-      <Outlet context={{ lang, onBook: openBooking, onBookAstrology: () => setAstrologyIntakeOpen(true), onBookGuidance: (pkg = "individual") => { setGuidancePackage(pkg); setGuidanceIntakeOpen(true); }, onOpenLegal: setLegalModal } satisfies LayoutContext} />
+      <Outlet context={{ lang, onBook: openBooking, onBookAstrology: () => setAstrologyIntakeOpen(true), onBookReiki: setReikiPackage, onBookGuidance: (pkg = "individual") => { setGuidancePackage(pkg); setGuidanceIntakeOpen(true); }, onOpenLegal: setLegalModal } satisfies LayoutContext} />
       <Footer lang={lang} onOpenLegal={setLegalModal} />
 
       <LegalModal
@@ -2932,6 +3269,13 @@ const AppLayout = () => {
         lang={lang}
         open={astrologyIntakeOpen}
         onOpenChange={setAstrologyIntakeOpen}
+        onOpenPrivacy={() => setLegalModal("privacy")}
+      />
+
+      <ReikiIntakeModal
+        lang={lang}
+        pkg={reikiPackage}
+        onClose={() => setReikiPackage(null)}
         onOpenPrivacy={() => setLegalModal("privacy")}
       />
 
