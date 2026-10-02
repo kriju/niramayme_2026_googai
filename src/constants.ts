@@ -488,6 +488,21 @@ export const TRANSLATIONS = {
       whatsappTemplate: "Hi Richa, I'd like to book a Vedic Astrology reading.\nName:\nPlace of Birth:\nDate of Birth:\nTime of Birth:",
       closeBtn: "Close",
     },
+    guidanceIntake: {
+      cta: "Book Your Session",
+      step1Title: "Book Your Session",
+      packageLabel: "Choose your session",
+      packages: {
+        individual: { title: "Individual Soul Counseling & Guidance", price: "€50 / ₹5,000", priceValue: "50 EUR or 5000 INR" },
+        couple: { title: "Relationship & Couple Guidance", price: "€90 / ₹9,000", priceValue: "90 EUR or 9000 INR" },
+      },
+      yourDetailsTitle: "Your birth details",
+      partnerDetailsTitle: "Your partner's birth details",
+      partnerName: "Partner's Full Name",
+      consentPrefix: "I agree to Niramay storing these details to prepare my session, per the",
+      whatsappTemplate: "Hi Richa, I'd like to book an Intuitive Guidance & Soul Counseling session.\nSession (individual / couple):\nName:\nPlace of Birth:\nDate of Birth:\nTime of Birth:",
+      bookThisBtn: "Book this session",
+    },
     book: {
       title: "Journey from Body to Bliss",
       subtitle: "The Niramay Path to Pancha Koshas",
@@ -991,6 +1006,21 @@ export const TRANSLATIONS = {
       whatsappTemplate: "Hallo Richa, ich möchte eine vedische Astrologie-Lesung buchen.\nName:\nGeburtsort:\nGeburtsdatum:\nGeburtszeit:",
       closeBtn: "Schließen",
     },
+    guidanceIntake: {
+      cta: "Sitzung buchen",
+      step1Title: "Ihre Sitzung buchen",
+      packageLabel: "Wählen Sie Ihre Sitzung",
+      packages: {
+        individual: { title: "Individuelle Seelenberatung & Begleitung", price: "50 € / ₹5.000", priceValue: "50 EUR oder 5000 INR" },
+        couple: { title: "Beziehungs- & Paarbegleitung", price: "90 € / ₹9.000", priceValue: "90 EUR oder 9000 INR" },
+      },
+      yourDetailsTitle: "Ihre Geburtsdaten",
+      partnerDetailsTitle: "Geburtsdaten Ihres Partners / Ihrer Partnerin",
+      partnerName: "Vollständiger Name des Partners / der Partnerin",
+      consentPrefix: "Ich stimme zu, dass Niramay diese Angaben zur Vorbereitung meiner Sitzung speichert, gemäß der",
+      whatsappTemplate: "Hallo Richa, ich möchte eine Sitzung für Intuitive Begleitung & Seelenberatung buchen.\nSitzung (einzeln / Paar):\nName:\nGeburtsort:\nGeburtsdatum:\nGeburtszeit:",
+      bookThisBtn: "Diese Sitzung buchen",
+    },
     book: {
       title: "Reise vom Körper zur Glückseligkeit",
       subtitle: "Der Niramay-Pfad zu den Pancha Koshas",
@@ -1178,6 +1208,7 @@ export const SERVICES = [
       offeringsTitle: "Intuitive Guidance & Soul Counseling Offerings",
       offerings: [
         {
+          package: "individual" as const,
           title: "Individual Soul Counseling & Guidance",
           format: "Online / Video Call (60 mins)",
           price: "€50 / ₹5,000",
@@ -1188,6 +1219,7 @@ export const SERVICES = [
           ],
         },
         {
+          package: "couple" as const,
           title: "Relationship & Couple Guidance",
           format: "Online / Video Call (60 mins)",
           price: "€90 / ₹9,000",
@@ -1212,6 +1244,7 @@ export const SERVICES = [
       offeringsTitle: "Angebote: Intuitive Begleitung & Seelenberatung",
       offerings: [
         {
+          package: "individual" as const,
           title: "Individuelle Seelenberatung & Begleitung",
           format: "Online / Videoanruf (60 Min.)",
           price: "50 € / ₹5.000",
@@ -1222,6 +1255,7 @@ export const SERVICES = [
           ],
         },
         {
+          package: "couple" as const,
           title: "Beziehungs- & Paarbegleitung",
           format: "Online / Videoanruf (60 Min.)",
           price: "90 € / ₹9.000",
