@@ -87,6 +87,22 @@ service cloud.firestore {
           && data.paymentClaimed == false;
     }
 
+    // Online course booking helper (CourseIntakeModal in src/App.tsx)
+    function isValidCourseBooking(data) {
+      return data.keys().hasAll(['course', 'name', 'email', 'whatsapp', 'notes', 'consentAccepted', 'lang', 'createdAt', 'paymentClaimed'])
+          && data.keys().size() == 9
+          && data.course in ['yoga-stress-immunity-sleep']
+          && data.name is string && data.name.size() > 0 && data.name.size() <= 100
+          && data.email is string && data.email.size() > 0 && data.email.size() <= 200
+          && data.email.matches('^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$')
+          && data.whatsapp is string && data.whatsapp.size() > 0 && data.whatsapp.size() <= 40
+          && data.notes is string && data.notes.size() <= 2000
+          && data.consentAccepted == true
+          && data.lang in ['EN', 'DE']
+          && data.createdAt is timestamp
+          && data.paymentClaimed == false;
+    }
+
     // Plain Vedic Astrology requests carry none of the optional fields.
     // Intuitive Guidance & Soul Counseling requests are tagged with `service`
     // and a `package`; the couple package must also carry the partner's
@@ -214,6 +230,17 @@ service cloud.firestore {
       // their own "I've paid" flag once, and nothing else.
       allow update: if existing()['package'] == 'in-person'
                     && existing().paymentClaimed == false
+                    && incoming().paymentClaimed == true
+                    && incoming().diff(existing()).affectedKeys().hasOnly(['paymentClaimed']);
+      allow delete: if false;
+    }
+
+    match /courseBookings/{requestId} {
+      // Never client-readable, same as reikiRequests. Pay-first: the visitor
+      // can flip their own "I've paid" flag once, and nothing else.
+      allow get, list: if false;
+      allow create: if isValidId(requestId) && isValidCourseBooking(incoming());
+      allow update: if existing().paymentClaimed == false
                     && incoming().paymentClaimed == true
                     && incoming().diff(existing()).affectedKeys().hasOnly(['paymentClaimed']);
       allow delete: if false;

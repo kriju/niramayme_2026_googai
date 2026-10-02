@@ -101,6 +101,7 @@ type LayoutContext = {
   onBookReiki: (pkg: ReikiPackageId) => void;
   onBookGuidance: (pkg?: GuidancePackage) => void;
   onBookTarot: () => void;
+  onBookCourse: (courseId: string) => void;
   onOpenLegal: (type: "impressum" | "privacy") => void;
 };
 
@@ -776,6 +777,239 @@ const ReikiIntakeModal = ({ lang, pkg, onClose, onOpenPrivacy }: { lang: "EN" | 
                 <span className="text-muted-foreground">{t.confirmationSentTo}</span>{" "}
                 <span className="font-medium">{form.email}</span>
               </p>
+              <Button className="rounded-full w-full" onClick={resetAndClose}>{t.closeBtn}</Button>
+            </div>
+          </>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+// Booking flow for Niramay's own online courses (COURSES entries with
+// `bookable: true`). Pay-first like the in-person Reiki booking, minus the
+// calendar step since the dates are fixed: details, then payment
+// instructions keyed to a reference code, then an "I've paid" claim that
+// triggers the confirmation email (api/notify-course-booking.ts). See
+// firestore.rules for what's enforced server-side.
+type CourseStep = "details" | "payment" | "done";
+type CourseForm = { name: string; email: string; whatsapp: string; notes: string; consent: boolean };
+const EMPTY_COURSE_FORM: CourseForm = { name: "", email: "", whatsapp: "", notes: "", consent: false };
+const COURSE_CONTACT_EMAIL = "riju.kansal@niramay.me";
+
+const CourseIntakeModal = ({ lang, courseId, onClose, onOpenPrivacy }: { lang: "EN" | "DE", courseId: string | null, onClose: () => void, onOpenPrivacy: () => void }) => {
+  const t = TRANSLATIONS[lang].courseIntake;
+  const { profile } = useAuth();
+  // Keep the last course around while the dialog fades out (see ReikiIntakeModal).
+  const [shownCourseId, setShownCourseId] = useState<string | null>(courseId);
+  const [step, setStep] = useState<CourseStep>("details");
+  const [form, setForm] = useState<CourseForm>(EMPTY_COURSE_FORM);
+  const [requestId, setRequestId] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [paying, setPaying] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const open = courseId !== null;
+
+  useEffect(() => {
+    if (courseId) setShownCourseId(courseId);
+  }, [courseId]);
+
+  useEffect(() => {
+    if (!open || !profile) return;
+    setForm(f => ({
+      ...f,
+      name: f.name || profile.displayName,
+      email: f.email || profile.email,
+    }));
+  }, [open, profile]);
+
+  const course = COURSES.find(c => c.id === shownCourseId);
+  const content = course?.[lang];
+  // Derived from the Firestore doc ID, the same way api/notify-course-booking.ts
+  // derives it — never stored separately, so the two can't drift.
+  const refCode = requestId ? `CRS-${requestId.slice(-6).toUpperCase()}` : "";
+  const isValid = Boolean(form.name.trim() && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim()) && form.whatsapp.trim() && form.consent);
+
+  const resetAndClose = () => {
+    onClose();
+    setTimeout(() => {
+      setStep("details");
+      setForm(EMPTY_COURSE_FORM);
+      setRequestId(null);
+      setError(null);
+    }, 300);
+  };
+
+  const notify = (id: string, kind: "submitted" | "payment_claimed") =>
+    fetch("/api/notify-course-booking", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ requestId: id, kind }),
+    }).catch(err => console.error(`Failed to send course ${kind} notification:`, err));
+
+  const handleSubmitDetails = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!isValid || submitting || !course) return;
+    setSubmitting(true);
+    setError(null);
+    try {
+      const docRef = await addDoc(collection(db, "courseBookings"), {
+        course: course.id,
+        name: form.name.trim(),
+        email: form.email.trim(),
+        whatsapp: form.whatsapp.trim(),
+        notes: form.notes.trim(),
+        consentAccepted: true,
+        lang,
+        createdAt: serverTimestamp(),
+        paymentClaimed: false,
+      });
+      setRequestId(docRef.id);
+      setStep("payment");
+      // Best-effort — the booking is already saved above regardless.
+      notify(docRef.id, "submitted");
+    } catch (err) {
+      console.error("Error submitting course booking:", err);
+      setError(t.submitError);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handlePaid = async () => {
+    if (!requestId || paying) return;
+    setPaying(true);
+    setError(null);
+    try {
+      await updateDoc(doc(db, "courseBookings", requestId), { paymentClaimed: true });
+      setStep("done");
+      notify(requestId, "payment_claimed");
+    } catch (err) {
+      console.error("Error confirming course payment claim:", err);
+      setError(t.paidError);
+    } finally {
+      setPaying(false);
+    }
+  };
+
+  if (!course || !content) return null;
+
+  const inputClass = "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2";
+
+  const summary = (
+    <div className="bg-stone-50 p-4 rounded-xl border border-stone-100">
+      <p className="text-xs uppercase tracking-wider text-muted-foreground mb-1">{t.selectedLabel}</p>
+      <p className="font-bold">{content.title}</p>
+      <p className="text-sm text-muted-foreground">{content.time} · <span className="font-semibold text-foreground">{content.price}</span></p>
+    </div>
+  );
+
+  const questions = (
+    <p className="text-xs text-muted-foreground">
+      {t.questionsNote}{" "}
+      <a href={`mailto:${COURSE_CONTACT_EMAIL}`} className="underline underline-offset-2 hover:text-primary">{COURSE_CONTACT_EMAIL}</a>
+    </p>
+  );
+
+  return (
+    <Dialog open={open} onOpenChange={(o) => !o && resetAndClose()}>
+      <DialogContent className="sm:max-w-lg max-h-[85vh] overflow-y-auto">
+        {step === "details" && (
+          <>
+            <DialogHeader>
+              <DialogTitle className="text-2xl font-serif">{t.detailsTitle}</DialogTitle>
+            </DialogHeader>
+            <form onSubmit={handleSubmitDetails} className="grid gap-4 py-2">
+              {summary}
+              <div className="grid gap-2">
+                <label className="text-sm font-medium">{t.fields.name}</label>
+                <input required maxLength={100} className={inputClass} value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} />
+              </div>
+              <div className="grid gap-2">
+                <label className="text-sm font-medium">{t.fields.email}</label>
+                <input required type="email" maxLength={200} className={inputClass} value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} />
+              </div>
+              <div className="grid gap-2">
+                <label className="text-sm font-medium">{t.fields.whatsapp}</label>
+                <input required type="tel" maxLength={40} placeholder={t.fields.whatsappPlaceholder} className={inputClass} value={form.whatsapp} onChange={e => setForm({ ...form, whatsapp: e.target.value })} />
+              </div>
+              <div className="grid gap-2">
+                <label className="text-sm font-medium">{t.fields.notes}</label>
+                <textarea
+                  maxLength={2000}
+                  rows={3}
+                  placeholder={t.fields.notesPlaceholder}
+                  className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  value={form.notes}
+                  onChange={e => setForm({ ...form, notes: e.target.value })}
+                />
+              </div>
+              <label className="flex items-start gap-2 text-sm">
+                <input type="checkbox" required className="mt-1 h-4 w-4 shrink-0" checked={form.consent} onChange={e => setForm({ ...form, consent: e.target.checked })} />
+                <span>
+                  {t.consentPrefix}{" "}
+                  <button type="button" onClick={onOpenPrivacy} className="underline underline-offset-2 hover:text-primary">
+                    {t.consentLinkLabel}
+                  </button>.
+                </span>
+              </label>
+              {error && <p className="text-sm text-red-600">{error}</p>}
+              <Button type="submit" size="lg" className="rounded-full w-full" disabled={!isValid || submitting}>
+                {submitting ? t.submitting : t.continueBtn}
+              </Button>
+            </form>
+          </>
+        )}
+
+        {step === "payment" && (
+          <>
+            <DialogHeader>
+              <DialogTitle className="text-2xl font-serif">{t.paymentTitle}</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-5 py-2">
+              <div className="bg-stone-50 p-4 rounded-xl border border-stone-100 text-center">
+                <p className="text-xs uppercase tracking-wider text-muted-foreground mb-1">{t.refCodeLabel}</p>
+                <p className="text-2xl font-bold font-mono tracking-wide">{refCode}</p>
+                <p className="text-xs text-muted-foreground mt-1">{t.refCodeNote}</p>
+              </div>
+              <div>
+                <p className="text-xs font-bold uppercase tracking-wider text-primary/50 mb-1">{t.priceLabel}</p>
+                <p className="text-lg font-semibold">{content.price}</p>
+              </div>
+              <div className="p-4 rounded-xl border border-stone-100 space-y-2">
+                <p className="font-bold text-sm">{t.paymentEURTitle}</p>
+                <p className="text-sm">{t.paypalLabel}: <span className="font-mono">richa@niramay.me</span></p>
+                <p className="text-xs text-muted-foreground">{t.paypalNote}</p>
+                <Separator className="my-2" />
+                <p className="text-sm">{t.bankLabel}</p>
+                <p className="text-xs font-mono">IBAN: DE08 1001 1001 2721 9373 31</p>
+                <p className="text-xs font-mono">BIC: NTSBDEB1XXX</p>
+                <p className="text-xs text-muted-foreground">{t.bankNote}</p>
+              </div>
+              {error && <p className="text-sm text-red-600">{error}</p>}
+              <Button size="lg" className="rounded-full w-full" onClick={handlePaid} disabled={paying}>
+                {paying ? t.paidSubmitting : t.paidBtn}
+              </Button>
+              {questions}
+            </div>
+          </>
+        )}
+
+        {step === "done" && (
+          <>
+            <DialogHeader>
+              <DialogTitle className="text-2xl font-serif">{t.confirmationTitle}</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-2">
+              <div className="flex items-start gap-3">
+                <CheckCircle2 className="w-6 h-6 text-primary shrink-0 mt-0.5" />
+                <p className="text-muted-foreground">{t.confirmationBody}</p>
+              </div>
+              <p className="text-sm">
+                <span className="text-muted-foreground">{t.confirmationSentTo}</span>{" "}
+                <span className="font-medium">{form.email}</span>
+              </p>
+              {questions}
               <Button className="rounded-full w-full" onClick={resetAndClose}>{t.closeBtn}</Button>
             </div>
           </>
@@ -2486,10 +2720,14 @@ const OngoingSessionsSection = ({ lang }: { lang: "EN" | "DE" }) => {
 // carry a `provider` (e.g. VHS Ostfildern) who owns registration/the course
 // number, in which case the card links out to them instead of a direct
 // WhatsApp booking. A course without a `provider` (a future Niramay-run
-// course) falls back to the same WhatsApp flow as OngoingSessionsSection.
-const CoursesSection = ({ lang }: { lang: "EN" | "DE" }) => {
+// course) falls back to the same WhatsApp flow as OngoingSessionsSection,
+// unless it's `bookable`, in which case it's paid for on-site via
+// CourseIntakeModal and has its own /courses/:id details page.
+const CoursesSection = ({ lang, onBookCourse }: { lang: "EN" | "DE", onBookCourse: (courseId: string) => void }) => {
   const t = TRANSLATIONS[lang].courses;
   const sessionsT = TRANSLATIONS[lang].sessions;
+  const ys = TRANSLATIONS[lang].yogaSeries;
+  const prefix = langPrefix(lang);
   return (
     <section id="courses" className="py-24 bg-stone-50/50">
       <div className="container mx-auto px-6">
@@ -2527,6 +2765,9 @@ const CoursesSection = ({ lang }: { lang: "EN" | "DE" }) => {
                       <MapPin className="w-4 h-4" />
                       {content.location}
                     </div>
+                    {content.price && (
+                      <p className="text-foreground font-semibold text-sm mt-1">{content.price}</p>
+                    )}
                   </CardHeader>
                   <CardContent className="flex flex-col flex-1">
                     <p className="text-muted-foreground text-sm mb-2 leading-relaxed">
@@ -2536,7 +2777,19 @@ const CoursesSection = ({ lang }: { lang: "EN" | "DE" }) => {
                       {t.by} {content.instructor}
                     </p>
                     <div className="mt-auto space-y-2">
-                      {course.provider && course.registrationUrl ? (
+                      {course.bookable ? (
+                        <>
+                          <Button size="sm" className="rounded-full w-full" onClick={() => onBookCourse(course.id)}>
+                            {ys.bookBtn}
+                          </Button>
+                          <Link to={`${prefix}/courses/${course.id}`} className="block">
+                            <Button size="sm" variant="outline" className="rounded-full w-full gap-1.5">
+                              {ys.moreInfoBtn}
+                              <ArrowRight className="w-3.5 h-3.5" />
+                            </Button>
+                          </Link>
+                        </>
+                      ) : course.provider && course.registrationUrl ? (
                         <>
                           <a href={course.registrationUrl} target="_blank" rel="noopener noreferrer">
                             <Button size="sm" variant="outline" className="rounded-full w-full gap-1.5">
@@ -3449,6 +3702,7 @@ const AppLayout = () => {
   const [guidanceIntakeOpen, setGuidanceIntakeOpen] = useState(false);
   const [guidancePackage, setGuidancePackage] = useState<GuidancePackage>("individual");
   const [tarotIntakeOpen, setTarotIntakeOpen] = useState(false);
+  const [courseBookingId, setCourseBookingId] = useState<string | null>(null);
 
   useEffect(() => {
     document.documentElement.lang = lang.toLowerCase();
@@ -3516,7 +3770,7 @@ const AppLayout = () => {
     <div className="min-h-screen selection:bg-primary/20">
       <ScrollManager />
       <Navbar lang={lang} onToggleLang={toggleLang} onBook={openBooking} />
-      <Outlet context={{ lang, onBook: openBooking, onBookAstrology: () => setAstrologyIntakeOpen(true), onBookReiki: setReikiPackage, onBookGuidance: (pkg = "individual") => { setGuidancePackage(pkg); setGuidanceIntakeOpen(true); }, onBookTarot: () => setTarotIntakeOpen(true), onOpenLegal: setLegalModal } satisfies LayoutContext} />
+      <Outlet context={{ lang, onBook: openBooking, onBookAstrology: () => setAstrologyIntakeOpen(true), onBookReiki: setReikiPackage, onBookGuidance: (pkg = "individual") => { setGuidancePackage(pkg); setGuidanceIntakeOpen(true); }, onBookTarot: () => setTarotIntakeOpen(true), onBookCourse: setCourseBookingId, onOpenLegal: setLegalModal } satisfies LayoutContext} />
       <Footer lang={lang} onOpenLegal={setLegalModal} />
 
       <LegalModal
@@ -3564,13 +3818,156 @@ const AppLayout = () => {
         onOpenPrivacy={() => setLegalModal("privacy")}
       />
 
+      <CourseIntakeModal
+        lang={lang}
+        courseId={courseBookingId}
+        onClose={() => setCourseBookingId(null)}
+        onOpenPrivacy={() => setLegalModal("privacy")}
+      />
+
       <CookieConsent lang={lang} onOpenPrivacy={() => setLegalModal("privacy")} />
     </div>
   );
 };
 
+// Details page for a `bookable` course (currently only the Yoga for Stress,
+// Immunity & Sleep series, whose copy lives in TRANSLATIONS.yogaSeries).
+// The Courses tile stays short and links here for the full picture.
+const CoursePage = () => {
+  const { id } = useParams<{ id: string }>();
+  const { lang, onBookCourse } = useOutletContext<LayoutContext>();
+  const course = COURSES.find(c => c.id === id && c.bookable);
+  const content = course?.[lang];
+  const ys = TRANSLATIONS[lang].yogaSeries;
+  const sp = TRANSLATIONS[lang].servicePage;
+  const prefix = langPrefix(lang);
+  const canonical = `${SITE_URL}${prefix}/courses/${id}`;
+
+  useSeo({
+    title: ys.seoTitle,
+    description: ys.seoDescription,
+    canonical,
+    lang,
+    alternates: { en: `${SITE_URL}/courses/${id}`, de: `${SITE_URL}/de/courses/${id}` },
+  });
+
+  const courseJsonLd = useMemo(() => {
+    if (!course || !content) return null;
+    return {
+      "@context": "https://schema.org",
+      "@type": "Course",
+      name: content.title,
+      description: ys.seoDescription,
+      url: canonical,
+      inLanguage: lang === "EN" ? "en" : "de",
+      provider: { "@id": BUSINESS_JSONLD_ID },
+      offers: { "@type": "Offer", price: "79", priceCurrency: "EUR", category: "Paid" },
+    };
+  }, [course, content, ys.seoDescription, canonical, lang]);
+  useJsonLd("ld-json-course", courseJsonLd);
+
+  if (!course || !content) return <Navigate to={prefix || "/"} replace />;
+
+  const facts = [
+    { icon: Calendar, label: ys.scheduleLabel, value: ys.schedule },
+    { icon: Clock, label: ys.durationLabel, value: ys.duration },
+    { icon: Globe, label: ys.formatLabel, value: ys.format },
+    { icon: Sparkles, label: ys.priceLabel, value: ys.price },
+  ];
+
+  return (
+    <main className="pt-32 pb-24">
+      <div className="container mx-auto px-6 max-w-3xl">
+        <nav className="flex items-center gap-2 text-sm text-muted-foreground mb-10" aria-label="Breadcrumb">
+          <Link to={prefix || "/"} className="hover:text-primary transition-colors">{sp.home}</Link>
+          <ChevronRight className="w-3.5 h-3.5" />
+          <Link to={`${prefix}/#courses`} className="hover:text-primary transition-colors">{ys.breadcrumbCourses}</Link>
+          <ChevronRight className="w-3.5 h-3.5" />
+          <span className="text-foreground font-medium">{content.title}</span>
+        </nav>
+
+        <Badge variant="secondary" className="w-fit text-primary mb-4">{ys.badge}</Badge>
+        <h1 className="text-4xl md:text-5xl font-serif font-bold mb-6">{content.title}</h1>
+        <p className="text-lg text-muted-foreground leading-relaxed mb-10">{ys.intro}</p>
+
+        <div className="grid sm:grid-cols-2 gap-4 mb-10">
+          {facts.map(({ icon: Icon, label, value }) => (
+            <div key={label} className="flex items-start gap-3 p-4 rounded-xl border border-stone-100 bg-white">
+              <Icon className="w-5 h-5 text-primary shrink-0 mt-0.5" />
+              <div>
+                <p className="text-xs font-bold uppercase tracking-wider text-primary/50 mb-1">{label}</p>
+                <p className="text-sm">{value}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <Button size="lg" className="rounded-full gap-2 mb-16" onClick={() => onBookCourse(course.id)}>
+          {ys.bookCta}
+          <ArrowRight className="w-4 h-4" />
+        </Button>
+
+        <h2 className="text-2xl md:text-3xl font-serif font-bold mb-6">{ys.learnTitle}</h2>
+        <div className="grid sm:grid-cols-2 gap-4 mb-14">
+          {ys.learnItems.map(item => (
+            <Card key={item.title} className="border border-stone-100 shadow-sm bg-white">
+              <CardHeader>
+                <CardTitle className="text-lg font-serif">{item.title}</CardTitle>
+                <CardDescription>{item.description}</CardDescription>
+              </CardHeader>
+            </Card>
+          ))}
+        </div>
+
+        <h2 className="text-2xl md:text-3xl font-serif font-bold mb-6">{ys.benefitsTitle}</h2>
+        <ul className="space-y-3 mb-14">
+          {ys.benefits.map(b => (
+            <li key={b} className="flex items-start gap-3">
+              <CheckCircle2 className="w-5 h-5 text-primary shrink-0 mt-0.5" />
+              <span className="text-muted-foreground">{b}</span>
+            </li>
+          ))}
+        </ul>
+
+        <h2 className="text-2xl md:text-3xl font-serif font-bold mb-6">{ys.howTitle}</h2>
+        <ol className="space-y-3 mb-14">
+          {ys.howSteps.map((step, i) => (
+            <li key={step} className="flex items-start gap-3">
+              <span className="w-6 h-6 rounded-full bg-primary/10 text-primary text-sm font-bold flex items-center justify-center shrink-0">{i + 1}</span>
+              <span className="text-muted-foreground">{step}</span>
+            </li>
+          ))}
+        </ol>
+
+        {course.blogSlug && (
+          <div className="p-6 rounded-2xl bg-stone-50 border border-stone-100 mb-14">
+            <h2 className="text-xl font-serif font-bold mb-2">{ys.blogTitle}</h2>
+            <p className="text-muted-foreground text-sm mb-4">{ys.blogDescription}</p>
+            {/* The article exists in English only, so the DE page links to it too. */}
+            <Link to={`/blog/${course.blogSlug}`} className="inline-flex items-center gap-2 text-primary font-medium hover:underline underline-offset-4">
+              {ys.blogLinkLabel}
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
+        )}
+
+        <div className="text-center space-y-4">
+          <Button size="lg" className="rounded-full gap-2" onClick={() => onBookCourse(course.id)}>
+            {ys.bookCta}
+            <ArrowRight className="w-4 h-4" />
+          </Button>
+          <p className="text-sm text-muted-foreground">
+            {ys.questionsNote}{" "}
+            <a href={`mailto:${COURSE_CONTACT_EMAIL}`} className="underline underline-offset-2 hover:text-primary">{COURSE_CONTACT_EMAIL}</a>
+          </p>
+        </div>
+      </div>
+    </main>
+  );
+};
+
 const HomePage = () => {
-  const { lang, onBook } = useOutletContext<LayoutContext>();
+  const { lang, onBook, onBookCourse } = useOutletContext<LayoutContext>();
   const [previewTool, setPreviewTool] = useState<{ title: string; link: string } | null>(null);
 
   useSeo({
@@ -3597,7 +3994,7 @@ const HomePage = () => {
       <Hero lang={lang} onBook={onBook} />
       <ServicesSection lang={lang} onLearnMore={handleServiceToolPreview} />
       <OngoingSessionsSection lang={lang} />
-      <CoursesSection lang={lang} />
+      <CoursesSection lang={lang} onBookCourse={onBookCourse} />
       <AboutSection lang={lang} />
       <EventsSection lang={lang} />
       <BookSection lang={lang} />
@@ -3626,10 +4023,12 @@ const WritePage = lazy(() => import("./pages/WritePage"));
 const SPEED_INSIGHTS_ROUTES = [
   "/",
   "/services/:id",
+  "/courses/:id",
   "/blog/:slug",
   "/faq",
   "/de",
   "/de/services/:id",
+  "/de/courses/:id",
   "/de/blog/:slug",
   "/de/faq",
   "/write",
@@ -3649,10 +4048,12 @@ export default function App() {
           <Route element={<AppLayout />}>
             <Route index element={<HomePage />} />
             <Route path="services/:id" element={<ServicePage />} />
+            <Route path="courses/:id" element={<CoursePage />} />
             <Route path="blog/:slug" element={<BlogPostPage />} />
             <Route path="faq" element={<FAQPage />} />
             <Route path="de" element={<HomePage />} />
             <Route path="de/services/:id" element={<ServicePage />} />
+            <Route path="de/courses/:id" element={<CoursePage />} />
             <Route path="de/blog/:slug" element={<BlogPostPage />} />
             <Route path="de/faq" element={<FAQPage />} />
             {/* An unknown path under /de falls back to the German home page
