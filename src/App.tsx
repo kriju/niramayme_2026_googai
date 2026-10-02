@@ -96,7 +96,9 @@ function ScrollManager() {
 type LayoutContext = {
   lang: "EN" | "DE";
   onBook: (ctx?: BookingContext) => void;
-  onBookPaid: (service: PaidService) => void;
+  onBookAstrology: () => void;
+  onBookGuidance: (pkg?: GuidancePackage) => void;
+  onBookTarot: () => void;
   onOpenLegal: (type: "impressum" | "privacy") => void;
 };
 
@@ -155,41 +157,83 @@ const BookingDialog = ({ context, lang, open, onOpenChange }: { context: Booking
   );
 };
 
-// The pay-first intake flow used by the Vedic Astrology and Tarot tiles: it
-// replaces self-serve calendar booking with (1) collecting what the session
-// actually needs (birth details for a chart, the question for a tarot
-// reading), with an explicit consent checkbox, then (2) advance-payment
+// The Vedic Astrology tile's own intake flow: it replaces self-serve
+// calendar booking with (1) collecting the birth details a chart actually
+// needs, with an explicit consent checkbox, then (2) advance-payment
 // instructions keyed to a reference code, so the visitor and Richa share
 // one canonical, receipted record instead of coordinating over email/
 // WhatsApp with no paper trail. See firestore.rules for what's enforced
 // server-side (the client can create a request and flip its own
 // paymentClaimed flag, nothing else).
+// The "guidance" variant is the same pay-first flow for Intuitive Guidance &
+// Soul Counseling: the visitor also picks a package, and the couple package
+// collects the partner's birth details too (it includes a dual chart
+// analysis). Requests share the astrologyRequests collection, tagged with
+// `service`, so the rules and notify endpoint stay in one place.
+// The "tarot" variant asks for a question instead of birth details, so it
+// has its own tarotRequests collection (and rules) rather than loosening the
+// astrology ones; the notify endpoint is told which collection to read.
 const ASTROLOGY_WHATSAPP_NUMBER = "4915175315761";
 
-type PaidService = "astrology" | "tarot";
-// Firestore collection + reference-code prefix per service. The prefix is
-// re-derived the same way in api/notify-astrology-request.ts.
-const PAID_SERVICES: Record<PaidService, { collection: string; refPrefix: string }> = {
-  astrology: { collection: "astrologyRequests", refPrefix: "AST" },
-  tarot: { collection: "tarotRequests", refPrefix: "TAR" },
+type IntakeVariant = "astrology" | "guidance" | "tarot";
+type GuidancePackage = "individual" | "couple";
+type AstrologyStep = "details" | "payment" | "done";
+type AstrologyForm = {
+  name: string; placeOfBirth: string; dateOfBirth: string; timeOfBirth: string; contact: string; consent: boolean;
+  partnerName: string; partnerPlaceOfBirth: string; partnerDateOfBirth: string; partnerTimeOfBirth: string;
+  question: string;
 };
+const EMPTY_ASTROLOGY_FORM: AstrologyForm = {
+  name: "", placeOfBirth: "", dateOfBirth: "", timeOfBirth: "", contact: "", consent: false,
+  partnerName: "", partnerPlaceOfBirth: "", partnerDateOfBirth: "", partnerTimeOfBirth: "",
+  question: "",
+};
+const INPUT_CLASS = "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2";
 
-type IntakeStep = "details" | "payment" | "done";
-type IntakeForm = { name: string; placeOfBirth: string; dateOfBirth: string; timeOfBirth: string; question: string; contact: string; consent: boolean };
-const EMPTY_INTAKE_FORM: IntakeForm = { name: "", placeOfBirth: "", dateOfBirth: "", timeOfBirth: "", question: "", contact: "", consent: false };
+type BirthDetails = { name: string; placeOfBirth: string; dateOfBirth: string; timeOfBirth: string };
+const BirthDetailsFields = ({ t, nameLabel, values, onChange }: { t: typeof TRANSLATIONS["EN"]["astrologyIntake"], nameLabel: string, values: BirthDetails, onChange: (v: Partial<BirthDetails>) => void }) => (
+  <>
+    <div className="grid gap-2">
+      <label className="text-sm font-medium">{nameLabel}</label>
+      <input required className={INPUT_CLASS} value={values.name} onChange={e => onChange({ name: e.target.value })} />
+    </div>
+    <div className="grid gap-2">
+      <label className="text-sm font-medium">{t.fields.placeOfBirth}</label>
+      <input required placeholder={t.fields.placeOfBirthPlaceholder} className={INPUT_CLASS} value={values.placeOfBirth} onChange={e => onChange({ placeOfBirth: e.target.value })} />
+    </div>
+    <div className="grid grid-cols-2 gap-4">
+      <div className="grid gap-2">
+        <label className="text-sm font-medium">{t.fields.dateOfBirth}</label>
+        <input required type="date" className={INPUT_CLASS} value={values.dateOfBirth} onChange={e => onChange({ dateOfBirth: e.target.value })} />
+      </div>
+      <div className="grid gap-2">
+        <label className="text-sm font-medium">{t.fields.timeOfBirth}</label>
+        <input required type="time" className={INPUT_CLASS} value={values.timeOfBirth} onChange={e => onChange({ timeOfBirth: e.target.value })} />
+      </div>
+    </div>
+    <p className="text-xs text-muted-foreground -mt-2">{t.fields.timeOfBirthHint}</p>
+  </>
+);
 
-const PaidIntakeModal = ({ service, lang, open, onOpenChange, onOpenPrivacy }: { service: PaidService, lang: "EN" | "DE", open: boolean, onOpenChange: (o: boolean) => void, onOpenPrivacy: () => void }) => {
-  const isTarot = service === "tarot";
-  const base = TRANSLATIONS[lang].astrologyIntake;
-  const tarot = TRANSLATIONS[lang].tarotIntake;
-  // tarotIntake only holds the strings that differ from the astrology flow.
-  // Its extra field labels are merged in either way, since only the tarot
-  // form renders them.
-  const t = { ...base, ...(isTarot ? tarot : {}), fields: { ...base.fields, ...tarot.fields } };
-  const { collection: collectionName, refPrefix } = PAID_SERVICES[service];
+const AstrologyIntakeModal = ({ lang, open, onOpenChange, onOpenPrivacy, variant = "astrology", initialPackage = "individual" }: { lang: "EN" | "DE", open: boolean, onOpenChange: (o: boolean) => void, onOpenPrivacy: () => void, variant?: IntakeVariant, initialPackage?: GuidancePackage }) => {
+  const t = TRANSLATIONS[lang].astrologyIntake;
+  const tg = TRANSLATIONS[lang].guidanceIntake;
+  const isGuidance = variant === "guidance";
+  const isTarot = variant === "tarot";
+  const tt = TRANSLATIONS[lang].tarotIntake;
+  const requestCollection = isTarot ? "tarotRequests" : "astrologyRequests";
   const { profile } = useAuth();
-  const [step, setStep] = useState<IntakeStep>("details");
-  const [form, setForm] = useState<IntakeForm>(EMPTY_INTAKE_FORM);
+  const [step, setStep] = useState<AstrologyStep>("details");
+  const [form, setForm] = useState<AstrologyForm>(EMPTY_ASTROLOGY_FORM);
+  const [pkg, setPkg] = useState<GuidancePackage>(initialPackage);
+  const isCouple = isGuidance && pkg === "couple";
+
+  // Each "Book" button can preselect a package; pick it up whenever the
+  // dialog opens fresh on the details step.
+  useEffect(() => {
+    if (open && step === "details") setPkg(initialPackage);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, initialPackage]);
   const [requestId, setRequestId] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [paying, setPaying] = useState(false);
@@ -209,12 +253,14 @@ const PaidIntakeModal = ({ service, lang, open, onOpenChange, onOpenPrivacy }: {
   // Short human-quotable code derived from the Firestore doc ID, shown to
   // the visitor and re-derived server-side (see api/notify-astrology-request.ts)
   // from the same ID — never stored separately, so the two can't drift.
-  const refCode = requestId ? `${refPrefix}-${requestId.slice(-6).toUpperCase()}` : "";
-  const hasServiceDetails = isTarot
+  const refCode = requestId ? `${isGuidance ? "IGS" : isTarot ? "TAR" : "AST"}-${requestId.slice(-6).toUpperCase()}` : "";
+  const partnerValid = !isCouple || Boolean(form.partnerName.trim() && form.partnerPlaceOfBirth.trim() && form.partnerDateOfBirth && form.partnerTimeOfBirth);
+  const detailsValid = isTarot
     ? Boolean(form.question.trim())
-    : Boolean(form.placeOfBirth.trim() && form.dateOfBirth && form.timeOfBirth);
-  const isValid = Boolean(form.name.trim() && hasServiceDetails && form.contact.trim() && form.consent);
-  const whatsappHref = `https://wa.me/${ASTROLOGY_WHATSAPP_NUMBER}?text=${encodeURIComponent(t.whatsappTemplate)}`;
+    : Boolean(form.placeOfBirth.trim() && form.dateOfBirth && form.timeOfBirth && partnerValid);
+  const isValid = Boolean(form.name.trim() && detailsValid && form.contact.trim() && form.consent);
+  const whatsappHref = `https://wa.me/${ASTROLOGY_WHATSAPP_NUMBER}?text=${encodeURIComponent(isGuidance ? tg.whatsappTemplate : isTarot ? tt.whatsappTemplate : t.whatsappTemplate)}`;
+  const priceValue = isGuidance ? tg.packages[pkg].priceValue : isTarot ? tt.priceValue : t.priceValue;
 
   const resetAndClose = () => {
     onOpenChange(false);
@@ -222,7 +268,7 @@ const PaidIntakeModal = ({ service, lang, open, onOpenChange, onOpenPrivacy }: {
     // visibly snap back to step 1 while it's still fading out.
     setTimeout(() => {
       setStep("details");
-      setForm(EMPTY_INTAKE_FORM);
+      setForm(EMPTY_ASTROLOGY_FORM);
       setRequestId(null);
       setError(null);
     }, 300);
@@ -234,7 +280,7 @@ const PaidIntakeModal = ({ service, lang, open, onOpenChange, onOpenPrivacy }: {
     setSubmitting(true);
     setError(null);
     try {
-      const docRef = await addDoc(collection(db, collectionName), {
+      const docRef = await addDoc(collection(db, requestCollection), {
         name: form.name.trim(),
         ...(isTarot
           ? { question: form.question.trim() }
@@ -248,6 +294,16 @@ const PaidIntakeModal = ({ service, lang, open, onOpenChange, onOpenPrivacy }: {
         lang,
         createdAt: serverTimestamp(),
         paymentClaimed: false,
+        ...(isGuidance && {
+          service: "intuitive-guidance",
+          package: pkg,
+          ...(isCouple && {
+            partnerName: form.partnerName.trim(),
+            partnerPlaceOfBirth: form.partnerPlaceOfBirth.trim(),
+            partnerDateOfBirth: form.partnerDateOfBirth,
+            partnerTimeOfBirth: form.partnerTimeOfBirth,
+          }),
+        }),
       });
       setRequestId(docRef.id);
       setStep("payment");
@@ -256,10 +312,10 @@ const PaidIntakeModal = ({ service, lang, open, onOpenChange, onOpenPrivacy }: {
       fetch("/api/notify-astrology-request", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ requestId: docRef.id, kind: "submitted", service }),
-      }).catch(err => console.error(`Failed to notify admin of new ${service} request:`, err));
+        body: JSON.stringify({ requestId: docRef.id, kind: "submitted", ...(isTarot && { collection: "tarotRequests" }) }),
+      }).catch(err => console.error("Failed to notify admin of new astrology request:", err));
     } catch (err) {
-      console.error(`Error submitting ${service} request:`, err);
+      console.error("Error submitting astrology request:", err);
       setError(t.submitError);
     } finally {
       setSubmitting(false);
@@ -271,15 +327,15 @@ const PaidIntakeModal = ({ service, lang, open, onOpenChange, onOpenPrivacy }: {
     setPaying(true);
     setError(null);
     try {
-      await updateDoc(doc(db, collectionName, requestId), { paymentClaimed: true });
+      await updateDoc(doc(db, requestCollection, requestId), { paymentClaimed: true });
       setStep("done");
       fetch("/api/notify-astrology-request", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ requestId, kind: "payment_claimed", service }),
-      }).catch(err => console.error(`Failed to notify admin of ${service} payment claim:`, err));
+        body: JSON.stringify({ requestId, kind: "payment_claimed", ...(isTarot && { collection: "tarotRequests" }) }),
+      }).catch(err => console.error("Failed to notify admin of astrology payment claim:", err));
     } catch (err) {
-      console.error(`Error confirming ${service} payment claim:`, err);
+      console.error("Error confirming astrology payment claim:", err);
       setError(t.paidError);
     } finally {
       setPaying(false);
@@ -292,72 +348,77 @@ const PaidIntakeModal = ({ service, lang, open, onOpenChange, onOpenPrivacy }: {
         {step === "details" && (
           <>
             <DialogHeader>
-              <DialogTitle className="text-2xl font-serif">{t.step1Title}</DialogTitle>
+              <DialogTitle className="text-2xl font-serif">{isGuidance ? tg.step1Title : isTarot ? tt.step1Title : t.step1Title}</DialogTitle>
             </DialogHeader>
             <form onSubmit={handleSubmitDetails} className="grid gap-4 py-2">
-              <div className="grid gap-2">
-                <label className="text-sm font-medium">{t.fields.name}</label>
-                <input
-                  required
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                  value={form.name}
-                  onChange={e => setForm({ ...form, name: e.target.value })}
-                />
-              </div>
+              {isGuidance && (
+                <fieldset className="grid gap-2">
+                  <legend className="text-sm font-medium mb-2">{tg.packageLabel}</legend>
+                  {(["individual", "couple"] as const).map(key => (
+                    <label
+                      key={key}
+                      className={`flex items-center justify-between gap-3 p-3 rounded-xl border cursor-pointer transition-colors ${pkg === key ? "border-primary bg-stone-50" : "border-stone-200 hover:border-primary/40"}`}
+                    >
+                      <span className="flex items-center gap-2 text-sm">
+                        <input type="radio" name="guidance-package" className="h-4 w-4" checked={pkg === key} onChange={() => setPkg(key)} />
+                        {tg.packages[key].title}
+                      </span>
+                      <span className="text-sm font-semibold text-primary whitespace-nowrap">{tg.packages[key].price}</span>
+                    </label>
+                  ))}
+                </fieldset>
+              )}
+              {isCouple && <p className="text-sm font-bold -mb-2">{tg.yourDetailsTitle}</p>}
               {isTarot ? (
-                <div className="grid gap-2">
-                  <label className="text-sm font-medium">{t.fields.question}</label>
-                  <textarea
-                    required
-                    rows={4}
-                    maxLength={1000}
-                    placeholder={t.fields.questionPlaceholder}
-                    className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                    value={form.question}
-                    onChange={e => setForm({ ...form, question: e.target.value })}
-                  />
-                  <p className="text-xs text-muted-foreground">{t.fields.questionHint}</p>
-                </div>
-              ) : (<>
-              <div className="grid gap-2">
-                <label className="text-sm font-medium">{t.fields.placeOfBirth}</label>
-                <input
-                  required
-                  placeholder={t.fields.placeOfBirthPlaceholder}
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                  value={form.placeOfBirth}
-                  onChange={e => setForm({ ...form, placeOfBirth: e.target.value })}
+                <>
+                  <div className="grid gap-2">
+                    <label className="text-sm font-medium">{t.fields.name}</label>
+                    <input required className={INPUT_CLASS} value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} />
+                  </div>
+                  <div className="grid gap-2">
+                    <label className="text-sm font-medium">{tt.fields.question}</label>
+                    <textarea
+                      required
+                      rows={4}
+                      maxLength={1000}
+                      placeholder={tt.fields.questionPlaceholder}
+                      className={`${INPUT_CLASS} h-auto min-h-[80px]`}
+                      value={form.question}
+                      onChange={e => setForm({ ...form, question: e.target.value })}
+                    />
+                    <p className="text-xs text-muted-foreground">{tt.fields.questionHint}</p>
+                  </div>
+                </>
+              ) : (
+                <BirthDetailsFields
+                  t={t}
+                  nameLabel={t.fields.name}
+                  values={{ name: form.name, placeOfBirth: form.placeOfBirth, dateOfBirth: form.dateOfBirth, timeOfBirth: form.timeOfBirth }}
+                  onChange={v => setForm(f => ({ ...f, ...v }))}
                 />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="grid gap-2">
-                  <label className="text-sm font-medium">{t.fields.dateOfBirth}</label>
-                  <input
-                    required
-                    type="date"
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                    value={form.dateOfBirth}
-                    onChange={e => setForm({ ...form, dateOfBirth: e.target.value })}
+              )}
+              {isCouple && (
+                <>
+                  <p className="text-sm font-bold -mb-2 pt-2">{tg.partnerDetailsTitle}</p>
+                  <BirthDetailsFields
+                    t={t}
+                    nameLabel={tg.partnerName}
+                    values={{ name: form.partnerName, placeOfBirth: form.partnerPlaceOfBirth, dateOfBirth: form.partnerDateOfBirth, timeOfBirth: form.partnerTimeOfBirth }}
+                    onChange={v => setForm(f => ({
+                      ...f,
+                      ...(v.name !== undefined && { partnerName: v.name }),
+                      ...(v.placeOfBirth !== undefined && { partnerPlaceOfBirth: v.placeOfBirth }),
+                      ...(v.dateOfBirth !== undefined && { partnerDateOfBirth: v.dateOfBirth }),
+                      ...(v.timeOfBirth !== undefined && { partnerTimeOfBirth: v.timeOfBirth }),
+                    }))}
                   />
-                </div>
-                <div className="grid gap-2">
-                  <label className="text-sm font-medium">{t.fields.timeOfBirth}</label>
-                  <input
-                    required
-                    type="time"
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                    value={form.timeOfBirth}
-                    onChange={e => setForm({ ...form, timeOfBirth: e.target.value })}
-                  />
-                </div>
-              </div>
-              <p className="text-xs text-muted-foreground -mt-2">{t.fields.timeOfBirthHint}</p>
-              </>)}
+                </>
+              )}
               <div className="grid gap-2">
                 <label className="text-sm font-medium">{t.fields.contact}</label>
                 <input
                   required
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  className={INPUT_CLASS}
                   value={form.contact}
                   onChange={e => setForm({ ...form, contact: e.target.value })}
                 />
@@ -372,7 +433,7 @@ const PaidIntakeModal = ({ service, lang, open, onOpenChange, onOpenPrivacy }: {
                   onChange={e => setForm({ ...form, consent: e.target.checked })}
                 />
                 <span>
-                  {t.consentPrefix}{" "}
+                  {isGuidance ? tg.consentPrefix : isTarot ? tt.consentPrefix : t.consentPrefix}{" "}
                   <button type="button" onClick={onOpenPrivacy} className="underline underline-offset-2 hover:text-primary">
                     {t.consentLinkLabel}
                   </button>.
@@ -402,7 +463,8 @@ const PaidIntakeModal = ({ service, lang, open, onOpenChange, onOpenPrivacy }: {
               </div>
               <div>
                 <p className="text-xs font-bold uppercase tracking-wider text-primary/50 mb-1">{t.priceLabel}</p>
-                <p className="text-lg font-semibold">{t.priceValue}</p>
+                {isGuidance && <p className="text-sm text-muted-foreground">{tg.packages[pkg].title}</p>}
+                <p className="text-lg font-semibold">{priceValue}</p>
               </div>
               <div className="grid sm:grid-cols-2 gap-4">
                 <div className="p-4 rounded-xl border border-stone-100 space-y-2">
@@ -445,7 +507,7 @@ const PaidIntakeModal = ({ service, lang, open, onOpenChange, onOpenPrivacy }: {
             <div className="space-y-4 py-2">
               <div className="flex items-start gap-3">
                 <CheckCircle2 className="w-6 h-6 text-primary shrink-0 mt-0.5" />
-                <p className="text-muted-foreground">{t.confirmationBody}</p>
+                <p className="text-muted-foreground">{isTarot ? tt.confirmationBody : t.confirmationBody}</p>
               </div>
               <p className="text-sm">
                 <span className="text-muted-foreground">{t.confirmationSentTo}</span>{" "}
@@ -641,7 +703,7 @@ const BlogCard = ({ blog, lang }: { blog: any, lang: "EN" | "DE", key?: any }) =
   );
 };
 
-// The two "openInModal" service cards (external interactive tools hosted on
+// The "openInModal" service cards (external interactive tools hosted on
 // lovable.app) preview in a plain iframe modal — not Niramay's own content,
 // so unlike blog posts they don't get a page of their own.
 const ToolPreviewModal = ({ tool, open, onOpenChange }: { tool: { title: string; link: string } | null, open: boolean, onOpenChange: (o: boolean) => void }) => {
@@ -1251,7 +1313,7 @@ const ServiceCard = ({ service, index, lang, onLearnMore }: { service: any, inde
 // Each in-house service's own indexable page at /services/:id — replaces
 // the old ServiceDetailModal (a same-content popup with no URL of its own,
 // so Google had nothing to rank "Reiki Ostfildern" or "Vedic Astrology
-// Germany" against). Services with an external `link` (the two
+// Germany" against). Services with an external `link` (the
 // "openInModal" interactive-tool cards) don't get one: they're not content
 // Niramay owns, so a dedicated page for them would just be thin/duplicate.
 // NLP Coaching, Hypnotherapy and Past Life Regression were merged into one
@@ -1265,7 +1327,7 @@ const MERGED_SERVICE_IDS: Record<string, string> = {
 
 const ServicePage = () => {
   const { id } = useParams<{ id: string }>();
-  const { lang, onBook, onBookPaid } = useOutletContext<LayoutContext>();
+  const { lang, onBook, onBookAstrology, onBookGuidance, onBookTarot } = useOutletContext<LayoutContext>();
   const service = SERVICES.find(s => s.id === id && !s.openInModal);
 
   const t = TRANSLATIONS[lang].services;
@@ -1274,6 +1336,10 @@ const ServicePage = () => {
   const ta = TRANSLATIONS[lang].astrology;
   const content = service?.[lang];
   const isAstrology = service?.id === "astrology";
+  // Like astrology, this one is pay-first: chart prep needs birth details
+  // and the session is confirmed only once payment is in.
+  const isGuidance = service?.id === "intuitive-guidance";
+  const tg = TRANSLATIONS[lang].guidanceIntake;
   const prefix = langPrefix(lang);
   const canonical = `${SITE_URL}${prefix}/services/${id}`;
   const enUrl = `${SITE_URL}/services/${id}`;
@@ -1320,11 +1386,16 @@ const ServicePage = () => {
 
   const otherServices = SERVICES.filter(s => !s.openInModal && s.id !== service.id);
   const handleBook = () => {
-    if (service.id === "astrology" || service.id === "tarot") {
-      // Astrology and Tarot don't use the self-serve calendar: an
-      // appointment can't be offered until the session details and advance
-      // payment are in, so they get their own pay-first intake flow.
-      onBookPaid(service.id);
+    if (isAstrology) {
+      // Astrology doesn't use the self-serve calendar: an appointment can't
+      // be offered until birth details and advance payment are in, so it
+      // gets its own intake flow.
+      onBookAstrology();
+    } else if (isGuidance) {
+      onBookGuidance();
+    } else if (service.id === "tarot") {
+      // Also pay-first: the reading is scheduled once payment is in.
+      onBookTarot();
     } else {
       onBook({
         title: content.title,
@@ -1371,6 +1442,61 @@ const ServicePage = () => {
                 </li>
               ))}
             </ul>
+          </div>
+        )}
+
+        {"receive" in content && content.receive && (
+          <div className="mb-10">
+            <h2 className="text-2xl font-serif font-bold mb-6">{content.receiveTitle}</h2>
+            <ul className="space-y-4">
+              {content.receive.map((item, idx) => (
+                <li key={idx} className="flex items-start gap-3">
+                  <CheckCircle2 className="w-5 h-5 text-primary mt-0.5 shrink-0" />
+                  <span className="text-muted-foreground leading-relaxed">
+                    <span className="font-bold text-foreground">{item.title}:</span> {item.description}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {"offerings" in content && content.offerings && (
+          <div className="mb-10">
+            <h2 className="text-2xl font-serif font-bold mb-6">{content.offeringsTitle}</h2>
+            <div className="grid sm:grid-cols-2 gap-4">
+              {content.offerings.map((offer, idx) => (
+                <div key={idx} className="bg-stone-50 p-6 rounded-2xl border border-stone-100 flex flex-col">
+                  <p className="font-serif text-xl font-bold mb-4">{idx + 1}. {offer.title}</p>
+                  <dl className="space-y-2 text-sm mb-4">
+                    <div>
+                      <dt className="inline font-bold">{sp.formatLabel}: </dt>
+                      <dd className="inline text-muted-foreground">{offer.format}</dd>
+                    </div>
+                    <div>
+                      <dt className="inline font-bold">{sp.priceLabel}: </dt>
+                      <dd className="inline text-primary font-semibold">{offer.price}</dd>
+                    </div>
+                  </dl>
+                  <p className="text-xs font-bold uppercase tracking-wider text-primary/50 mb-2">{sp.inclusionsLabel}</p>
+                  <ul className="space-y-2">
+                    {offer.inclusions.map((inc, i) => (
+                      <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground leading-relaxed">
+                        <CheckCircle2 className="w-4 h-4 text-primary mt-0.5 shrink-0" />
+                        <span>{inc}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  {isGuidance && (
+                    <div className="mt-auto pt-5">
+                      <Button variant="outline" className="rounded-full" onClick={() => onBookGuidance(offer.package)}>
+                        {tg.bookThisBtn}
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
           </div>
         )}
 
@@ -1442,7 +1568,7 @@ const ServicePage = () => {
         <div className="flex flex-wrap items-center gap-4 mb-20">
           <Button size="lg" className="rounded-full px-8 gap-2" onClick={handleBook}>
             <Sparkles className="w-4 h-4" />
-            {isAstrology ? ta.cta : ("ctaLabel" in content && content.ctaLabel) || nav.bookNow}
+            {isAstrology ? ta.cta : isGuidance ? tg.cta : ("ctaLabel" in content && content.ctaLabel) || nav.bookNow}
           </Button>
           <a
             href={`https://wa.me/4915175315761?text=${encodeURIComponent(`Hi, I'm interested in "${content.title}".`)}`}
@@ -2781,9 +2907,10 @@ const AppLayout = () => {
   const [legalModal, setLegalModal] = useState<"impressum" | "privacy" | null>(null);
   const [bookingContext, setBookingContext] = useState<BookingContext | null>(null);
   const openBooking = (ctx: BookingContext = {}) => setBookingContext(ctx);
-  const [paidIntake, setPaidIntake] = useState<PaidService | null>(null);
-  // Kept after close so the dialog doesn't swap content mid-fade-out.
-  const [paidIntakeService, setPaidIntakeService] = useState<PaidService>("astrology");
+  const [astrologyIntakeOpen, setAstrologyIntakeOpen] = useState(false);
+  const [guidanceIntakeOpen, setGuidanceIntakeOpen] = useState(false);
+  const [guidancePackage, setGuidancePackage] = useState<GuidancePackage>("individual");
+  const [tarotIntakeOpen, setTarotIntakeOpen] = useState(false);
 
   useEffect(() => {
     document.documentElement.lang = lang.toLowerCase();
@@ -2831,7 +2958,7 @@ const AppLayout = () => {
       "https://www.youtube.com/@richaniramayme",
       GOOGLE_MAPS_URL,
     ],
-    // Only the sessions Niramay delivers directly — the two "openInModal"
+    // Only the sessions Niramay delivers directly — the "openInModal"
     // entries just link out to standalone third-party tools, not a service
     // Niramay itself provides, so they don't belong in this list.
     makesOffer: SERVICES.filter(s => !s.openInModal).map(s => ({
@@ -2851,7 +2978,7 @@ const AppLayout = () => {
     <div className="min-h-screen selection:bg-primary/20">
       <ScrollManager />
       <Navbar lang={lang} onToggleLang={toggleLang} onBook={openBooking} />
-      <Outlet context={{ lang, onBook: openBooking, onBookPaid: (svc) => { setPaidIntakeService(svc); setPaidIntake(svc); }, onOpenLegal: setLegalModal } satisfies LayoutContext} />
+      <Outlet context={{ lang, onBook: openBooking, onBookAstrology: () => setAstrologyIntakeOpen(true), onBookGuidance: (pkg = "individual") => { setGuidancePackage(pkg); setGuidanceIntakeOpen(true); }, onBookTarot: () => setTarotIntakeOpen(true), onOpenLegal: setLegalModal } satisfies LayoutContext} />
       <Footer lang={lang} onOpenLegal={setLegalModal} />
 
       <LegalModal
@@ -2868,11 +2995,27 @@ const AppLayout = () => {
         lang={lang}
       />
 
-      <PaidIntakeModal
-        service={paidIntakeService}
+      <AstrologyIntakeModal
         lang={lang}
-        open={!!paidIntake}
-        onOpenChange={(o) => !o && setPaidIntake(null)}
+        open={astrologyIntakeOpen}
+        onOpenChange={setAstrologyIntakeOpen}
+        onOpenPrivacy={() => setLegalModal("privacy")}
+      />
+
+      <AstrologyIntakeModal
+        variant="guidance"
+        initialPackage={guidancePackage}
+        lang={lang}
+        open={guidanceIntakeOpen}
+        onOpenChange={setGuidanceIntakeOpen}
+        onOpenPrivacy={() => setLegalModal("privacy")}
+      />
+
+      <AstrologyIntakeModal
+        variant="tarot"
+        lang={lang}
+        open={tarotIntakeOpen}
+        onOpenChange={setTarotIntakeOpen}
         onOpenPrivacy={() => setLegalModal("privacy")}
       />
 
@@ -2897,7 +3040,7 @@ const HomePage = () => {
     alternates: { en: `${SITE_URL}/`, de: `${SITE_URL}/de` },
   });
 
-  // The two "openInModal" service cards link to standalone third-party
+  // The "openInModal" service cards link to standalone third-party
   // tools rather than a page of Niramay's own, so they still open as an
   // iframe preview here instead of routing to /services/:id.
   const handleServiceToolPreview = (service: any) => {

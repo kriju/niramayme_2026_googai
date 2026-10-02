@@ -55,7 +55,9 @@ service cloud.firestore {
     // way in.
     function isValidAstrologyRequest(data) {
       return data.keys().hasAll(['name', 'placeOfBirth', 'dateOfBirth', 'timeOfBirth', 'contact', 'consentAccepted', 'lang', 'createdAt', 'paymentClaimed'])
-          && data.keys().size() <= 9
+          && data.keys().hasOnly(['name', 'placeOfBirth', 'dateOfBirth', 'timeOfBirth', 'contact', 'consentAccepted', 'lang', 'createdAt', 'paymentClaimed',
+                                  'service', 'package', 'partnerName', 'partnerPlaceOfBirth', 'partnerDateOfBirth', 'partnerTimeOfBirth'])
+          && hasValidServiceFields(data)
           && data.name is string && data.name.size() > 0 && data.name.size() <= 100
           && data.placeOfBirth is string && data.placeOfBirth.size() > 0 && data.placeOfBirth.size() <= 200
           && data.dateOfBirth is string && data.dateOfBirth.size() > 0 && data.dateOfBirth.size() <= 20
@@ -67,6 +69,25 @@ service cloud.firestore {
           && data.lang in ['EN', 'DE']
           && data.createdAt is timestamp
           && data.paymentClaimed == false;
+    }
+
+    // Plain Vedic Astrology requests carry none of the optional fields.
+    // Intuitive Guidance & Soul Counseling requests are tagged with `service`
+    // and a `package`; the couple package must also carry the partner's
+    // birth details (the individual one must not).
+    // (Bracket access below: `service` is a reserved word in the rules language.)
+    function hasValidServiceFields(data) {
+      return (!data.keys().hasAny(['service', 'package', 'partnerName', 'partnerPlaceOfBirth', 'partnerDateOfBirth', 'partnerTimeOfBirth']))
+          || (data['service'] == 'intuitive-guidance'
+              && data.keys().hasAll(['package'])
+              && ((data['package'] == 'individual'
+                   && !data.keys().hasAny(['partnerName', 'partnerPlaceOfBirth', 'partnerDateOfBirth', 'partnerTimeOfBirth']))
+                  || (data['package'] == 'couple'
+                      && data.keys().hasAll(['partnerName', 'partnerPlaceOfBirth', 'partnerDateOfBirth', 'partnerTimeOfBirth'])
+                      && data.partnerName is string && data.partnerName.size() > 0 && data.partnerName.size() <= 100
+                      && data.partnerPlaceOfBirth is string && data.partnerPlaceOfBirth.size() > 0 && data.partnerPlaceOfBirth.size() <= 200
+                      && data.partnerDateOfBirth is string && data.partnerDateOfBirth.size() > 0 && data.partnerDateOfBirth.size() <= 20
+                      && data.partnerTimeOfBirth is string && data.partnerTimeOfBirth.size() > 0 && data.partnerTimeOfBirth.size() <= 20)));
     }
 
     // Tarot intake helper — same pay-first flow as astrology, but holds the
