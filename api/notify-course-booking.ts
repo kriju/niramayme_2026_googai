@@ -13,12 +13,21 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const CONTACT_EMAIL = "riju.kansal@niramay.me";
 
 type NotifyKind = "submitted" | "payment_claimed";
-type CourseId = "yoga-stress-immunity-sleep";
+type CourseId = "yoga-stress-immunity-sleep" | "yoga-adventure";
 type Lang = "EN" | "DE";
 
 // Kept in sync by hand with the bookable COURSES entries in src/constants.ts
 // (duplicated rather than imported, same reasoning as api/sitemap.ts).
-const COURSES: Record<CourseId, Record<Lang, { title: string; schedule: string; price: string }>> = {
+// `sessions` (multi-date workshops) maps the booking's chosen `session` id to
+// its schedule, overriding the course-level one; `inrPrice` adds UPI payment;
+// `contactEmail` overrides CONTACT_EMAIL for questions/replies (keep in sync
+// with the COURSES entry in src/constants.ts).
+type CourseInfo = Record<Lang, { title: string; schedule: string; price: string }> & {
+  inrPrice?: string;
+  contactEmail?: string;
+  sessions?: Record<string, Record<Lang, string>>;
+};
+const COURSES: Record<CourseId, CourseInfo> = {
   "yoga-stress-immunity-sleep": {
     EN: {
       title: "Yoga for Stress, Immunity & Sleep: 8-Session Series",
@@ -29,6 +38,30 @@ const COURSES: Record<CourseId, Record<Lang, { title: string; schedule: string; 
       title: "Yoga für Stress, Immunität & Schlaf: Serie mit 8 Einheiten",
       schedule: "jeden Dienstag & Donnerstag, 20:00–21:00 Uhr (deutsche Zeit), 4 Wochen lang ab Dienstag, 3. November 2026",
       price: "79 €",
+    },
+  },
+  "yoga-adventure": {
+    EN: {
+      title: "Yoga Adventure – Move • Breathe • Play • Discover! (kids 9–14)",
+      schedule: "on the date you chose",
+      price: "€15",
+    },
+    DE: {
+      title: "Yoga-Abenteuer – Bewegen • Atmen • Spielen • Entdecken! (Kinder 9–14)",
+      schedule: "am gewählten Termin",
+      price: "15 €",
+    },
+    inrPrice: "₹1500",
+    contactEmail: "richa@niramay.me",
+    sessions: {
+      "2026-10-24": {
+        EN: "on Saturday, 24 October, 12:30–2:00 pm European time (4:00–5:30 pm IST)",
+        DE: "am Samstag, 24. Oktober, 12:30–14:00 Uhr europäische Zeit (16:00–17:30 Uhr IST)",
+      },
+      "2026-10-29": {
+        EN: "on Thursday, 29 October, 11:30 am–1:00 pm European time (4:00–5:30 pm IST)",
+        DE: "am Donnerstag, 29. Oktober, 11:30–13:00 Uhr europäische Zeit (16:00–17:30 Uhr IST)",
+      },
     },
   },
 };
@@ -64,6 +97,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // stored separately, so the two can't drift.
     const refCode = `CRS-${requestId.slice(-6).toUpperCase()}`;
     const lang: Lang = booking.lang === "DE" ? "DE" : "EN";
+    const session = course.sessions?.[booking.session];
 
     const createdAt: Date = booking.createdAt?.toDate ? booking.createdAt.toDate() : new Date();
     const formattedDate = new Intl.DateTimeFormat("en-GB", {
@@ -80,7 +114,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       },
     });
 
-    const adminParams = { refCode, kind, booking, formattedDate, courseTitle: course.EN.title, price: course.EN.price };
+    const adminParams = {
+      refCode, kind, booking, formattedDate,
+      courseTitle: course.EN.title,
+      price: course.inrPrice ? `${course.EN.price} / ${course.inrPrice}` : course.EN.price,
+      session: session?.EN,
+    };
     await transporter.sendMail({
       from: process.env.GMAIL_USER,
       to: process.env.COURSE_NOTIFY_EMAIL || `${CONTACT_EMAIL}, richa@niramay.me`,
@@ -93,11 +132,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     });
 
     if (EMAIL_RE.test(String(booking.email || "").trim())) {
-      const customerParams = { refCode, kind, lang, name: booking.name, ...course[lang] };
+      const customerParams = {
+        refCode, kind, lang, name: booking.name, ...course[lang],
+        schedule: session?.[lang] ?? course[lang].schedule,
+        inrPrice: course.inrPrice,
+        contactEmail: course.contactEmail ?? CONTACT_EMAIL,
+      };
       await transporter.sendMail({
         from: process.env.GMAIL_USER,
         to: booking.email,
-        replyTo: CONTACT_EMAIL,
+        replyTo: course.contactEmail ?? CONTACT_EMAIL,
         subject: customerSubject(customerParams),
         text: renderCustomerEmailText(customerParams),
         html: renderCustomerEmailHtml(customerParams),
@@ -118,25 +162,27 @@ type AdminParams = {
   formattedDate: string;
   courseTitle: string;
   price: string;
+  session?: string;
 };
 
-function renderAdminEmailText({ refCode, kind, booking, formattedDate, courseTitle, price }: AdminParams) {
+function renderAdminEmailText({ refCode, kind, booking, formattedDate, courseTitle, price, session }: AdminParams) {
   return [
     kind === "submitted" ? "New course booking (awaiting payment)" : "Payment claimed for a course booking",
     `Submitted ${formattedDate} (Europe/Berlin) — ref ${refCode} — language: ${booking.lang}`,
     "",
     `Course: ${courseTitle} (${price})`,
+    ...(session ? [`Session: ${session}`] : []),
     `Name: ${booking.name}`,
     `Email: ${booking.email}`,
     `WhatsApp: ${booking.whatsapp}`,
     `Notes: ${booking.notes || "—"}`,
     `Payment claimed: ${booking.paymentClaimed ? "Yes" : "No"}`,
     "",
-    `Look for ${refCode} in the payment note (PayPal remark or bank transfer reference) to match the payment. Remember to email them the meeting link one day before the session.`,
+    `Look for ${refCode} in the payment note (PayPal/UPI remark or bank transfer reference) to match the payment. Remember to email them the meeting link one day before the session.`,
   ].join("\n");
 }
 
-function renderAdminEmailHtml({ refCode, kind, booking, formattedDate, courseTitle, price }: AdminParams) {
+function renderAdminEmailHtml({ refCode, kind, booking, formattedDate, courseTitle, price, session }: AdminParams) {
   const row = (label: string, value: string) => `
       <tr>
         <td style="padding: 6px 0; color: #78716c; width: 160px; vertical-align: top;">${label}</td>
@@ -151,6 +197,7 @@ function renderAdminEmailHtml({ refCode, kind, booking, formattedDate, courseTit
 
     <table style="width: 100%; border-collapse: collapse; margin: 16px 0;">
       ${row("Course", `<strong>${escapeHtml(courseTitle)}</strong> (${escapeHtml(price)})`)}
+      ${session ? row("Session", escapeHtml(session)) : ""}
       ${row("Name", `<strong>${escapeHtml(booking.name)}</strong>`)}
       ${row("Email", escapeHtml(booking.email))}
       ${row("WhatsApp", escapeHtml(booking.whatsapp))}
@@ -159,7 +206,7 @@ function renderAdminEmailHtml({ refCode, kind, booking, formattedDate, courseTit
     </table>
 
     <div style="background: #f5f5f4; border-radius: 12px; padding: 16px; margin-bottom: 24px;">
-      Look for <strong>${escapeHtml(refCode)}</strong> in the payment note (PayPal remark or bank transfer reference) to match the payment.
+      Look for <strong>${escapeHtml(refCode)}</strong> in the payment note (PayPal/UPI remark or bank transfer reference) to match the payment.
       Remember to email them the meeting link one day before the session.
     </div>
 
@@ -178,6 +225,8 @@ type CustomerParams = {
   title: string;
   schedule: string;
   price: string;
+  inrPrice?: string;
+  contactEmail: string;
 };
 
 function customerSubject({ refCode, kind, lang, title }: CustomerParams) {
@@ -187,16 +236,16 @@ function customerSubject({ refCode, kind, lang, title }: CustomerParams) {
 
 // Paragraphs shared by the text and HTML bodies; `code` marks where the
 // reference code is shown on a line of its own.
-function customerParagraphs({ refCode, kind, lang, title, schedule, price }: CustomerParams): (string | { code: string })[] {
+function customerParagraphs({ refCode, kind, lang, title, schedule, price, inrPrice, contactEmail }: CustomerParams): (string | { code: string })[] {
   const de = lang === "DE";
   const questions = de
-    ? `Bei Fragen schreiben Sie uns jederzeit an ${CONTACT_EMAIL} (oder antworten Sie einfach auf diese E-Mail).`
-    : `If you have any questions, email us at ${CONTACT_EMAIL} (or simply reply to this email).`;
+    ? `Bei Fragen schreiben Sie uns jederzeit an ${contactEmail} (oder antworten Sie einfach auf diese E-Mail).`
+    : `If you have any questions, email us at ${contactEmail} (or simply reply to this email).`;
   if (kind === "payment_claimed") {
     return [
       de
-        ? `vielen Dank für Ihre Anmeldung zu „${title}“ – wir haben Ihre Zahlungsmeldung für Referenz ${refCode} erhalten. Die Einheiten finden ${schedule} online statt.`
-        : `Thank you for joining "${title}" — we've received your payment for reference ${refCode}. The sessions take place online ${schedule}.`,
+        ? `vielen Dank für Ihre Anmeldung zu „${title}“ – wir haben Ihre Zahlungsmeldung für Referenz ${refCode} erhalten. Der Kurs findet ${schedule} online statt.`
+        : `Thank you for joining "${title}" — we've received your payment for reference ${refCode}. It takes place online ${schedule}.`,
       de
         ? "Sie erhalten den Online-Meeting-Link einen Tag vor der Einheit per E-Mail an diese Adresse."
         : "You will receive the online meeting link by email at this address one day before the session.",
@@ -207,8 +256,8 @@ function customerParagraphs({ refCode, kind, lang, title, schedule, price }: Cus
     de ? `vielen Dank für Ihre Reservierung: ${title}. Ihr Referenzcode ist:` : `Thank you for reserving your place: ${title}. Your reference code is:`,
     { code: refCode },
     de
-      ? `Bitte zahlen Sie ${price} per PayPal (richa@niramay.me) oder Überweisung (IBAN DE08 1001 1001 2721 9373 31, BIC NTSBDEB1XXX) und geben Sie diesen Code als Verwendungszweck an. Klicken Sie danach auf unserer Website auf „Ich habe bezahlt“, um Ihren Platz zu bestätigen.`
-      : `Please pay ${price} via PayPal (richa@niramay.me) or bank transfer (IBAN DE08 1001 1001 2721 9373 31, BIC NTSBDEB1XXX) with this code as the payment note, then click "I've Paid" on our website to confirm your place.`,
+      ? `Bitte zahlen Sie ${price} per PayPal (richa@niramay.me) oder Überweisung (IBAN DE08 1001 1001 2721 9373 31, BIC NTSBDEB1XXX)${inrPrice ? ` bzw. ${inrPrice} per UPI (richa944@icici)` : ""} und geben Sie diesen Code als Verwendungszweck an. Klicken Sie danach auf unserer Website auf „Ich habe bezahlt“, um Ihren Platz zu bestätigen.`
+      : `Please pay ${price} via PayPal (richa@niramay.me) or bank transfer (IBAN DE08 1001 1001 2721 9373 31, BIC NTSBDEB1XXX)${inrPrice ? `, or ${inrPrice} via UPI (richa944@icici),` : ""} with this code as the payment note, then click "I've Paid" on our website to confirm your place.`,
     questions,
   ];
 }
