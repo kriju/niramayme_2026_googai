@@ -2494,6 +2494,27 @@ export const COURSES = [
   }
 ];
 
+// Short items for the announcement bar at the top of every page (see
+// AnnouncementBar in App.tsx). `href` is a site path without the /de prefix
+// (it's added for German pages); `until` is the last day (YYYY-MM-DD, German
+// time) the item is shown, so it drops out on its own once it's over.
+export const ANNOUNCEMENTS: {
+  id: string;
+  href: string;
+  until: string;
+  // `short` is the phone version of `label`; keep it under ~38 characters.
+  EN: { label: string; short: string; cta: string };
+  DE: { label: string; short: string; cta: string };
+}[] = [
+  {
+    id: "yoga-stress-immunity-sleep-2026-11",
+    href: "/courses/yoga-stress-immunity-sleep",
+    until: "2026-11-03",
+    EN: { label: "New online series: Yoga for Stress, Immunity & Sleep · starts 3 Nov", short: "New: Yoga for Stress & Sleep · 3 Nov", cta: "Book now" },
+    DE: { label: "Neue Online-Serie: Yoga für Stress, Immunität & Schlaf · ab 3. Nov.", short: "Neu: Yoga für Stress & Schlaf · 3.11.", cta: "Jetzt buchen" },
+  },
+];
+
 // Curated set of past-event photos, shown in the "Moments From Our Journey" section
 // to build trust by showing Richa & Riju actually teaching. Kept as a small, hand-picked
 // list (not user/admin uploaded) — see EventsSection in App.tsx.

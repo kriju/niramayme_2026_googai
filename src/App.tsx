@@ -56,7 +56,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { NavigationMenu } from "@base-ui/react/navigation-menu";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { SERVICES, TESTIMONIALS, type ClientStory, FAQS, HEALER_CERTIFICATIONS, HEALER_IMAGES, TRANSLATIONS, ONGOING_SESSIONS, COURSES, EVENTS, GOOGLE_CALENDAR_URL, GOOGLE_REVIEW_URL, BUSINESS_STREET_ADDRESS, BUSINESS_POSTAL_CODE, BUSINESS_CITY, GOOGLE_MAPS_URL, GOOGLE_MAPS_EMBED_URL } from "./constants";
+import { SERVICES, TESTIMONIALS, type ClientStory, FAQS, HEALER_CERTIFICATIONS, HEALER_IMAGES, TRANSLATIONS, ONGOING_SESSIONS, COURSES, EVENTS, ANNOUNCEMENTS, GOOGLE_CALENDAR_URL, GOOGLE_REVIEW_URL, BUSINESS_STREET_ADDRESS, BUSINESS_POSTAL_CODE, BUSINESS_CITY, GOOGLE_MAPS_URL, GOOGLE_MAPS_EMBED_URL } from "./constants";
 import { getStoredConsent, grantAnalyticsConsent, denyAnalyticsConsent, initAnalyticsFromStoredConsent, trackPageview } from "./lib/analytics";
 import { SITE_URL, BUSINESS_JSONLD_ID, useJsonLd, useSeo } from "./lib/seo";
 import { responsiveImage } from "./lib/images";
@@ -1368,7 +1368,102 @@ const NavFlatLink = ({ to, children }: { to: string, children: React.ReactNode }
   </NavigationMenu.Item>
 );
 
-const Navbar = ({ lang, onToggleLang, onBook }: { lang: "EN" | "DE", onToggleLang: () => void, onBook: (ctx?: BookingContext) => void }) => {
+// Slim strip above the nav announcing upcoming workshops (ANNOUNCEMENTS in
+// constants.ts). It sits in the normal page flow, so it scrolls away instead
+// of permanently taking screen space on phones; the fixed Navbar is offset
+// below it until the visitor scrolls. Laptops see every item side by side,
+// phones rotate through them one at a time. Dismissing hides the current set
+// of items only, so adding a new workshop brings the bar back.
+const ANNOUNCEMENT_DISMISS_KEY = "niramay-announcement-dismissed";
+const ANNOUNCEMENT_BAR_HEIGHT = "2.5rem";
+
+const useActiveAnnouncements = () => {
+  // Compare calendar days in German time, matching how dates are listed.
+  const today = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Berlin" }).format(new Date());
+  const active = ANNOUNCEMENTS.filter(a => a.until >= today);
+  const signature = active.map(a => a.id).join("|");
+  const [dismissed, setDismissed] = useState(() => {
+    try {
+      return localStorage.getItem(ANNOUNCEMENT_DISMISS_KEY) === signature;
+    } catch {
+      return false;
+    }
+  });
+  const dismiss = () => {
+    setDismissed(true);
+    try {
+      localStorage.setItem(ANNOUNCEMENT_DISMISS_KEY, signature);
+    } catch {
+      // Storage blocked (private mode etc.): hide for this visit only.
+    }
+  };
+  return { items: dismissed ? [] : active, dismiss };
+};
+
+const AnnouncementBar = ({ lang, items, onDismiss }: { lang: "EN" | "DE", items: typeof ANNOUNCEMENTS, onDismiss: () => void }) => {
+  const [index, setIndex] = useState(0);
+  const prefix = langPrefix(lang);
+
+  useEffect(() => {
+    if (items.length < 2) return;
+    const id = setInterval(() => setIndex(i => (i + 1) % items.length), 5000);
+    return () => clearInterval(id);
+  }, [items.length]);
+
+  if (items.length === 0) return null;
+
+  const renderItem = (item: (typeof ANNOUNCEMENTS)[number], className = "") => (
+    <Link
+      key={item.id}
+      to={`${prefix}${item.href}`}
+      className={`group inline-flex items-center gap-2 min-w-0 hover:underline underline-offset-4 ${className}`}
+    >
+      <Sparkles className="w-4 h-4 shrink-0" aria-hidden="true" />
+      <span className="truncate sm:hidden">{item[lang].short}</span>
+      <span className="truncate hidden sm:inline">{item[lang].label}</span>
+      <ArrowRight className="w-3.5 h-3.5 shrink-0 sm:hidden" aria-hidden="true" />
+      <span className="hidden sm:inline-flex items-center gap-1 font-semibold whitespace-nowrap">
+        {item[lang].cta}
+        <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
+      </span>
+    </Link>
+  );
+
+  return (
+    <div
+      role="region"
+      aria-label={lang === "EN" ? "Announcements" : "Ankündigungen"}
+      className="relative z-[60] bg-primary text-primary-foreground text-sm"
+      style={{ height: ANNOUNCEMENT_BAR_HEIGHT }}
+    >
+      <div className="container mx-auto h-full pl-4 pr-11 sm:px-12 flex items-center justify-center">
+        {/* Laptop: all items side by side */}
+        <div className="hidden md:flex items-center gap-6 min-w-0">
+          {items.map((item, i) => (
+            <React.Fragment key={item.id}>
+              {i > 0 && <span aria-hidden="true" className="opacity-60">·</span>}
+              {renderItem(item)}
+            </React.Fragment>
+          ))}
+        </div>
+        {/* Phone: one item at a time */}
+        <div className="flex md:hidden items-center min-w-0" aria-live="polite">
+          {renderItem(items[index % items.length])}
+        </div>
+      </div>
+      <button
+        type="button"
+        onClick={onDismiss}
+        aria-label={lang === "EN" ? "Close announcement" : "Ankündigung schließen"}
+        className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-full opacity-80 hover:opacity-100 hover:bg-white/10 transition"
+      >
+        <X className="w-4 h-4" />
+      </button>
+    </div>
+  );
+};
+
+const Navbar = ({ lang, onToggleLang, onBook, belowAnnouncement = false }: { lang: "EN" | "DE", onToggleLang: () => void, onBook: (ctx?: BookingContext) => void, belowAnnouncement?: boolean }) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const t = TRANSLATIONS[lang].nav;
@@ -1391,7 +1486,10 @@ const Navbar = ({ lang, onToggleLang, onBook }: { lang: "EN" | "DE", onToggleLan
   const closeMobileMenu = () => setIsMobileMenuOpen(false);
 
   return (
-    <nav className={`fixed top-0 w-full z-50 transition-all duration-300 ${isScrolled ? "bg-background/80 backdrop-blur-md border-b py-3" : "bg-transparent py-6"}`}>
+    <nav
+      className={`fixed top-0 w-full z-50 transition-all duration-300 ${isScrolled ? "bg-background/80 backdrop-blur-md border-b py-3" : "bg-transparent py-6"}`}
+      style={belowAnnouncement && !isScrolled ? { top: ANNOUNCEMENT_BAR_HEIGHT } : undefined}
+    >
       <div className="container mx-auto px-6 flex justify-between items-center">
         <Link to={prefix || "/"} className="flex items-center gap-2 shrink-0">
           <img src="/logo.svg" alt="Niramay Logo" className="w-10 h-10 object-contain shrink-0" referrerPolicy="no-referrer" />
@@ -3702,6 +3800,7 @@ const AppLayout = () => {
   const [guidancePackage, setGuidancePackage] = useState<GuidancePackage>("individual");
   const [tarotIntakeOpen, setTarotIntakeOpen] = useState(false);
   const [courseBookingId, setCourseBookingId] = useState<string | null>(null);
+  const { items: announcements, dismiss: dismissAnnouncements } = useActiveAnnouncements();
 
   useEffect(() => {
     document.documentElement.lang = lang.toLowerCase();
@@ -3768,7 +3867,8 @@ const AppLayout = () => {
   return (
     <div className="min-h-screen selection:bg-primary/20">
       <ScrollManager />
-      <Navbar lang={lang} onToggleLang={toggleLang} onBook={openBooking} />
+      <AnnouncementBar lang={lang} items={announcements} onDismiss={dismissAnnouncements} />
+      <Navbar lang={lang} onToggleLang={toggleLang} onBook={openBooking} belowAnnouncement={announcements.length > 0} />
       <Outlet context={{ lang, onBook: openBooking, onBookAstrology: () => setAstrologyIntakeOpen(true), onBookReiki: setReikiPackage, onBookGuidance: (pkg = "individual") => { setGuidancePackage(pkg); setGuidanceIntakeOpen(true); }, onBookTarot: () => setTarotIntakeOpen(true), onBookCourse: setCourseBookingId, onOpenLegal: setLegalModal } satisfies LayoutContext} />
       <Footer lang={lang} onOpenLegal={setLegalModal} />
 
