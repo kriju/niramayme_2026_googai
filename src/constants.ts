@@ -78,6 +78,7 @@ export const TRANSLATIONS = {
       breadcrumbServices: "Services",
       otherServicesTitle: "Explore Other Services",
       whatsappCta: "Or message us on WhatsApp",
+      clientsSayTitle: "What clients say",
       formatLabel: "Format",
       priceLabel: "Investment",
       inclusionsLabel: "Inclusions",
@@ -106,7 +107,15 @@ export const TRANSLATIONS = {
     },
     testimonials: {
       title: "Real Stories of Transformation",
-      description: "Hear from those who have walked the path of healing with us.",
+      description: "In their own words: messages clients sent Richa after their sessions, shared here with their permission.",
+      via: "via",
+      client: "Client",
+      originalIn: { EN: "Original in English", HI: "Original in Hindi" },
+      translationLabel: "Translation",
+      seeOriginal: "See original message",
+      originalAlt: "Screenshot of the original message, cropped and with personal details removed",
+      readMore: "Read more",
+      showLess: "Show less",
       googleReview: "Review us on Google",
       leaveReview: "Leave a Review",
       modalTitle: "Share Your Experience",
@@ -160,13 +169,10 @@ export const TRANSLATIONS = {
     },
     courses: {
       title: "Courses",
-      description: "Structured, multi-week courses and workshops taught by Richa & Riju — currently offered through VHS Ostfildern, with more course partners to come.",
+      description: "Structured, multi-week courses and workshops taught by Richa & Riju — online series you can book right here, plus courses offered through VHS Ostfildern.",
       by: "by",
       registerVia: "Register via",
       courseNo: "Course No.",
-      pastTitle: "Past Courses",
-      pastDescription: "Courses we've already taught — a look at our track record.",
-      pastBadge: "Completed",
       contactNote: "Questions about a course? Reach out via WhatsApp or email us at richa@niramay.me",
     },
     booking: {
@@ -251,6 +257,10 @@ export const TRANSLATIONS = {
             {
               title: "10. Reiki Session Requests",
               content: "If you book or request a Reiki session, we collect your name, email address, WhatsApp number and what you would like Reiki support with through our booking form, solely to arrange and deliver your session and to send you a confirmation email. This data is shared with Richa (richa@niramay.me) to contact you about next steps, is stored only for as long as needed to arrange and deliver your session, and is not shared with third parties. In-person sessions are scheduled via Google Calendar (see section 4). You must actively confirm your consent before this data is submitted, and you may withdraw consent and request deletion of this data at any time by contacting richa@niramay.me."
+            },
+            {
+              title: "11. Online Course Bookings",
+              content: "If you book an online course (such as the Yoga for Stress, Immunity & Sleep series), we collect your name, email address, WhatsApp number and any optional notes you give us through our booking form, solely to organise the course, match your payment, send you a confirmation email and email you the online meeting link before the session. This data is shared with Riju (riju.kansal@niramay.me) and Richa (richa@niramay.me), is stored only for as long as needed to run the course and handle payment, and is not shared with third parties. You must actively confirm your consent before this data is submitted, and you may withdraw consent and request deletion of this data at any time by contacting riju.kansal@niramay.me."
             }
           ]
         }
@@ -327,6 +337,8 @@ export const TRANSLATIONS = {
       breadcrumbBlog: "Blog",
       listenLabel: "Listen to this article",
       otherPostsTitle: "More Posts",
+      byline: "Written by",
+      authoredBy: "Article authored by",
     },
     engagement: {
       like: "Like",
@@ -517,8 +529,8 @@ export const TRANSLATIONS = {
       packages: {
         "in-person": {
           title: "In-Person Reiki Immersion",
-          format: "In-Person (45–60 mins)",
-          investment: "€40 – €60",
+          format: "In-Person (45 mins)",
+          investment: "€40",
           focus: "Deep somatic reset, tactile energetic recalibration, and localized tension release.",
           cta: "Book In-Person Session",
         },
@@ -565,7 +577,6 @@ export const TRANSLATIONS = {
       refCodeLabel: "Your reference code",
       refCodeNote: "Include this in your payment note so we can match it to your booking quickly.",
       priceLabel: "Price",
-      inPersonPriceNote: "€40 for 45 minutes, up to €60 for 60 minutes — please pay the amount matching the slot you booked.",
       paymentEURTitle: "Pay in EUR",
       paypalLabel: "PayPal",
       paypalNote: "Usually confirmed within hours.",
@@ -578,6 +589,84 @@ export const TRANSLATIONS = {
       inPersonConfirmationBody: "We've noted your payment claim and will confirm your in-person session within 24–48 hours.",
       distanceConfirmationBody: "Your request has been sent to Richa. She will get in touch with you for the next steps.",
       confirmationSentTo: "A confirmation email has been sent to:",
+      closeBtn: "Close",
+    },
+    yogaSeries: {
+      badge: "Online · 8-Session Series",
+      seoTitle: "Yoga for Stress, Immunity & Sleep — 8-Session Online Series | Niramay Wellbeing",
+      seoDescription: "An 8-session live online yoga series (Tue & Thu, 8–9 pm, 4 weeks) with gentle stretching, breathing, meditation and deep relaxation to improve stress handling, immunity and sleep. €79.",
+      breadcrumbCourses: "Courses",
+      intro: "A gentle, structured 4-week online series to calm your nervous system, strengthen your body's natural defences and help you sleep more deeply. Each live session builds on the last, so by the end you have a simple routine you can keep using on your own.",
+      scheduleLabel: "Schedule",
+      schedule: "Every Tuesday & Thursday, 8:00–9:00 pm (German time), starting Tuesday, 3 November 2026",
+      durationLabel: "Duration",
+      duration: "4 weeks · 3–26 November 2026 · 8 sessions in total",
+      formatLabel: "Format",
+      format: "Live online — the meeting link is emailed one day before the session",
+      priceLabel: "Price",
+      price: "€79 for all 8 sessions",
+      learnTitle: "What You Will Learn",
+      learnItems: [
+        { title: "Gentle Stretching & Loosening", description: "Yoga postures that release stiffness and tension held in the body after a long day." },
+        { title: "Breathing Practices", description: "Simple pranayama techniques that calm the mind and settle the nervous system." },
+        { title: "Meditation", description: "Guided practices to quieten mental chatter and build inner steadiness." },
+        { title: "Deep Relaxation", description: "Restorative relaxation techniques that prepare the body for deeper, more restful sleep." },
+      ],
+      benefitsTitle: "Why It Helps",
+      benefits: [
+        "Handle everyday stress with more calm and clarity",
+        "Support your immune system by reducing the strain of chronic stress",
+        "Fall asleep more easily and wake up more rested",
+        "Leave with a simple daily routine you can practise on your own",
+      ],
+      howTitle: "How Booking Works",
+      howSteps: [
+        "Fill in your details and reserve your place.",
+        "Pay €79 via PayPal or bank transfer using your reference code.",
+        "Confirm your payment — you'll receive a confirmation email straight away.",
+        "One day before the session, we email you the online meeting link.",
+      ],
+      blogTitle: "Read More on This Topic",
+      blogDescription: "Learn how yoga works on stress, immunity and sleep in our blog article.",
+      blogLinkLabel: "Stress, Immunity and Sleep: How Yoga Restores Your Balance",
+      questionsNote: "Questions? Email us at",
+      moreInfoBtn: "More Info",
+      bookBtn: "Book & Pay",
+      bookCta: "Book Your Place — €79",
+    },
+    courseIntake: {
+      detailsTitle: "Reserve Your Place",
+      paymentTitle: "Complete Your Payment",
+      selectedLabel: "Selected course",
+      fields: {
+        name: "Full Name",
+        email: "Email",
+        whatsapp: "WhatsApp Number",
+        whatsappPlaceholder: "+49 …",
+        notes: "Anything we should know? (optional)",
+        notesPlaceholder: "e.g. injuries, health conditions, experience with yoga…",
+      },
+      consentPrefix: "I agree to Niramay storing these details to organise my course, per the",
+      consentLinkLabel: "Privacy Policy",
+      continueBtn: "Continue to Payment",
+      backBtn: "Back",
+      submitting: "Submitting...",
+      submitError: "Something went wrong sending your details. Please try again.",
+      refCodeLabel: "Your reference code",
+      refCodeNote: "Include this in your payment note so we can match it to your booking quickly.",
+      priceLabel: "Price",
+      paymentEURTitle: "Pay in EUR",
+      paypalLabel: "PayPal",
+      paypalNote: "Usually confirmed within hours.",
+      bankLabel: "Bank Transfer",
+      bankNote: "SEPA transfers can take 1–2 business days to confirm.",
+      paidBtn: "I've Paid",
+      paidSubmitting: "Confirming...",
+      paidError: "Couldn't confirm your payment claim. Please try again, or email riju.kansal@niramay.me.",
+      confirmationTitle: "You're booked in!",
+      confirmationBody: "Thank you for joining. We'll verify your payment, and you'll receive the online meeting link by email one day before the session.",
+      confirmationSentTo: "A confirmation email has been sent to:",
+      questionsNote: "Questions? Email",
       closeBtn: "Close",
     },
     guidanceIntake: {
@@ -700,6 +789,7 @@ export const TRANSLATIONS = {
       breadcrumbServices: "Leistungen",
       otherServicesTitle: "Weitere Angebote entdecken",
       whatsappCta: "Oder schreiben Sie uns auf WhatsApp",
+      clientsSayTitle: "Das sagen Klientinnen und Klienten",
       formatLabel: "Format",
       priceLabel: "Investition",
       inclusionsLabel: "Enthalten",
@@ -728,7 +818,15 @@ export const TRANSLATIONS = {
     },
     testimonials: {
       title: "Echte Geschichten der Transformation",
-      description: "Hören Sie von denen, die den Weg der Heilung mit uns gegangen sind.",
+      description: "In ihren eigenen Worten: Nachrichten, die Klientinnen und Klienten Richa nach ihren Sitzungen geschickt haben, hier mit ihrer Erlaubnis geteilt.",
+      via: "über",
+      client: "Klient:in",
+      originalIn: { EN: "Originalzitat auf Englisch", HI: "Originalzitat auf Hindi" },
+      translationLabel: "Übersetzung",
+      seeOriginal: "Originalnachricht ansehen",
+      originalAlt: "Screenshot der Originalnachricht, zugeschnitten und ohne persönliche Daten",
+      readMore: "Weiterlesen",
+      showLess: "Weniger anzeigen",
       googleReview: "Bewerten Sie uns auf Google",
       leaveReview: "Bewertung abgeben",
       modalTitle: "Teilen Sie Ihre Erfahrung",
@@ -783,13 +881,10 @@ export const TRANSLATIONS = {
     },
     courses: {
       title: "Kurse",
-      description: "Mehrwöchige Kurse und Workshops von Richa & Riju – aktuell über die VHS Ostfildern buchbar, weitere Kurspartner folgen.",
+      description: "Mehrwöchige Kurse und Workshops von Richa & Riju – Online-Serien, die Sie direkt hier buchen können, sowie Kurse über die VHS Ostfildern.",
       by: "von",
       registerVia: "Anmelden über",
       courseNo: "Kursnr.",
-      pastTitle: "Vergangene Kurse",
-      pastDescription: "Kurse, die wir bereits geleitet haben – ein Einblick in unsere Erfahrung.",
-      pastBadge: "Abgeschlossen",
       contactNote: "Fragen zu einem Kurs? Schreiben Sie uns über WhatsApp oder per E-Mail an richa@niramay.me",
     },
     booking: {
@@ -874,6 +969,10 @@ export const TRANSLATIONS = {
             {
               title: "10. Anfragen für Reiki-Sitzungen",
               content: "Wenn Sie eine Reiki-Sitzung buchen oder anfragen, erfassen wir über unser Buchungsformular Ihren Namen, Ihre E-Mail-Adresse, Ihre WhatsApp-Nummer und wobei Sie sich Unterstützung durch Reiki wünschen, ausschließlich zur Organisation und Durchführung Ihrer Sitzung und zum Versand einer Bestätigungs-E-Mail. Diese Daten werden an Richa (richa@niramay.me) weitergeleitet, damit sie Sie wegen der nächsten Schritte kontaktieren kann, nur so lange gespeichert, wie es für die Organisation und Durchführung Ihrer Sitzung erforderlich ist, und nicht an Dritte weitergegeben. Sitzungen vor Ort werden über Google Calendar terminiert (siehe Abschnitt 4). Sie müssen Ihre Einwilligung vor dem Absenden dieser Daten aktiv bestätigen; Sie können Ihre Einwilligung jederzeit widerrufen und die Löschung dieser Daten verlangen, indem Sie uns unter richa@niramay.me kontaktieren."
+            },
+            {
+              title: "11. Buchungen von Online-Kursen",
+              content: "Wenn Sie einen Online-Kurs buchen (etwa die Serie Yoga für Stress, Immunität & Schlaf), erfassen wir über unser Buchungsformular Ihren Namen, Ihre E-Mail-Adresse, Ihre WhatsApp-Nummer und optionale Hinweise, ausschließlich um den Kurs zu organisieren, Ihre Zahlung zuzuordnen, Ihnen eine Bestätigungs-E-Mail und vor der Einheit den Online-Meeting-Link zu senden. Diese Daten werden an Riju (riju.kansal@niramay.me) und Richa (richa@niramay.me) weitergeleitet, nur so lange gespeichert, wie es für die Durchführung des Kurses und die Zahlungsabwicklung erforderlich ist, und nicht an Dritte weitergegeben. Sie müssen Ihre Einwilligung vor dem Absenden dieser Daten aktiv bestätigen; Sie können Ihre Einwilligung jederzeit widerrufen und die Löschung dieser Daten verlangen, indem Sie uns unter riju.kansal@niramay.me kontaktieren."
             }
           ]
         }
@@ -951,6 +1050,8 @@ export const TRANSLATIONS = {
       breadcrumbBlog: "Blog",
       listenLabel: "Diesen Artikel anhören",
       otherPostsTitle: "Weitere Beiträge",
+      byline: "Geschrieben von",
+      authoredBy: "Artikel verfasst von",
     },
     engagement: {
       like: "Gefällt mir",
@@ -1141,8 +1242,8 @@ export const TRANSLATIONS = {
       packages: {
         "in-person": {
           title: "Reiki-Immersion vor Ort",
-          format: "Vor Ort (45–60 Min.)",
-          investment: "40 – 60 €",
+          format: "Vor Ort (45 Min.)",
+          investment: "40 €",
           focus: "Tiefe somatische Neuausrichtung, spürbare energetische Rekalibrierung und gezieltes Lösen von Verspannungen.",
           cta: "Sitzung vor Ort buchen",
         },
@@ -1189,7 +1290,6 @@ export const TRANSLATIONS = {
       refCodeLabel: "Ihr Referenzcode",
       refCodeNote: "Geben Sie diesen Code als Verwendungszweck an, damit wir die Zahlung schnell Ihrer Buchung zuordnen können.",
       priceLabel: "Preis",
-      inPersonPriceNote: "40 € für 45 Minuten, bis zu 60 € für 60 Minuten — bitte zahlen Sie den Betrag, der zu Ihrem gebuchten Termin passt.",
       paymentEURTitle: "Zahlung in EUR",
       paypalLabel: "PayPal",
       paypalNote: "In der Regel innerhalb weniger Stunden bestätigt.",
@@ -1202,6 +1302,84 @@ export const TRANSLATIONS = {
       inPersonConfirmationBody: "Wir haben Ihre Zahlungsmeldung erhalten und bestätigen Ihre Sitzung vor Ort innerhalb von 24–48 Stunden.",
       distanceConfirmationBody: "Ihre Anfrage wurde an Richa gesendet. Sie meldet sich bei Ihnen, um die nächsten Schritte zu besprechen.",
       confirmationSentTo: "Eine Bestätigungs-E-Mail wurde gesendet an:",
+      closeBtn: "Schließen",
+    },
+    yogaSeries: {
+      badge: "Online · Serie mit 8 Einheiten",
+      seoTitle: "Yoga für Stress, Immunität & Schlaf — Online-Serie mit 8 Einheiten | Niramay Wellbeing",
+      seoDescription: "Eine Live-Online-Yogaserie mit 8 Einheiten (Di & Do, 20–21 Uhr, 4 Wochen) mit sanfter Dehnung, Atemübungen, Meditation und Tiefenentspannung für besseren Umgang mit Stress, ein starkes Immunsystem und erholsamen Schlaf. 79 €.",
+      breadcrumbCourses: "Kurse",
+      intro: "Eine sanfte, strukturierte Online-Serie über 4 Wochen, die Ihr Nervensystem beruhigt, die natürlichen Abwehrkräfte Ihres Körpers stärkt und Ihnen zu tieferem Schlaf verhilft. Jede Live-Einheit baut auf der vorherigen auf – am Ende haben Sie eine einfache Routine, die Sie selbstständig weiterführen können.",
+      scheduleLabel: "Termine",
+      schedule: "Jeden Dienstag & Donnerstag, 20:00–21:00 Uhr (deutsche Zeit), ab Dienstag, 3. November 2026",
+      durationLabel: "Dauer",
+      duration: "4 Wochen · 3.–26. November 2026 · insgesamt 8 Einheiten",
+      formatLabel: "Format",
+      format: "Live online – den Meeting-Link erhalten Sie einen Tag vor der Einheit per E-Mail",
+      priceLabel: "Preis",
+      price: "79 € für alle 8 Einheiten",
+      learnTitle: "Was Sie lernen",
+      learnItems: [
+        { title: "Sanfte Dehnung & Lockerung", description: "Yoga-Haltungen, die Steifheit und Verspannungen nach einem langen Tag lösen." },
+        { title: "Atemübungen", description: "Einfache Pranayama-Techniken, die den Geist beruhigen und das Nervensystem ausgleichen." },
+        { title: "Meditation", description: "Angeleitete Übungen, die das Gedankenkarussell zur Ruhe bringen und innere Stabilität aufbauen." },
+        { title: "Tiefenentspannung", description: "Regenerative Entspannungstechniken, die den Körper auf tieferen, erholsameren Schlaf vorbereiten." },
+      ],
+      benefitsTitle: "Warum es hilft",
+      benefits: [
+        "Gelassener und klarer mit Alltagsstress umgehen",
+        "Das Immunsystem stärken, indem chronischer Stress abgebaut wird",
+        "Leichter einschlafen und erholter aufwachen",
+        "Eine einfache tägliche Routine für die eigene Praxis mitnehmen",
+      ],
+      howTitle: "So funktioniert die Buchung",
+      howSteps: [
+        "Geben Sie Ihre Daten ein und reservieren Sie Ihren Platz.",
+        "Zahlen Sie 79 € per PayPal oder Überweisung mit Ihrem Referenzcode.",
+        "Bestätigen Sie Ihre Zahlung – Sie erhalten sofort eine Bestätigungs-E-Mail.",
+        "Einen Tag vor der Einheit senden wir Ihnen den Online-Meeting-Link per E-Mail.",
+      ],
+      blogTitle: "Mehr zu diesem Thema",
+      blogDescription: "Wie Yoga auf Stress, Immunität und Schlaf wirkt, erfahren Sie in unserem Blogartikel (auf Englisch).",
+      blogLinkLabel: "Stress, Immunity and Sleep: How Yoga Restores Your Balance",
+      questionsNote: "Fragen? Schreiben Sie uns an",
+      moreInfoBtn: "Mehr Infos",
+      bookBtn: "Buchen & bezahlen",
+      bookCta: "Platz buchen — 79 €",
+    },
+    courseIntake: {
+      detailsTitle: "Platz reservieren",
+      paymentTitle: "Zahlung abschließen",
+      selectedLabel: "Gewählter Kurs",
+      fields: {
+        name: "Vollständiger Name",
+        email: "E-Mail",
+        whatsapp: "WhatsApp-Nummer",
+        whatsappPlaceholder: "+49 …",
+        notes: "Gibt es etwas, das wir wissen sollten? (optional)",
+        notesPlaceholder: "z. B. Verletzungen, gesundheitliche Einschränkungen, Yoga-Erfahrung…",
+      },
+      consentPrefix: "Ich bin damit einverstanden, dass Niramay diese Angaben zur Organisation meines Kurses speichert, gemäß der",
+      consentLinkLabel: "Datenschutzerklärung",
+      continueBtn: "Weiter zur Zahlung",
+      backBtn: "Zurück",
+      submitting: "Wird gesendet...",
+      submitError: "Beim Senden Ihrer Angaben ist etwas schiefgelaufen. Bitte versuchen Sie es erneut.",
+      refCodeLabel: "Ihr Referenzcode",
+      refCodeNote: "Bitte geben Sie diesen Code als Verwendungszweck an, damit wir Ihre Zahlung schnell zuordnen können.",
+      priceLabel: "Preis",
+      paymentEURTitle: "Zahlung in EUR",
+      paypalLabel: "PayPal",
+      paypalNote: "In der Regel innerhalb weniger Stunden bestätigt.",
+      bankLabel: "Banküberweisung",
+      bankNote: "SEPA-Überweisungen können 1–2 Werktage bis zur Bestätigung dauern.",
+      paidBtn: "Ich habe bezahlt",
+      paidSubmitting: "Wird bestätigt...",
+      paidError: "Ihre Zahlungsmeldung konnte nicht bestätigt werden. Bitte versuchen Sie es erneut oder schreiben Sie an riju.kansal@niramay.me.",
+      confirmationTitle: "Sie sind angemeldet!",
+      confirmationBody: "Vielen Dank für Ihre Anmeldung. Wir prüfen Ihre Zahlung, und Sie erhalten den Online-Meeting-Link einen Tag vor der Einheit per E-Mail.",
+      confirmationSentTo: "Eine Bestätigungs-E-Mail wurde gesendet an:",
+      questionsNote: "Fragen? Schreiben Sie an",
       closeBtn: "Schließen",
     },
     guidanceIntake: {
@@ -1317,7 +1495,7 @@ export const SERVICES = [
       title: "Reiki Energy Healing",
       description: "Harmonize mind, body & spirit with gentle Japanese energy healing, in person in Ostfildern or as distance Reiki wherever you are in the world.",
       outcome: "Dissolve energetic blockages, calm your nervous system and awaken your body's natural capacity to heal.",
-      price: "Distance from €20 / ₹2,000 · In-person €40 – €60",
+      price: "Distance from €20 / ₹2,000 · In-person €40",
       details: [
         "Reiki is a gentle, non-invasive Japanese energy healing practice that channels universal life force energy (Prana or Ki) to dissolve energetic blockages, calm the nervous system, and awaken your body's natural capacity to heal. When our energy flow is stagnant or disrupted by stress, suppressed emotions, or physical strain, it often manifests as fatigue, emotional heaviness, or physical tension. Reiki restores this sacred balance across your subtle energy centers (chakras), bringing profound lightness and peace.",
       ],
@@ -1326,7 +1504,7 @@ export const SERVICES = [
       title: "Reiki-Energieheilung",
       description: "Bringen Sie Geist, Körper & Seele in Einklang – mit sanfter japanischer Energieheilung, vor Ort in Ostfildern oder als Fern-Reiki, wo auch immer Sie auf der Welt sind.",
       outcome: "Lösen Sie energetische Blockaden, beruhigen Sie Ihr Nervensystem und wecken Sie die natürliche Heilkraft Ihres Körpers.",
-      price: "Fern-Reiki ab 20 € / 2.000 ₹ · Vor Ort 40 – 60 €",
+      price: "Fern-Reiki ab 20 € / 2.000 ₹ · Vor Ort 40 €",
       details: [
         "Reiki ist eine sanfte, nicht-invasive japanische Methode der Energieheilung, die universelle Lebensenergie (Prana oder Ki) leitet, um energetische Blockaden zu lösen, das Nervensystem zu beruhigen und die natürliche Heilkraft Ihres Körpers zu wecken. Wenn unser Energiefluss durch Stress, unterdrückte Gefühle oder körperliche Belastung ins Stocken gerät, zeigt sich das oft als Erschöpfung, emotionale Schwere oder körperliche Anspannung. Reiki stellt dieses heilige Gleichgewicht in Ihren feinstofflichen Energiezentren (Chakren) wieder her und schenkt tiefe Leichtigkeit und Frieden.",
       ],
@@ -1524,45 +1702,197 @@ export const SERVICES = [
   },
 ];
 
-export const TESTIMONIALS = [
+// Real client feedback: messages clients sent Richa on WhatsApp, Instagram
+// and Facebook, each shared here with the client's consent. `quote` is kept
+// verbatim in the client's own language, typos included; "…" marks the only
+// edits (cuts). Two health-outcome passages (back pain, meniscus) were cut
+// on purpose, because German health-advertising law (HWG) is strict about
+// testimonials that suggest a treatment cured something. None of these
+// carry a star rating unless the client gave one, and they are never put
+// into Review/AggregateRating JSON-LD (see TestimonialsSection).
+//
+// `serviceId` puts a story on that service's own page; `featured` puts it in
+// the homepage hero rotation; `screenshot` is a cropped, redacted image of
+// the original message under public/testimonials/.
+export type ClientStory = {
+  id: string;
+  name?: string;
+  category: string;
+  serviceId?: string;
+  source?: "WhatsApp" | "Instagram" | "Facebook";
+  date?: string; // YYYY-MM
+  rating?: number;
+  quote: string;
+  quoteLang: "EN" | "DE" | "HI";
+  translation?: { EN?: string; DE?: string };
+  screenshot?: string;
+  featured?: boolean;
+  EN: { role: string };
+  DE: { role: string };
+};
+
+export const TESTIMONIALS: ClientStory[] = [
   {
-    id: 1,
-    name: "Sarah M.",
-    category: "Mental Clarity",
-    EN: {
-      role: "Burnout Recovery",
-      content: "Richa's blend of NLP and Yoga helped me navigate the most stressful period of my career. I feel more grounded than ever.",
-    },
-    DE: {
-      role: "Burnout-Erholung",
-      content: "Richas Mischung aus NLP und Yoga hat mir geholfen, die stressigste Zeit meiner Karriere zu meistern. Ich fühle mich geerdeter als je zuvor.",
-    }
-  },
-  {
-    id: 2,
-    name: "Thomas K.",
+    id: "story-yoga-beginner-advanced",
     category: "Physical Wellness",
-    EN: {
-      role: "Chronic Pain Management",
-      content: "The personalized yoga sessions in Ostfildern have been a game-changer for my back pain. Highly professional and caring.",
-    },
-    DE: {
-      role: "Chronisches Schmerzmanagement",
-      content: "Die personalisierten Yoga-Sitzungen in Ostfildern waren ein Wendepunkt für meine Rückenschmerzen. Hochprofessionell und fürsorglich.",
-    }
+    serviceId: "yoga",
+    source: "WhatsApp",
+    date: "2024-07",
+    quoteLang: "EN",
+    featured: true,
+    quote: "Hello ladies, just wanted to share my experience of doing yoga with Richa, which was amazing. She's great at making one feel comfortable, whether you're a beginner or advanced. Richa asked me what was my goal and paid attention to how I moved, during the session. She ensured I was getting the most out of each pose and class. Her classes felt peaceful and help relax. What I love most is her kindness and encouragement, which makes every class feel welcoming. If you want to improve your yoga practice and feel more balanced, Richa's classes are perfect for you. Highly recommend.",
+    EN: { role: "Yoga classes" },
+    DE: { role: "Yoga-Kurse" },
   },
   {
-    id: 3,
-    name: "Elena R.",
+    id: "story-tarot-palbhar21",
+    name: "@palbhar21",
+    category: "Tarot Reading",
+    source: "Instagram",
+    date: "2025-08",
+    quoteLang: "EN",
+    featured: true,
+    quote: "Completely AWESTRUCK by the accuracy of it. Thank you so much. Evry interaction with you is so rewarding. Must say you are one of those few healers who truely do it out of their love and kindness for people. Extending genuine comfort and help is at the core of your effort. That's exactly why you ate able to do it so effectively, it's almost magical. Thank you so much",
+    EN: { role: "Tarot reading" },
+    DE: { role: "Tarot-Lesung" },
+  },
+  {
+    id: "story-healing-upasna",
+    name: "Upasna T.",
     category: "Spiritual Healing",
-    EN: {
-      role: "Spiritual Growth",
-      content: "My Reiki sessions with Richa are the highlight of my week. It's a space of pure peace and rejuvenation.",
+    source: "Facebook",
+    date: "2024-07",
+    quoteLang: "EN",
+    featured: true,
+    quote: "The experience after session is really valuable for me, After session I realise the motive of my remaining life ! thanks for giving me this wonderful and healing. Before healing I was confused that what is the motive of my life. Why God send me after session i Got all the answers ...it's wonderful experience thanks Richa for this beautiful gift",
+    EN: { role: "Healing session" },
+    DE: { role: "Heilsitzung" },
+  },
+  {
+    id: "story-yoga-private-richa-b",
+    name: "Richa B.",
+    category: "Physical Wellness",
+    serviceId: "yoga",
+    source: "WhatsApp",
+    quoteLang: "EN",
+    featured: true,
+    screenshot: "/testimonials/yoga-private-sessions.webp",
+    quote: "Hello everyone, I want to share my feedback for the Yoga classes that I am taking Richa. I always wanted to practice yoga but her free session was the one which inspired me to go ahead and take some private sessions. She is an excellent instructor and guides clearly. I can follow her instructions even with closed eyes. I feel light after every session even though I am exhausted before the sessions and above all her voice is so soothing.",
+    EN: { role: "Private yoga sessions" },
+    DE: { role: "Yoga-Einzelstunden" },
+  },
+  {
+    id: "story-tarot-8sunnysideup8",
+    name: "@8sunnysideup8",
+    category: "Tarot Reading",
+    source: "Instagram",
+    date: "2025-08",
+    quoteLang: "EN",
+    featured: true,
+    quote: "I must admit I was a non believer when I got into it. But after having your reading I was almost in shock and blown away with how exact it was. It definitely gave me more clarity into my current situation and welcomed guidance on how to navigate this. I still have goosebumps. Thank you so much for the good work that you're doing",
+    EN: { role: "Tarot reading" },
+    DE: { role: "Tarot-Lesung" },
+  },
+  {
+    id: "story-reiki-mother",
+    category: "Spiritual Healing",
+    serviceId: "reiki",
+    rating: 5,
+    quoteLang: "HI",
+    quote: "Thankyou so much Richa kansal ji . Jab sy aapse REIK HEALING ka Session liya hai tab sy aapko blessings de rahi hai meri mother, Or sabsy badi baat ki aapke baat karne ka tarika or samjhane ka tarika bhi healing sy kaam nahi bilkul stress free kar diya aapne mujhe bhi or meri mother ko bhi . Thankyou so much once again dear . God bless you always . Aap aise hi aage badte rahen or help karte rahen",
+    translation: {
+      EN: "Thank you so much, Richa Kansal ji. Ever since we had a Reiki healing session with you, my mother has been sending you her blessings. And the best part is that the way you talk and explain things is no less than healing. You made both me and my mother completely stress-free. Thank you so much once again, dear. God bless you always. Keep growing like this and keep helping people.",
+      DE: "Vielen herzlichen Dank, Richa Kansal ji. Seit wir bei dir eine Reiki-Sitzung hatten, schickt dir meine Mutter ihren Segen. Und das Schönste ist: Schon die Art, wie du sprichst und Dinge erklärst, ist nicht weniger als Heilung. Du hast mich und meine Mutter ganz stressfrei gemacht. Nochmals vielen Dank, Liebe. Gott segne dich immer. Mach weiter so und hilf weiterhin Menschen.",
     },
-    DE: {
-      role: "Spirituelles Wachstum",
-      content: "Meine Reiki-Sitzungen bei Richa sind der Höhepunkt meiner Woche. Es ist ein Raum des puren Friedens und der Verjüngung.",
-    }
+    EN: { role: "Reiki for my mother and me" },
+    DE: { role: "Reiki für meine Mutter und mich" },
+  },
+  {
+    id: "story-tarot-meetu-verma01",
+    name: "@meetu.verma01",
+    category: "Tarot Reading",
+    source: "Instagram",
+    date: "2025-08",
+    quoteLang: "EN",
+    quote: "Thank you so much for your time it was on spot. You mentioned exactly what is my current situation and helped in giving clarity which I needed. I am really grateful to you I would highly recommend anyone to get in touch with you who has any doubts or questions in their minds .... Once again thank you so much",
+    EN: { role: "Tarot reading" },
+    DE: { role: "Tarot-Lesung" },
+  },
+  {
+    id: "story-reiki-priyanka",
+    name: "Priyanka",
+    category: "Spiritual Healing",
+    serviceId: "reiki",
+    source: "WhatsApp",
+    date: "2024-07",
+    quoteLang: "EN",
+    featured: true,
+    quote: "Hi Richa i am glad to say thank you to you for helping me with the Reiki sessions. … I did Both Distance (Distance Reiki) and In person sessions, From day 1, I feel so good and lots of positivity feel in my body. My best wishes for you in future, May you get lots of success in your life and carrier. Thank you very much",
+    EN: { role: "Distance and in-person Reiki" },
+    DE: { role: "Fern- und Präsenz-Reiki" },
+  },
+  {
+    id: "story-tarot-themessysassy-56",
+    name: "@themessysassy_56",
+    category: "Tarot Reading",
+    source: "Instagram",
+    date: "2025-08",
+    quoteLang: "EN",
+    quote: "Thank you so much for your mini reading!! It gave me the much needed clarity on path forward and definitely put my mind to ease",
+    EN: { role: "Mini tarot reading" },
+    DE: { role: "Mini-Tarot-Lesung" },
+  },
+  {
+    id: "story-yoga-evening",
+    category: "Physical Wellness",
+    serviceId: "yoga",
+    source: "WhatsApp",
+    date: "2024-02",
+    quoteLang: "EN",
+    screenshot: "/testimonials/yoga-evening-session.webp",
+    quote: "Thank you Richa.. It was really lovely and relaxing evening yoga session with you. Enjoyed to the fullest. See you again next Tuesday",
+    EN: { role: "Evening yoga" },
+    DE: { role: "Abend-Yoga" },
+  },
+  {
+    id: "story-tarot-subtly-subtle",
+    name: "@subtly_subtle",
+    category: "Tarot Reading",
+    source: "Instagram",
+    date: "2025-08",
+    quoteLang: "EN",
+    quote: "Thank you so much the reading resonated with me very well and brought clarity. It wasn't a short but quiet detailed reading according to me.",
+    EN: { role: "Tarot reading" },
+    DE: { role: "Tarot-Lesung" },
+  },
+  {
+    id: "story-yoga-knee",
+    category: "Physical Wellness",
+    serviceId: "yoga",
+    quoteLang: "EN",
+    quote: "Richa, I want to thank you for your advice on rehabbing my knee. … I feel much better … Thank you very much",
+    EN: { role: "Yoga for the knee" },
+    DE: { role: "Yoga für das Knie" },
+  },
+  {
+    id: "story-tarot-peace-of-mind",
+    category: "Tarot Reading",
+    source: "Instagram",
+    date: "2025-10",
+    quoteLang: "EN",
+    quote: "Thank u thank u so much for ur kind words niramay.me.....ur words are more positive and brings peace in my mind....thank u so much for ur timely support....let me follow ur words of positivity to bring my mind calm and peaceful ...thank u once again",
+    EN: { role: "Tarot reading" },
+    DE: { role: "Tarot-Lesung" },
+  },
+  {
+    id: "story-tarot-god-bless",
+    category: "Tarot Reading",
+    source: "Instagram",
+    date: "2025-08",
+    quoteLang: "EN",
+    quote: "Thank u thank u so much for ur time..ur msg means a lot to me ... Feeling happy and relaxed now after receiving the answer for my question ...may god bless you abundantly..",
+    EN: { role: "Free tarot reading" },
+    DE: { role: "Kostenlose Tarot-Lesung" },
   },
 ];
 
@@ -1978,100 +2308,28 @@ export const ONGOING_SESSIONS = [
 // cards link out to the provider instead of offering a direct WhatsApp booking.
 // A future Niramay-run course can simply omit `provider`/`kursnr`/`registrationUrl`
 // and CoursesSection falls back to the WhatsApp booking flow (see App.tsx).
-// Set `past: true` once a course has finished: it moves out of the bookable
-// grid into the "Past Courses" strip (no registration link), so it still
-// shows our track record.
-export const COURSES: Array<{
-  id: string;
-  provider?: string;
-  kursnr?: string;
-  registrationUrl?: string;
-  past?: boolean;
-  EN: { title: string; time: string; location: string; instructor: string; description: string };
-  DE: { title: string; time: string; location: string; instructor: string; description: string };
-}> = [
+export const COURSES = [
   {
-    id: "yoga-kids",
-    provider: "VHS Ostfildern",
-    kursnr: "262-301111",
-    past: true,
-    registrationUrl: "https://vhs-ostfildern.de/programm/kw/bereich/kursdetails/kurs/262-301111/",
+    // Niramay's own online series: booked and paid for on this site (see
+    // CourseIntakeModal in App.tsx), with a dedicated /courses/:id page.
+    id: "yoga-stress-immunity-sleep",
+    bookable: true,
+    blogSlug: "stress-immunity-and-sleep-how-yoga-restores-your-balance",
     EN: {
-      title: "Yoga Kids",
-      time: "Fridays, 16:30–17:15",
-      location: "Stadthaus Scharnhauser Park, R. 2.13",
-      instructor: "Richa",
-      description: "A playful yoga class for children ages 7–11 to move, breathe, and unwind after school.",
+      title: "Yoga for Stress, Immunity & Sleep: 8-Session Series",
+      time: "Starts Nov 3 · Tue & Thu, 20:00–21:00 · 4 weeks",
+      location: "Online (live)",
+      price: "€79 · 8 sessions",
+      instructor: "Riju",
+      description: "Gentle stretching, breathing, meditation and deep relaxation to handle stress better, support immunity and sleep well.",
     },
     DE: {
-      title: "Yoga Kids",
-      time: "Freitags, 16:30–17:15 Uhr",
-      location: "Stadthaus Scharnhauser Park, R. 2.13",
-      instructor: "Richa",
-      description: "Spielerisches Yoga für Kinder von 7 bis 11 Jahren – bewegen, atmen und nach der Schule entspannen.",
-    }
-  },
-  {
-    id: "teen-yoga",
-    provider: "VHS Ostfildern",
-    kursnr: "262-301112",
-    past: true,
-    registrationUrl: "https://vhs-ostfildern.de/programm/kw/bereich/kursdetails/kurs/262-301112/",
-    EN: {
-      title: "Teen Yoga",
-      time: "Tuesdays, 17:00–18:00",
-      location: "An der Halle, Nellingen, R. 18/19",
-      instructor: "Richa",
-      description: "A pressure-free space for 12–14 year olds to unwind from school stress and build flexibility.",
-    },
-    DE: {
-      title: "Teen Yoga",
-      time: "Dienstags, 17:00–18:00 Uhr",
-      location: "An der Halle, Nellingen, R. 18/19",
-      instructor: "Richa",
-      description: "Ein druckfreier Raum für 12- bis 14-Jährige, um vom Schulstress abzuschalten und beweglicher zu werden.",
-    }
-  },
-  {
-    id: "yin-yoga",
-    provider: "VHS Ostfildern",
-    kursnr: "262-301113",
-    past: true,
-    registrationUrl: "https://vhs-ostfildern.de/programm/kw/bereich/kursdetails/kurs/262-301113/",
-    EN: {
-      title: "Yin Yoga",
-      time: "Thursdays, 17:00",
-      location: "An der Halle, Nellingen, R. 18/19",
-      instructor: "Richa",
-      description: "Slow down, hold space, and recharge — a restorative practice to find calm and renewed energy.",
-    },
-    DE: {
-      title: "Yin-Yoga",
-      time: "Donnerstags, 17:00 Uhr",
-      location: "An der Halle, Nellingen, R. 18/19",
-      instructor: "Richa",
-      description: "Zur Ruhe kommen und neue Energie tanken – eine regenerative Praxis für mehr Gelassenheit.",
-    }
-  },
-  {
-    id: "stuhlyoga",
-    provider: "VHS Ostfildern",
-    kursnr: "262-301114",
-    past: true,
-    registrationUrl: "https://vhs-ostfildern.de/programm/kw/bereich/kursdetails/kurs/262-301114/",
-    EN: {
-      title: "Chair Yoga",
-      time: "Mondays, 16:45–17:30",
-      location: "An der Halle, Nellingen, R. 18/19",
-      instructor: "Richa",
-      description: "Gentle movement and breathing for anyone who'd rather skip the floor — no mat needed.",
-    },
-    DE: {
-      title: "Stuhlyoga",
-      time: "Montags, 16:45–17:30 Uhr",
-      location: "An der Halle, Nellingen, R. 18/19",
-      instructor: "Richa",
-      description: "Sanfte Bewegung und Atmung für alle ohne Bodenkontakt – bewegen, atmen, wohlfühlen.",
+      title: "Yoga für Stress, Immunität & Schlaf: Serie mit 8 Einheiten",
+      time: "Ab 3. Nov. · Di & Do, 20:00–21:00 Uhr · 4 Wochen",
+      location: "Online (live)",
+      price: "79 € · 8 Einheiten",
+      instructor: "Riju",
+      description: "Sanfte Dehnung, Atemübungen, Meditation und Tiefenentspannung für mehr Gelassenheit, ein starkes Immunsystem und guten Schlaf.",
     }
   },
   {

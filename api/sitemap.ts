@@ -8,6 +8,8 @@ const SITE_URL = "https://www.niramay.me";
 // module (which drags lucide-react and friends into a serverless bundle)
 // since service pages are added rarely and deliberately.
 const SERVICE_IDS = ["yoga", "reiki", "subconscious-healing", "astrology", "intuitive-guidance", "tarot"];
+// Likewise for the COURSES entries with `bookable: true` (each has a /courses/:id page).
+const COURSE_IDS = ["yoga-stress-immunity-sleep"];
 
 type LocalizedPair = { en: string; de: string; changefreq: string; priority: string };
 
@@ -58,6 +60,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     ...SERVICE_IDS.map((id) => ({
       en: `${SITE_URL}/services/${id}`,
       de: `${SITE_URL}/de/services/${id}`,
+      changefreq: "monthly",
+      priority: "0.8",
+    })),
+    ...COURSE_IDS.map((id) => ({
+      en: `${SITE_URL}/courses/${id}`,
+      de: `${SITE_URL}/de/courses/${id}`,
       changefreq: "monthly",
       priority: "0.8",
     })),

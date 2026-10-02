@@ -23,7 +23,8 @@ import {
   ChevronDown,
   ExternalLink,
   Heart,
-  Volume2
+  Volume2,
+  Image as ImageIcon
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { db } from "./lib/firebase";
@@ -55,7 +56,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { NavigationMenu } from "@base-ui/react/navigation-menu";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { SERVICES, TESTIMONIALS, FAQS, HEALER_CERTIFICATIONS, HEALER_IMAGES, TRANSLATIONS, ONGOING_SESSIONS, COURSES, EVENTS, GOOGLE_CALENDAR_URL, GOOGLE_REVIEW_URL, BUSINESS_STREET_ADDRESS, BUSINESS_POSTAL_CODE, BUSINESS_CITY, GOOGLE_MAPS_URL, GOOGLE_MAPS_EMBED_URL } from "./constants";
+import { SERVICES, TESTIMONIALS, type ClientStory, FAQS, HEALER_CERTIFICATIONS, HEALER_IMAGES, TRANSLATIONS, ONGOING_SESSIONS, COURSES, EVENTS, GOOGLE_CALENDAR_URL, GOOGLE_REVIEW_URL, BUSINESS_STREET_ADDRESS, BUSINESS_POSTAL_CODE, BUSINESS_CITY, GOOGLE_MAPS_URL, GOOGLE_MAPS_EMBED_URL } from "./constants";
 import { getStoredConsent, grantAnalyticsConsent, denyAnalyticsConsent, initAnalyticsFromStoredConsent, trackPageview } from "./lib/analytics";
 import { SITE_URL, BUSINESS_JSONLD_ID, useJsonLd, useSeo } from "./lib/seo";
 import { responsiveImage } from "./lib/images";
@@ -100,6 +101,7 @@ type LayoutContext = {
   onBookReiki: (pkg: ReikiPackageId) => void;
   onBookGuidance: (pkg?: GuidancePackage) => void;
   onBookTarot: () => void;
+  onBookCourse: (courseId: string) => void;
   onOpenLegal: (type: "impressum" | "privacy") => void;
 };
 
@@ -738,7 +740,6 @@ const ReikiIntakeModal = ({ lang, pkg, onClose, onOpenPrivacy }: { lang: "EN" | 
               <div>
                 <p className="text-xs font-bold uppercase tracking-wider text-primary/50 mb-1">{t.priceLabel}</p>
                 <p className="text-lg font-semibold">{pkgContent.investment}</p>
-                <p className="text-xs text-muted-foreground">{t.inPersonPriceNote}</p>
               </div>
               <div className="p-4 rounded-xl border border-stone-100 space-y-2">
                 <p className="font-bold text-sm">{t.paymentEURTitle}</p>
@@ -775,6 +776,239 @@ const ReikiIntakeModal = ({ lang, pkg, onClose, onOpenPrivacy }: { lang: "EN" | 
                 <span className="text-muted-foreground">{t.confirmationSentTo}</span>{" "}
                 <span className="font-medium">{form.email}</span>
               </p>
+              <Button className="rounded-full w-full" onClick={resetAndClose}>{t.closeBtn}</Button>
+            </div>
+          </>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+// Booking flow for Niramay's own online courses (COURSES entries with
+// `bookable: true`). Pay-first like the in-person Reiki booking, minus the
+// calendar step since the dates are fixed: details, then payment
+// instructions keyed to a reference code, then an "I've paid" claim that
+// triggers the confirmation email (api/notify-course-booking.ts). See
+// firestore.rules for what's enforced server-side.
+type CourseStep = "details" | "payment" | "done";
+type CourseForm = { name: string; email: string; whatsapp: string; notes: string; consent: boolean };
+const EMPTY_COURSE_FORM: CourseForm = { name: "", email: "", whatsapp: "", notes: "", consent: false };
+const COURSE_CONTACT_EMAIL = "riju.kansal@niramay.me";
+
+const CourseIntakeModal = ({ lang, courseId, onClose, onOpenPrivacy }: { lang: "EN" | "DE", courseId: string | null, onClose: () => void, onOpenPrivacy: () => void }) => {
+  const t = TRANSLATIONS[lang].courseIntake;
+  const { profile } = useAuth();
+  // Keep the last course around while the dialog fades out (see ReikiIntakeModal).
+  const [shownCourseId, setShownCourseId] = useState<string | null>(courseId);
+  const [step, setStep] = useState<CourseStep>("details");
+  const [form, setForm] = useState<CourseForm>(EMPTY_COURSE_FORM);
+  const [requestId, setRequestId] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [paying, setPaying] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const open = courseId !== null;
+
+  useEffect(() => {
+    if (courseId) setShownCourseId(courseId);
+  }, [courseId]);
+
+  useEffect(() => {
+    if (!open || !profile) return;
+    setForm(f => ({
+      ...f,
+      name: f.name || profile.displayName,
+      email: f.email || profile.email,
+    }));
+  }, [open, profile]);
+
+  const course = COURSES.find(c => c.id === shownCourseId);
+  const content = course?.[lang];
+  // Derived from the Firestore doc ID, the same way api/notify-course-booking.ts
+  // derives it — never stored separately, so the two can't drift.
+  const refCode = requestId ? `CRS-${requestId.slice(-6).toUpperCase()}` : "";
+  const isValid = Boolean(form.name.trim() && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim()) && form.whatsapp.trim() && form.consent);
+
+  const resetAndClose = () => {
+    onClose();
+    setTimeout(() => {
+      setStep("details");
+      setForm(EMPTY_COURSE_FORM);
+      setRequestId(null);
+      setError(null);
+    }, 300);
+  };
+
+  const notify = (id: string, kind: "submitted" | "payment_claimed") =>
+    fetch("/api/notify-course-booking", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ requestId: id, kind }),
+    }).catch(err => console.error(`Failed to send course ${kind} notification:`, err));
+
+  const handleSubmitDetails = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!isValid || submitting || !course) return;
+    setSubmitting(true);
+    setError(null);
+    try {
+      const docRef = await addDoc(collection(db, "courseBookings"), {
+        course: course.id,
+        name: form.name.trim(),
+        email: form.email.trim(),
+        whatsapp: form.whatsapp.trim(),
+        notes: form.notes.trim(),
+        consentAccepted: true,
+        lang,
+        createdAt: serverTimestamp(),
+        paymentClaimed: false,
+      });
+      setRequestId(docRef.id);
+      setStep("payment");
+      // Best-effort — the booking is already saved above regardless.
+      notify(docRef.id, "submitted");
+    } catch (err) {
+      console.error("Error submitting course booking:", err);
+      setError(t.submitError);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handlePaid = async () => {
+    if (!requestId || paying) return;
+    setPaying(true);
+    setError(null);
+    try {
+      await updateDoc(doc(db, "courseBookings", requestId), { paymentClaimed: true });
+      setStep("done");
+      notify(requestId, "payment_claimed");
+    } catch (err) {
+      console.error("Error confirming course payment claim:", err);
+      setError(t.paidError);
+    } finally {
+      setPaying(false);
+    }
+  };
+
+  if (!course || !content) return null;
+
+  const inputClass = "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2";
+
+  const summary = (
+    <div className="bg-stone-50 p-4 rounded-xl border border-stone-100">
+      <p className="text-xs uppercase tracking-wider text-muted-foreground mb-1">{t.selectedLabel}</p>
+      <p className="font-bold">{content.title}</p>
+      <p className="text-sm text-muted-foreground">{content.time} · <span className="font-semibold text-foreground">{content.price}</span></p>
+    </div>
+  );
+
+  const questions = (
+    <p className="text-xs text-muted-foreground">
+      {t.questionsNote}{" "}
+      <a href={`mailto:${COURSE_CONTACT_EMAIL}`} className="underline underline-offset-2 hover:text-primary">{COURSE_CONTACT_EMAIL}</a>
+    </p>
+  );
+
+  return (
+    <Dialog open={open} onOpenChange={(o) => !o && resetAndClose()}>
+      <DialogContent className="sm:max-w-lg max-h-[85vh] overflow-y-auto">
+        {step === "details" && (
+          <>
+            <DialogHeader>
+              <DialogTitle className="text-2xl font-serif">{t.detailsTitle}</DialogTitle>
+            </DialogHeader>
+            <form onSubmit={handleSubmitDetails} className="grid gap-4 py-2">
+              {summary}
+              <div className="grid gap-2">
+                <label className="text-sm font-medium">{t.fields.name}</label>
+                <input required maxLength={100} className={inputClass} value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} />
+              </div>
+              <div className="grid gap-2">
+                <label className="text-sm font-medium">{t.fields.email}</label>
+                <input required type="email" maxLength={200} className={inputClass} value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} />
+              </div>
+              <div className="grid gap-2">
+                <label className="text-sm font-medium">{t.fields.whatsapp}</label>
+                <input required type="tel" maxLength={40} placeholder={t.fields.whatsappPlaceholder} className={inputClass} value={form.whatsapp} onChange={e => setForm({ ...form, whatsapp: e.target.value })} />
+              </div>
+              <div className="grid gap-2">
+                <label className="text-sm font-medium">{t.fields.notes}</label>
+                <textarea
+                  maxLength={2000}
+                  rows={3}
+                  placeholder={t.fields.notesPlaceholder}
+                  className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  value={form.notes}
+                  onChange={e => setForm({ ...form, notes: e.target.value })}
+                />
+              </div>
+              <label className="flex items-start gap-2 text-sm">
+                <input type="checkbox" required className="mt-1 h-4 w-4 shrink-0" checked={form.consent} onChange={e => setForm({ ...form, consent: e.target.checked })} />
+                <span>
+                  {t.consentPrefix}{" "}
+                  <button type="button" onClick={onOpenPrivacy} className="underline underline-offset-2 hover:text-primary">
+                    {t.consentLinkLabel}
+                  </button>.
+                </span>
+              </label>
+              {error && <p className="text-sm text-red-600">{error}</p>}
+              <Button type="submit" size="lg" className="rounded-full w-full" disabled={!isValid || submitting}>
+                {submitting ? t.submitting : t.continueBtn}
+              </Button>
+            </form>
+          </>
+        )}
+
+        {step === "payment" && (
+          <>
+            <DialogHeader>
+              <DialogTitle className="text-2xl font-serif">{t.paymentTitle}</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-5 py-2">
+              <div className="bg-stone-50 p-4 rounded-xl border border-stone-100 text-center">
+                <p className="text-xs uppercase tracking-wider text-muted-foreground mb-1">{t.refCodeLabel}</p>
+                <p className="text-2xl font-bold font-mono tracking-wide">{refCode}</p>
+                <p className="text-xs text-muted-foreground mt-1">{t.refCodeNote}</p>
+              </div>
+              <div>
+                <p className="text-xs font-bold uppercase tracking-wider text-primary/50 mb-1">{t.priceLabel}</p>
+                <p className="text-lg font-semibold">{content.price}</p>
+              </div>
+              <div className="p-4 rounded-xl border border-stone-100 space-y-2">
+                <p className="font-bold text-sm">{t.paymentEURTitle}</p>
+                <p className="text-sm">{t.paypalLabel}: <span className="font-mono">richa@niramay.me</span></p>
+                <p className="text-xs text-muted-foreground">{t.paypalNote}</p>
+                <Separator className="my-2" />
+                <p className="text-sm">{t.bankLabel}</p>
+                <p className="text-xs font-mono">IBAN: DE08 1001 1001 2721 9373 31</p>
+                <p className="text-xs font-mono">BIC: NTSBDEB1XXX</p>
+                <p className="text-xs text-muted-foreground">{t.bankNote}</p>
+              </div>
+              {error && <p className="text-sm text-red-600">{error}</p>}
+              <Button size="lg" className="rounded-full w-full" onClick={handlePaid} disabled={paying}>
+                {paying ? t.paidSubmitting : t.paidBtn}
+              </Button>
+              {questions}
+            </div>
+          </>
+        )}
+
+        {step === "done" && (
+          <>
+            <DialogHeader>
+              <DialogTitle className="text-2xl font-serif">{t.confirmationTitle}</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-2">
+              <div className="flex items-start gap-3">
+                <CheckCircle2 className="w-6 h-6 text-primary shrink-0 mt-0.5" />
+                <p className="text-muted-foreground">{t.confirmationBody}</p>
+              </div>
+              <p className="text-sm">
+                <span className="text-muted-foreground">{t.confirmationSentTo}</span>{" "}
+                <span className="font-medium">{form.email}</span>
+              </p>
+              {questions}
               <Button className="rounded-full w-full" onClick={resetAndClose}>{t.closeBtn}</Button>
             </div>
           </>
@@ -1330,6 +1564,103 @@ const Navbar = ({ lang, onToggleLang, onBook }: { lang: "EN" | "DE", onToggleLan
   );
 };
 
+// What every review card renders: the curated client stories in constants.ts
+// (verbatim messages, with source and date) and the moderated reviews
+// visitors submit on the site (Firestore), normalised to one shape.
+type DisplayReview = {
+  id: string;
+  name: string;
+  category?: string;
+  rating?: number;
+  content: string;
+  role?: string;
+  source?: string;
+  date?: string;
+  quoteLang?: "EN" | "DE" | "HI";
+  translation?: string;
+  screenshot?: string;
+};
+
+const storyToReview = (s: ClientStory, lang: "EN" | "DE"): DisplayReview => ({
+  id: s.id,
+  name: s.name ?? TRANSLATIONS[lang].testimonials.client,
+  category: s.category,
+  rating: s.rating,
+  content: s.quote,
+  role: s[lang].role,
+  source: s.source,
+  date: s.date,
+  quoteLang: s.quoteLang,
+  translation: s.translation?.[lang],
+  screenshot: s.screenshot,
+});
+
+const firestoreToReview = (r: any): DisplayReview => ({
+  id: r.id,
+  name: r.name,
+  category: r.category,
+  rating: r.rating || 5,
+  content: r.content,
+  role: r.role,
+});
+
+// "via Instagram · Aug 2025" — where and when a client story was sent.
+const reviewSourceLine = (r: DisplayReview, lang: "EN" | "DE") => {
+  const t = TRANSLATIONS[lang].testimonials;
+  const date = r.date
+    ? new Date(`${r.date}-01T12:00:00`).toLocaleDateString(lang === "DE" ? "de-DE" : "en-GB", { month: "short", year: "numeric" })
+    : undefined;
+  return [r.source && `${t.via} ${r.source}`, date].filter(Boolean).join(" · ");
+};
+
+const ReviewStars = ({ rating, className }: { rating: number, className: string }) => (
+  <div className="flex gap-0.5" aria-label={`${rating}/5`}>
+    {[1,2,3,4,5].map(i => <Star key={i} className={`w-4 h-4 ${i <= rating ? className : "opacity-25"}`} />)}
+  </div>
+);
+
+const SeeOriginalButton = ({ src, lang, className }: { src: string, lang: "EN" | "DE", className: string }) => {
+  const t = TRANSLATIONS[lang].testimonials;
+  return (
+    <Dialog>
+      <DialogTrigger render={
+        <button type="button" className={`inline-flex items-center gap-1.5 text-xs font-medium underline-offset-4 hover:underline ${className}`}>
+          <ImageIcon className="w-3.5 h-3.5" /> {t.seeOriginal}
+        </button>
+      } />
+      <DialogContent className="sm:max-w-md p-3">
+        <DialogTitle className="sr-only">{t.seeOriginal}</DialogTitle>
+        <img src={src} alt={t.originalAlt} className="w-full h-auto rounded-lg" loading="lazy" />
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+// The quote itself, clamped with a Read more toggle, plus a note when it's in
+// another language than the page (and the translation, when there is one).
+const ReviewQuote = ({ review, lang, clampClass, muted }: { review: DisplayReview, lang: "EN" | "DE", clampClass: string, muted: string }) => {
+  const t = TRANSLATIONS[lang].testimonials;
+  const [expanded, setExpanded] = useState(false);
+  const isLong = review.content.length > 220;
+  const foreign = review.quoteLang && review.quoteLang !== lang ? review.quoteLang : undefined;
+  return (
+    <div>
+      <p className={`font-serif italic leading-relaxed ${expanded ? "" : clampClass}`}>"{review.content}"</p>
+      {isLong && (
+        <button type="button" onClick={() => setExpanded(e => !e)} className={`mt-2 text-xs font-medium underline underline-offset-4 ${muted}`}>
+          {expanded ? t.showLess : t.readMore}
+        </button>
+      )}
+      {foreign && (
+        <p className={`mt-2 text-xs ${muted}`}>{t.originalIn[foreign as keyof typeof t.originalIn]}</p>
+      )}
+      {review.translation && (
+        <p className={`mt-2 text-sm leading-relaxed ${muted} ${expanded ? "" : clampClass}`}><span className="font-semibold">{t.translationLabel}:</span> {review.translation}</p>
+      )}
+    </div>
+  );
+};
+
 // The homepage hero is the only thing most visitors see before deciding to
 // stay, so instead of a big photo taking half the fold it leads with what
 // they came for: the latest articles, what clients say, and the book. The
@@ -1366,12 +1697,18 @@ const Hero = ({ lang, onBook }: { lang: "EN" | "DE", onBook: (ctx?: BookingConte
     return () => { cancelled = true; };
   }, []);
 
-  // Real, moderated reviews first; the seed TESTIMONIALS fill in until there
-  // are enough of them.
-  const reviews = useMemo(() => [
-    ...approvedReviews.map(r => ({ id: r.id, name: r.name, rating: r.rating || 5, content: r.content, role: r.role })),
-    ...TESTIMONIALS.map(r => ({ id: r.id, name: r.name, rating: 5, content: r[lang].content, role: r[lang].role })),
-  ].slice(0, 6), [approvedReviews, lang]);
+  // Featured client stories (one or two per service) alternate with the
+  // latest reviews submitted on the site.
+  const reviews = useMemo(() => {
+    const stories = TESTIMONIALS.filter(s => s.featured).map(s => storyToReview(s, lang));
+    const submitted = approvedReviews.map(firestoreToReview);
+    const mixed: DisplayReview[] = [];
+    for (let i = 0; i < Math.max(stories.length, submitted.length); i++) {
+      if (stories[i]) mixed.push(stories[i]);
+      if (submitted[i]) mixed.push(submitted[i]);
+    }
+    return mixed.slice(0, 6);
+  }, [approvedReviews, lang]);
 
   useEffect(() => {
     if (reviews.length < 2) return;
@@ -1467,9 +1804,7 @@ const Hero = ({ lang, onBook }: { lang: "EN" | "DE", onBook: (ctx?: BookingConte
           {review && (
             <motion.a {...reveal(0.38)} href="#testimonials" className={`${glass} p-5 md:p-6 flex flex-col min-w-[85%] sm:min-w-[60%] lg:min-w-0 snap-start hover:bg-white/70 transition-colors`}>
               <div className="flex items-center justify-between mb-3">
-                <div className="flex gap-0.5">
-                  {[1,2,3,4,5].map(i => <Star key={i} className={`w-4 h-4 ${i <= review.rating ? "text-amber-500 fill-amber-500" : "text-stone-300"}`} />)}
-                </div>
+                {review.rating ? <ReviewStars rating={review.rating} className="text-amber-500 fill-amber-500" /> : <span />}
                 <span className="text-xs font-bold uppercase tracking-[0.18em] text-stone-500">{t.reviewsLabel}</span>
               </div>
               <div className="relative flex-1 min-h-[6.5rem]">
@@ -1483,6 +1818,7 @@ const Hero = ({ lang, onBook }: { lang: "EN" | "DE", onBook: (ctx?: BookingConte
                   >
                     <p className="font-serif italic text-[15px] md:text-base leading-relaxed text-stone-800 line-clamp-4">"{review.content}"</p>
                     <p className="mt-3 text-sm font-semibold text-stone-700">{review.name}{review.role && <span className="font-normal text-stone-500"> · {review.role}</span>}</p>
+                    {review.source && <p className="mt-0.5 text-xs text-stone-500">{reviewSourceLine(review, lang)}</p>}
                   </motion.div>
                 </AnimatePresence>
               </div>
@@ -1655,6 +1991,10 @@ const ServicePage = () => {
   if (!service || !content) return <Navigate to={prefix || "/"} replace />;
 
   const otherServices = SERVICES.filter(s => !s.openInModal && s.id !== service.id);
+  const clientStories = TESTIMONIALS
+    .filter(s => s.serviceId === service.id)
+    .sort((a, b) => Number(!!b.featured) - Number(!!a.featured))
+    .map(s => storyToReview(s, lang));
   const handleBook = () => {
     if (isReiki) {
       // Reiki is booked per package (each with its own price and flow), so
@@ -1901,6 +2241,32 @@ const ServicePage = () => {
           </div>
         )}
 
+        {clientStories.length > 0 && (
+          <div className="mb-10">
+            <h2 className="text-2xl font-serif font-bold mb-6">{sp.clientsSayTitle}</h2>
+            <div className="grid gap-4">
+              {clientStories.map(story => {
+                const sourceLine = reviewSourceLine(story, lang);
+                return (
+                  <figure key={story.id} className="bg-stone-50 p-6 rounded-2xl border border-stone-100">
+                    {story.rating && <div className="mb-3"><ReviewStars rating={story.rating} className="text-amber-500 fill-amber-500" /></div>}
+                    <blockquote className="text-stone-800">
+                      <ReviewQuote review={story} lang={lang} clampClass="line-clamp-5" muted="text-muted-foreground" />
+                    </blockquote>
+                    <figcaption className="mt-4 flex flex-wrap items-center justify-between gap-x-4 gap-y-2 text-sm">
+                      <span>
+                        <span className="font-semibold">{story.name}</span>
+                        <span className="text-muted-foreground"> · {[story.role, sourceLine].filter(Boolean).join(" · ")}</span>
+                      </span>
+                      {story.screenshot && <SeeOriginalButton src={story.screenshot} lang={lang} className="text-primary" />}
+                    </figcaption>
+                  </figure>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         <div className="flex flex-wrap items-center gap-4 mb-20">
           <Button size="lg" className="rounded-full px-8 gap-2" onClick={handleBook}>
             <Sparkles className="w-4 h-4" />
@@ -1953,12 +2319,27 @@ const renderInline = (text: string): React.ReactNode[] =>
     return part;
   });
 
+// Splits a "| a | b |" table row into its trimmed cells. Outer pipes are
+// optional and "\|" stays a literal pipe inside a cell.
+const splitTableRow = (row: string): string[] =>
+  row
+    .replace(/\\\|/g, '\u0000')
+    .replace(/^\|/, '')
+    .replace(/\|$/, '')
+    .split('|')
+    .map(cell => cell.replace(/\u0000/g, '|').trim());
+
+// The "|---|:---:|" line under a table's header row.
+const isTableSeparator = (row: string) => /^\|?\s*:?-{3,}:?\s*(\|\s*:?-{3,}:?\s*)*\|?$/.test(row);
+
 // Turns the plain-text editor's content into blocks: "## " subheadings,
-// consecutive "- " lines grouped into one bullet list, everything else a
-// paragraph. The matching cheat sheet lives on the /write page.
+// consecutive "- " lines grouped into one bullet list, consecutive "|" lines
+// grouped into one table, everything else a paragraph. The matching cheat
+// sheet lives on the /write page.
 const renderPostContent = (content: string) => {
   const blocks: React.ReactNode[] = [];
   let listItems: string[] = [];
+  let tableRows: string[] = [];
   const flushList = () => {
     if (!listItems.length) return;
     blocks.push(
@@ -1968,8 +2349,48 @@ const renderPostContent = (content: string) => {
     );
     listItems = [];
   };
+  const flushTable = () => {
+    if (!tableRows.length) return;
+    // A separator as the second row marks the first row as the header;
+    // without one, every row is a body row.
+    const hasHeader = tableRows.length > 1 && isTableSeparator(tableRows[1]);
+    const header = hasHeader ? splitTableRow(tableRows[0]) : null;
+    const body = (hasHeader ? tableRows.slice(2) : tableRows)
+      .filter(row => !isTableSeparator(row))
+      .map(splitTableRow);
+    blocks.push(
+      <div key={`table-${blocks.length}`} className="mb-6 overflow-x-auto rounded-xl border border-stone-200">
+        <table className="w-full text-left text-base text-stone-600 leading-relaxed">
+          {header && (
+            <thead className="bg-stone-50 text-stone-800">
+              <tr>
+                {header.map((cell, j) => <th key={j} className="px-4 py-3 font-semibold">{renderInline(cell)}</th>)}
+              </tr>
+            </thead>
+          )}
+          <tbody>
+            {body.map((cells, r) => (
+              <tr key={r} className="border-t border-stone-100 first:border-t-0">
+                {cells.map((cell, j) => <td key={j} className="px-4 py-3 align-top">{renderInline(cell)}</td>)}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    );
+    tableRows = [];
+  };
   content.split('\n').forEach((line, i) => {
     const trimmed = line.trim();
+    if (trimmed.startsWith('|')) {
+      flushList();
+      tableRows.push(trimmed);
+      return;
+    }
+    // Blank lines between rows (common when pasting from a PDF or Word)
+    // don't end a table; only a line of other content does.
+    if (!trimmed && tableRows.length) return;
+    flushTable();
     if (trimmed.startsWith('- ')) {
       listItems.push(trimmed.slice(2));
       return;
@@ -1983,6 +2404,7 @@ const renderPostContent = (content: string) => {
     blocks.push(<p key={i} className="text-lg text-stone-600 leading-relaxed mb-5">{renderInline(trimmed)}</p>);
   });
   flushList();
+  flushTable();
   return blocks;
 };
 
@@ -2109,6 +2531,7 @@ const BlogPostPage = () => {
   // false "not found" flash while that's in flight.
   if (!post) return null;
 
+  const authorName = post.author?.trim() || "Niramay";
   const dateStr = post.createdAt?.toDate
     ? post.createdAt.toDate().toLocaleDateString(lang === "DE" ? "de-DE" : "en-US")
     : "";
@@ -2129,6 +2552,9 @@ const BlogPostPage = () => {
           {dateStr && <span className="text-sm text-stone-400">{dateStr}</span>}
         </div>
         <h1 className="text-4xl md:text-5xl font-serif font-bold mb-4 leading-tight">{post.title}</h1>
+        <p className="text-base text-stone-500 mb-4">
+          {bp.byline} <span className="font-semibold text-stone-800">{authorName}</span>
+        </p>
         {post.excerpt && (
           <p className="text-xl text-muted-foreground leading-relaxed mb-8">{post.excerpt}</p>
         )}
@@ -2164,10 +2590,13 @@ const BlogPostPage = () => {
         </div>
 
         <div className="flex items-center gap-4 pt-8 border-t border-stone-100 mb-8">
-          <div className="w-12 h-12 rounded-full bg-stone-100 flex items-center justify-center font-bold text-stone-600">
-            {post.author?.[0] || "N"}
+          <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center font-bold text-primary" aria-hidden="true">
+            {authorName[0]}
           </div>
-          <p className="font-bold">{post.author || "Niramay"}</p>
+          <div>
+            <p className="text-xs uppercase tracking-wider text-stone-500">{bp.authoredBy}</p>
+            <p className="text-lg font-bold text-stone-800">{authorName}</p>
+          </div>
         </div>
 
         <Suspense fallback={null}>
@@ -2290,12 +2719,14 @@ const OngoingSessionsSection = ({ lang }: { lang: "EN" | "DE" }) => {
 // carry a `provider` (e.g. VHS Ostfildern) who owns registration/the course
 // number, in which case the card links out to them instead of a direct
 // WhatsApp booking. A course without a `provider` (a future Niramay-run
-// course) falls back to the same WhatsApp flow as OngoingSessionsSection.
-const CoursesSection = ({ lang }: { lang: "EN" | "DE" }) => {
+// course) falls back to the same WhatsApp flow as OngoingSessionsSection,
+// unless it's `bookable`, in which case it's paid for on-site via
+// CourseIntakeModal and has its own /courses/:id details page.
+const CoursesSection = ({ lang, onBookCourse }: { lang: "EN" | "DE", onBookCourse: (courseId: string) => void }) => {
   const t = TRANSLATIONS[lang].courses;
   const sessionsT = TRANSLATIONS[lang].sessions;
-  const upcomingCourses = COURSES.filter((c) => !c.past);
-  const pastCourses = COURSES.filter((c) => c.past);
+  const ys = TRANSLATIONS[lang].yogaSeries;
+  const prefix = langPrefix(lang);
   return (
     <section id="courses" className="py-24 bg-stone-50/50">
       <div className="container mx-auto px-6">
@@ -2307,7 +2738,7 @@ const CoursesSection = ({ lang }: { lang: "EN" | "DE" }) => {
         </div>
 
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-          {upcomingCourses.map((course, idx) => {
+          {COURSES.map((course, idx) => {
             const content = course[lang];
             return (
               <motion.div
@@ -2333,6 +2764,9 @@ const CoursesSection = ({ lang }: { lang: "EN" | "DE" }) => {
                       <MapPin className="w-4 h-4" />
                       {content.location}
                     </div>
+                    {content.price && (
+                      <p className="text-foreground font-semibold text-sm mt-1">{content.price}</p>
+                    )}
                   </CardHeader>
                   <CardContent className="flex flex-col flex-1">
                     <p className="text-muted-foreground text-sm mb-2 leading-relaxed">
@@ -2342,7 +2776,19 @@ const CoursesSection = ({ lang }: { lang: "EN" | "DE" }) => {
                       {t.by} {content.instructor}
                     </p>
                     <div className="mt-auto space-y-2">
-                      {course.provider && course.registrationUrl ? (
+                      {course.bookable ? (
+                        <>
+                          <Button size="sm" className="rounded-full w-full" onClick={() => onBookCourse(course.id)}>
+                            {ys.bookBtn}
+                          </Button>
+                          <Link to={`${prefix}/courses/${course.id}`} className="block">
+                            <Button size="sm" variant="outline" className="rounded-full w-full gap-1.5">
+                              {ys.moreInfoBtn}
+                              <ArrowRight className="w-3.5 h-3.5" />
+                            </Button>
+                          </Link>
+                        </>
+                      ) : course.provider && course.registrationUrl ? (
                         <>
                           <a href={course.registrationUrl} target="_blank" rel="noopener noreferrer">
                             <Button size="sm" variant="outline" className="rounded-full w-full gap-1.5">
@@ -2377,48 +2823,6 @@ const CoursesSection = ({ lang }: { lang: "EN" | "DE" }) => {
         <p className="text-center text-muted-foreground text-sm mt-10">
           {t.contactNote}
         </p>
-
-        {pastCourses.length > 0 && (
-          <div className="mt-20">
-            <div className="text-center max-w-2xl mx-auto mb-10">
-              <h3 className="text-2xl md:text-3xl font-serif font-bold mb-3">{t.pastTitle}</h3>
-              <p className="text-muted-foreground">{t.pastDescription}</p>
-            </div>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {pastCourses.map((course, idx) => {
-                const content = course[lang];
-                return (
-                  <motion.div
-                    key={course.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ delay: idx * 0.06 }}
-                  >
-                    <div className="h-full rounded-xl border border-stone-200 bg-stone-100/60 p-5 flex flex-col">
-                      <div className="flex items-center justify-between gap-2 mb-3">
-                        {course.provider && (
-                          <span className="text-xs text-stone-500">{course.provider}</span>
-                        )}
-                        <span className="inline-flex items-center gap-1 text-xs font-medium text-primary">
-                          <CheckCircle2 className="w-3.5 h-3.5" />
-                          {t.pastBadge}
-                        </span>
-                      </div>
-                      <h4 className="text-lg font-serif text-stone-700">{content.title}</h4>
-                      <p className="text-stone-500 text-sm mt-2 leading-relaxed flex-1">
-                        {content.description}
-                      </p>
-                      <p className="text-stone-400 text-xs mt-4">
-                        {t.by} {content.instructor}
-                      </p>
-                    </div>
-                  </motion.div>
-                );
-              })}
-            </div>
-          </div>
-        )}
       </div>
     </section>
   );
@@ -2678,17 +3082,20 @@ const TestimonialsSection = ({ lang }: { lang: "EN" | "DE" }) => {
     return () => unsubscribe();
   }, []); // Remove lang from dependency to avoid unnecessary re-triggers, though it works either way
 
-  const allReviews = useMemo(() => [...TESTIMONIALS, ...dynamicReviews], [dynamicReviews]);
+  const allReviews = useMemo(
+    () => [...TESTIMONIALS.map(s => storyToReview(s, lang)), ...dynamicReviews.map(firestoreToReview)],
+    [dynamicReviews, lang]
+  );
   const filtered = filter === "all" ? allReviews : allReviews.filter(t => t.category === filter);
 
   const reviewsJsonLd = useMemo(() => {
     // Only the Firestore-backed reviews go through the site's own moderation
-    // (an admin approves each one — see notify-review.ts), so only those are
-    // genuine, verifiable reviews. TESTIMONIALS in constants.ts are seed/
-    // placeholder copy with no such trail; marking those up as schema.org
-    // Review/AggregateRating data would risk tripping Google's fake-review
-    // structured-data policy, so they're deliberately excluded here even
-    // though they still render on the page like any other testimonial.
+    // (an admin approves each one — see notify-review.ts) and carry a rating
+    // the reviewer chose. TESTIMONIALS in constants.ts are real client
+    // messages from WhatsApp/Instagram/Facebook, but mostly unrated and
+    // curated by us, so marking them up as schema.org Review/AggregateRating
+    // data would be self-selected reviews with invented stars — they're
+    // deliberately excluded here even though they render on the page.
     if (dynamicReviews.length === 0) return null;
     const ratings = dynamicReviews.map(r => r.rating || 5);
     const avgRating = ratings.reduce((sum, r) => sum + r, 0) / ratings.length;
@@ -2764,7 +3171,7 @@ const TestimonialsSection = ({ lang }: { lang: "EN" | "DE" }) => {
           >
             <AnimatePresence mode="popLayout">
               {filtered.map((test, idx) => {
-                const content = test[lang] || test["EN"] || test["DE"];
+                const sourceLine = reviewSourceLine(test, lang);
                 return (
                   <motion.div
                     key={test.id || idx}
@@ -2775,29 +3182,31 @@ const TestimonialsSection = ({ lang }: { lang: "EN" | "DE" }) => {
                     transition={{ duration: 0.4 }}
                     className="min-w-[280px] md:min-w-[380px] flex-shrink-0 snap-start"
                   >
-                    <Card className="bg-white/10 border-white/10 backdrop-blur-sm text-white h-[400px] hover:bg-white/15 transition-colors flex flex-col">
+                    <Card className="bg-white/10 border-white/10 backdrop-blur-sm text-white min-h-[400px] h-full hover:bg-white/15 transition-colors flex flex-col">
                       <CardHeader className="flex-grow flex flex-col">
-                        <div className="flex gap-1 mb-4">
-                          {[1,2,3,4,5].map(i => (
-                            <Star
-                              key={i} 
-                              className={`w-4 h-4 ${i <= (test.rating || 5) ? 'text-yellow-400 fill-yellow-400' : 'text-white/20'}`} 
-                            />
-                          ))}
-                        </div>
-                        <div className="flex-grow overflow-y-auto no-scrollbar mb-6">
-                           <p className="text-lg italic font-serif leading-relaxed line-clamp-6">"{content.content}"</p>
+                        {test.rating ? (
+                          <div className="mb-4"><ReviewStars rating={test.rating} className="text-yellow-400 fill-yellow-400" /></div>
+                        ) : (
+                          <p className="text-xs uppercase tracking-[0.18em] text-white/50 mb-4">{test.role}</p>
+                        )}
+                        <div className="flex-grow mb-6 text-lg">
+                          <ReviewQuote review={test} lang={lang} clampClass="line-clamp-6" muted="text-white/60" />
                         </div>
                         <Separator className="bg-white/10 mb-6" />
                         <div className="flex items-center gap-4">
                           <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center font-bold text-sm flex-shrink-0">
-                            {test.name ? test.name[0] : "N"}
+                            {test.name ? test.name.replace(/^@/, "")[0].toUpperCase() : "N"}
                           </div>
                           <div className="min-w-0">
                             <p className="font-bold text-lg leading-none mb-1 truncate">{test.name}</p>
-                            <p className="text-sm text-white/60 truncate">{content.role}</p>
+                            <p className="text-sm text-white/60 truncate">{test.rating ? [test.role, sourceLine].filter(Boolean).join(" · ") : sourceLine}</p>
                           </div>
                         </div>
+                        {test.screenshot && (
+                          <div className="mt-4">
+                            <SeeOriginalButton src={test.screenshot} lang={lang} className="text-white/70 hover:text-white" />
+                          </div>
+                        )}
                       </CardHeader>
                     </Card>
                   </motion.div>
@@ -3292,6 +3701,7 @@ const AppLayout = () => {
   const [guidanceIntakeOpen, setGuidanceIntakeOpen] = useState(false);
   const [guidancePackage, setGuidancePackage] = useState<GuidancePackage>("individual");
   const [tarotIntakeOpen, setTarotIntakeOpen] = useState(false);
+  const [courseBookingId, setCourseBookingId] = useState<string | null>(null);
 
   useEffect(() => {
     document.documentElement.lang = lang.toLowerCase();
@@ -3359,7 +3769,7 @@ const AppLayout = () => {
     <div className="min-h-screen selection:bg-primary/20">
       <ScrollManager />
       <Navbar lang={lang} onToggleLang={toggleLang} onBook={openBooking} />
-      <Outlet context={{ lang, onBook: openBooking, onBookAstrology: () => setAstrologyIntakeOpen(true), onBookReiki: setReikiPackage, onBookGuidance: (pkg = "individual") => { setGuidancePackage(pkg); setGuidanceIntakeOpen(true); }, onBookTarot: () => setTarotIntakeOpen(true), onOpenLegal: setLegalModal } satisfies LayoutContext} />
+      <Outlet context={{ lang, onBook: openBooking, onBookAstrology: () => setAstrologyIntakeOpen(true), onBookReiki: setReikiPackage, onBookGuidance: (pkg = "individual") => { setGuidancePackage(pkg); setGuidanceIntakeOpen(true); }, onBookTarot: () => setTarotIntakeOpen(true), onBookCourse: setCourseBookingId, onOpenLegal: setLegalModal } satisfies LayoutContext} />
       <Footer lang={lang} onOpenLegal={setLegalModal} />
 
       <LegalModal
@@ -3407,13 +3817,156 @@ const AppLayout = () => {
         onOpenPrivacy={() => setLegalModal("privacy")}
       />
 
+      <CourseIntakeModal
+        lang={lang}
+        courseId={courseBookingId}
+        onClose={() => setCourseBookingId(null)}
+        onOpenPrivacy={() => setLegalModal("privacy")}
+      />
+
       <CookieConsent lang={lang} onOpenPrivacy={() => setLegalModal("privacy")} />
     </div>
   );
 };
 
+// Details page for a `bookable` course (currently only the Yoga for Stress,
+// Immunity & Sleep series, whose copy lives in TRANSLATIONS.yogaSeries).
+// The Courses tile stays short and links here for the full picture.
+const CoursePage = () => {
+  const { id } = useParams<{ id: string }>();
+  const { lang, onBookCourse } = useOutletContext<LayoutContext>();
+  const course = COURSES.find(c => c.id === id && c.bookable);
+  const content = course?.[lang];
+  const ys = TRANSLATIONS[lang].yogaSeries;
+  const sp = TRANSLATIONS[lang].servicePage;
+  const prefix = langPrefix(lang);
+  const canonical = `${SITE_URL}${prefix}/courses/${id}`;
+
+  useSeo({
+    title: ys.seoTitle,
+    description: ys.seoDescription,
+    canonical,
+    lang,
+    alternates: { en: `${SITE_URL}/courses/${id}`, de: `${SITE_URL}/de/courses/${id}` },
+  });
+
+  const courseJsonLd = useMemo(() => {
+    if (!course || !content) return null;
+    return {
+      "@context": "https://schema.org",
+      "@type": "Course",
+      name: content.title,
+      description: ys.seoDescription,
+      url: canonical,
+      inLanguage: lang === "EN" ? "en" : "de",
+      provider: { "@id": BUSINESS_JSONLD_ID },
+      offers: { "@type": "Offer", price: "79", priceCurrency: "EUR", category: "Paid" },
+    };
+  }, [course, content, ys.seoDescription, canonical, lang]);
+  useJsonLd("ld-json-course", courseJsonLd);
+
+  if (!course || !content) return <Navigate to={prefix || "/"} replace />;
+
+  const facts = [
+    { icon: Calendar, label: ys.scheduleLabel, value: ys.schedule },
+    { icon: Clock, label: ys.durationLabel, value: ys.duration },
+    { icon: Globe, label: ys.formatLabel, value: ys.format },
+    { icon: Sparkles, label: ys.priceLabel, value: ys.price },
+  ];
+
+  return (
+    <main className="pt-32 pb-24">
+      <div className="container mx-auto px-6 max-w-3xl">
+        <nav className="flex items-center gap-2 text-sm text-muted-foreground mb-10" aria-label="Breadcrumb">
+          <Link to={prefix || "/"} className="hover:text-primary transition-colors">{sp.home}</Link>
+          <ChevronRight className="w-3.5 h-3.5" />
+          <Link to={`${prefix}/#courses`} className="hover:text-primary transition-colors">{ys.breadcrumbCourses}</Link>
+          <ChevronRight className="w-3.5 h-3.5" />
+          <span className="text-foreground font-medium">{content.title}</span>
+        </nav>
+
+        <Badge variant="secondary" className="w-fit text-primary mb-4">{ys.badge}</Badge>
+        <h1 className="text-4xl md:text-5xl font-serif font-bold mb-6">{content.title}</h1>
+        <p className="text-lg text-muted-foreground leading-relaxed mb-10">{ys.intro}</p>
+
+        <div className="grid sm:grid-cols-2 gap-4 mb-10">
+          {facts.map(({ icon: Icon, label, value }) => (
+            <div key={label} className="flex items-start gap-3 p-4 rounded-xl border border-stone-100 bg-white">
+              <Icon className="w-5 h-5 text-primary shrink-0 mt-0.5" />
+              <div>
+                <p className="text-xs font-bold uppercase tracking-wider text-primary/50 mb-1">{label}</p>
+                <p className="text-sm">{value}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <Button size="lg" className="rounded-full gap-2 mb-16" onClick={() => onBookCourse(course.id)}>
+          {ys.bookCta}
+          <ArrowRight className="w-4 h-4" />
+        </Button>
+
+        <h2 className="text-2xl md:text-3xl font-serif font-bold mb-6">{ys.learnTitle}</h2>
+        <div className="grid sm:grid-cols-2 gap-4 mb-14">
+          {ys.learnItems.map(item => (
+            <Card key={item.title} className="border border-stone-100 shadow-sm bg-white">
+              <CardHeader>
+                <CardTitle className="text-lg font-serif">{item.title}</CardTitle>
+                <CardDescription>{item.description}</CardDescription>
+              </CardHeader>
+            </Card>
+          ))}
+        </div>
+
+        <h2 className="text-2xl md:text-3xl font-serif font-bold mb-6">{ys.benefitsTitle}</h2>
+        <ul className="space-y-3 mb-14">
+          {ys.benefits.map(b => (
+            <li key={b} className="flex items-start gap-3">
+              <CheckCircle2 className="w-5 h-5 text-primary shrink-0 mt-0.5" />
+              <span className="text-muted-foreground">{b}</span>
+            </li>
+          ))}
+        </ul>
+
+        <h2 className="text-2xl md:text-3xl font-serif font-bold mb-6">{ys.howTitle}</h2>
+        <ol className="space-y-3 mb-14">
+          {ys.howSteps.map((step, i) => (
+            <li key={step} className="flex items-start gap-3">
+              <span className="w-6 h-6 rounded-full bg-primary/10 text-primary text-sm font-bold flex items-center justify-center shrink-0">{i + 1}</span>
+              <span className="text-muted-foreground">{step}</span>
+            </li>
+          ))}
+        </ol>
+
+        {course.blogSlug && (
+          <div className="p-6 rounded-2xl bg-stone-50 border border-stone-100 mb-14">
+            <h2 className="text-xl font-serif font-bold mb-2">{ys.blogTitle}</h2>
+            <p className="text-muted-foreground text-sm mb-4">{ys.blogDescription}</p>
+            {/* The article exists in English only, so the DE page links to it too. */}
+            <Link to={`/blog/${course.blogSlug}`} className="inline-flex items-center gap-2 text-primary font-medium hover:underline underline-offset-4">
+              {ys.blogLinkLabel}
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
+        )}
+
+        <div className="text-center space-y-4">
+          <Button size="lg" className="rounded-full gap-2" onClick={() => onBookCourse(course.id)}>
+            {ys.bookCta}
+            <ArrowRight className="w-4 h-4" />
+          </Button>
+          <p className="text-sm text-muted-foreground">
+            {ys.questionsNote}{" "}
+            <a href={`mailto:${COURSE_CONTACT_EMAIL}`} className="underline underline-offset-2 hover:text-primary">{COURSE_CONTACT_EMAIL}</a>
+          </p>
+        </div>
+      </div>
+    </main>
+  );
+};
+
 const HomePage = () => {
-  const { lang, onBook } = useOutletContext<LayoutContext>();
+  const { lang, onBook, onBookCourse } = useOutletContext<LayoutContext>();
   const [previewTool, setPreviewTool] = useState<{ title: string; link: string } | null>(null);
 
   useSeo({
@@ -3440,7 +3993,7 @@ const HomePage = () => {
       <Hero lang={lang} onBook={onBook} />
       <ServicesSection lang={lang} onLearnMore={handleServiceToolPreview} />
       <OngoingSessionsSection lang={lang} />
-      <CoursesSection lang={lang} />
+      <CoursesSection lang={lang} onBookCourse={onBookCourse} />
       <AboutSection lang={lang} />
       <EventsSection lang={lang} />
       <BookSection lang={lang} />
@@ -3469,10 +4022,12 @@ const WritePage = lazy(() => import("./pages/WritePage"));
 const SPEED_INSIGHTS_ROUTES = [
   "/",
   "/services/:id",
+  "/courses/:id",
   "/blog/:slug",
   "/faq",
   "/de",
   "/de/services/:id",
+  "/de/courses/:id",
   "/de/blog/:slug",
   "/de/faq",
   "/write",
@@ -3492,10 +4047,12 @@ export default function App() {
           <Route element={<AppLayout />}>
             <Route index element={<HomePage />} />
             <Route path="services/:id" element={<ServicePage />} />
+            <Route path="courses/:id" element={<CoursePage />} />
             <Route path="blog/:slug" element={<BlogPostPage />} />
             <Route path="faq" element={<FAQPage />} />
             <Route path="de" element={<HomePage />} />
             <Route path="de/services/:id" element={<ServicePage />} />
+            <Route path="de/courses/:id" element={<CoursePage />} />
             <Route path="de/blog/:slug" element={<BlogPostPage />} />
             <Route path="de/faq" element={<FAQPage />} />
             {/* An unknown path under /de falls back to the German home page
