@@ -78,6 +78,7 @@ export const TRANSLATIONS = {
       breadcrumbServices: "Services",
       otherServicesTitle: "Explore Other Services",
       whatsappCta: "Or message us on WhatsApp",
+      clientsSayTitle: "What clients say",
       formatLabel: "Format",
       priceLabel: "Investment",
       inclusionsLabel: "Inclusions",
@@ -106,7 +107,15 @@ export const TRANSLATIONS = {
     },
     testimonials: {
       title: "Real Stories of Transformation",
-      description: "Hear from those who have walked the path of healing with us.",
+      description: "In their own words: messages clients sent Richa after their sessions, shared here with their permission.",
+      via: "via",
+      client: "Client",
+      originalIn: { EN: "Original in English", HI: "Original in Hindi" },
+      translationLabel: "Translation",
+      seeOriginal: "See original message",
+      originalAlt: "Screenshot of the original message, cropped and with personal details removed",
+      readMore: "Read more",
+      showLess: "Show less",
       googleReview: "Review us on Google",
       leaveReview: "Leave a Review",
       modalTitle: "Share Your Experience",
@@ -697,6 +706,7 @@ export const TRANSLATIONS = {
       breadcrumbServices: "Leistungen",
       otherServicesTitle: "Weitere Angebote entdecken",
       whatsappCta: "Oder schreiben Sie uns auf WhatsApp",
+      clientsSayTitle: "Das sagen Klientinnen und Klienten",
       formatLabel: "Format",
       priceLabel: "Investition",
       inclusionsLabel: "Enthalten",
@@ -725,7 +735,15 @@ export const TRANSLATIONS = {
     },
     testimonials: {
       title: "Echte Geschichten der Transformation",
-      description: "Hören Sie von denen, die den Weg der Heilung mit uns gegangen sind.",
+      description: "In ihren eigenen Worten: Nachrichten, die Klientinnen und Klienten Richa nach ihren Sitzungen geschickt haben, hier mit ihrer Erlaubnis geteilt.",
+      via: "über",
+      client: "Klient:in",
+      originalIn: { EN: "Originalzitat auf Englisch", HI: "Originalzitat auf Hindi" },
+      translationLabel: "Übersetzung",
+      seeOriginal: "Originalnachricht ansehen",
+      originalAlt: "Screenshot der Originalnachricht, zugeschnitten und ohne persönliche Daten",
+      readMore: "Weiterlesen",
+      showLess: "Weniger anzeigen",
       googleReview: "Bewerten Sie uns auf Google",
       leaveReview: "Bewertung abgeben",
       modalTitle: "Teilen Sie Ihre Erfahrung",
@@ -1518,45 +1536,197 @@ export const SERVICES = [
   },
 ];
 
-export const TESTIMONIALS = [
+// Real client feedback: messages clients sent Richa on WhatsApp, Instagram
+// and Facebook, each shared here with the client's consent. `quote` is kept
+// verbatim in the client's own language, typos included; "…" marks the only
+// edits (cuts). Two health-outcome passages (back pain, meniscus) were cut
+// on purpose, because German health-advertising law (HWG) is strict about
+// testimonials that suggest a treatment cured something. None of these
+// carry a star rating unless the client gave one, and they are never put
+// into Review/AggregateRating JSON-LD (see TestimonialsSection).
+//
+// `serviceId` puts a story on that service's own page; `featured` puts it in
+// the homepage hero rotation; `screenshot` is a cropped, redacted image of
+// the original message under public/testimonials/.
+export type ClientStory = {
+  id: string;
+  name?: string;
+  category: string;
+  serviceId?: string;
+  source?: "WhatsApp" | "Instagram" | "Facebook";
+  date?: string; // YYYY-MM
+  rating?: number;
+  quote: string;
+  quoteLang: "EN" | "DE" | "HI";
+  translation?: { EN?: string; DE?: string };
+  screenshot?: string;
+  featured?: boolean;
+  EN: { role: string };
+  DE: { role: string };
+};
+
+export const TESTIMONIALS: ClientStory[] = [
   {
-    id: 1,
-    name: "Sarah M.",
-    category: "Mental Clarity",
-    EN: {
-      role: "Burnout Recovery",
-      content: "Richa's blend of NLP and Yoga helped me navigate the most stressful period of my career. I feel more grounded than ever.",
-    },
-    DE: {
-      role: "Burnout-Erholung",
-      content: "Richas Mischung aus NLP und Yoga hat mir geholfen, die stressigste Zeit meiner Karriere zu meistern. Ich fühle mich geerdeter als je zuvor.",
-    }
-  },
-  {
-    id: 2,
-    name: "Thomas K.",
+    id: "story-yoga-beginner-advanced",
     category: "Physical Wellness",
-    EN: {
-      role: "Chronic Pain Management",
-      content: "The personalized yoga sessions in Ostfildern have been a game-changer for my back pain. Highly professional and caring.",
-    },
-    DE: {
-      role: "Chronisches Schmerzmanagement",
-      content: "Die personalisierten Yoga-Sitzungen in Ostfildern waren ein Wendepunkt für meine Rückenschmerzen. Hochprofessionell und fürsorglich.",
-    }
+    serviceId: "yoga",
+    source: "WhatsApp",
+    date: "2024-07",
+    quoteLang: "EN",
+    featured: true,
+    quote: "Hello ladies, just wanted to share my experience of doing yoga with Richa, which was amazing. She's great at making one feel comfortable, whether you're a beginner or advanced. Richa asked me what was my goal and paid attention to how I moved, during the session. She ensured I was getting the most out of each pose and class. Her classes felt peaceful and help relax. What I love most is her kindness and encouragement, which makes every class feel welcoming. If you want to improve your yoga practice and feel more balanced, Richa's classes are perfect for you. Highly recommend.",
+    EN: { role: "Yoga classes" },
+    DE: { role: "Yoga-Kurse" },
   },
   {
-    id: 3,
-    name: "Elena R.",
+    id: "story-tarot-palbhar21",
+    name: "@palbhar21",
+    category: "Tarot Reading",
+    source: "Instagram",
+    date: "2025-08",
+    quoteLang: "EN",
+    featured: true,
+    quote: "Completely AWESTRUCK by the accuracy of it. Thank you so much. Evry interaction with you is so rewarding. Must say you are one of those few healers who truely do it out of their love and kindness for people. Extending genuine comfort and help is at the core of your effort. That's exactly why you ate able to do it so effectively, it's almost magical. Thank you so much",
+    EN: { role: "Tarot reading" },
+    DE: { role: "Tarot-Lesung" },
+  },
+  {
+    id: "story-healing-upasna",
+    name: "Upasna T.",
     category: "Spiritual Healing",
-    EN: {
-      role: "Spiritual Growth",
-      content: "My Reiki sessions with Richa are the highlight of my week. It's a space of pure peace and rejuvenation.",
+    source: "Facebook",
+    date: "2024-07",
+    quoteLang: "EN",
+    featured: true,
+    quote: "The experience after session is really valuable for me, After session I realise the motive of my remaining life ! thanks for giving me this wonderful and healing. Before healing I was confused that what is the motive of my life. Why God send me after session i Got all the answers ...it's wonderful experience thanks Richa for this beautiful gift",
+    EN: { role: "Healing session" },
+    DE: { role: "Heilsitzung" },
+  },
+  {
+    id: "story-yoga-private-richa-b",
+    name: "Richa B.",
+    category: "Physical Wellness",
+    serviceId: "yoga",
+    source: "WhatsApp",
+    quoteLang: "EN",
+    featured: true,
+    screenshot: "/testimonials/yoga-private-sessions.webp",
+    quote: "Hello everyone, I want to share my feedback for the Yoga classes that I am taking Richa. I always wanted to practice yoga but her free session was the one which inspired me to go ahead and take some private sessions. She is an excellent instructor and guides clearly. I can follow her instructions even with closed eyes. I feel light after every session even though I am exhausted before the sessions and above all her voice is so soothing.",
+    EN: { role: "Private yoga sessions" },
+    DE: { role: "Yoga-Einzelstunden" },
+  },
+  {
+    id: "story-tarot-8sunnysideup8",
+    name: "@8sunnysideup8",
+    category: "Tarot Reading",
+    source: "Instagram",
+    date: "2025-08",
+    quoteLang: "EN",
+    featured: true,
+    quote: "I must admit I was a non believer when I got into it. But after having your reading I was almost in shock and blown away with how exact it was. It definitely gave me more clarity into my current situation and welcomed guidance on how to navigate this. I still have goosebumps. Thank you so much for the good work that you're doing",
+    EN: { role: "Tarot reading" },
+    DE: { role: "Tarot-Lesung" },
+  },
+  {
+    id: "story-reiki-mother",
+    category: "Spiritual Healing",
+    serviceId: "reiki",
+    rating: 5,
+    quoteLang: "HI",
+    quote: "Thankyou so much Richa kansal ji . Jab sy aapse REIK HEALING ka Session liya hai tab sy aapko blessings de rahi hai meri mother, Or sabsy badi baat ki aapke baat karne ka tarika or samjhane ka tarika bhi healing sy kaam nahi bilkul stress free kar diya aapne mujhe bhi or meri mother ko bhi . Thankyou so much once again dear . God bless you always . Aap aise hi aage badte rahen or help karte rahen",
+    translation: {
+      EN: "Thank you so much, Richa Kansal ji. Ever since we had a Reiki healing session with you, my mother has been sending you her blessings. And the best part is that the way you talk and explain things is no less than healing. You made both me and my mother completely stress-free. Thank you so much once again, dear. God bless you always. Keep growing like this and keep helping people.",
+      DE: "Vielen herzlichen Dank, Richa Kansal ji. Seit wir bei dir eine Reiki-Sitzung hatten, schickt dir meine Mutter ihren Segen. Und das Schönste ist: Schon die Art, wie du sprichst und Dinge erklärst, ist nicht weniger als Heilung. Du hast mich und meine Mutter ganz stressfrei gemacht. Nochmals vielen Dank, Liebe. Gott segne dich immer. Mach weiter so und hilf weiterhin Menschen.",
     },
-    DE: {
-      role: "Spirituelles Wachstum",
-      content: "Meine Reiki-Sitzungen bei Richa sind der Höhepunkt meiner Woche. Es ist ein Raum des puren Friedens und der Verjüngung.",
-    }
+    EN: { role: "Reiki for my mother and me" },
+    DE: { role: "Reiki für meine Mutter und mich" },
+  },
+  {
+    id: "story-tarot-meetu-verma01",
+    name: "@meetu.verma01",
+    category: "Tarot Reading",
+    source: "Instagram",
+    date: "2025-08",
+    quoteLang: "EN",
+    quote: "Thank you so much for your time it was on spot. You mentioned exactly what is my current situation and helped in giving clarity which I needed. I am really grateful to you I would highly recommend anyone to get in touch with you who has any doubts or questions in their minds .... Once again thank you so much",
+    EN: { role: "Tarot reading" },
+    DE: { role: "Tarot-Lesung" },
+  },
+  {
+    id: "story-reiki-priyanka",
+    name: "Priyanka",
+    category: "Spiritual Healing",
+    serviceId: "reiki",
+    source: "WhatsApp",
+    date: "2024-07",
+    quoteLang: "EN",
+    featured: true,
+    quote: "Hi Richa i am glad to say thank you to you for helping me with the Reiki sessions. … I did Both Distance (Distance Reiki) and In person sessions, From day 1, I feel so good and lots of positivity feel in my body. My best wishes for you in future, May you get lots of success in your life and carrier. Thank you very much",
+    EN: { role: "Distance and in-person Reiki" },
+    DE: { role: "Fern- und Präsenz-Reiki" },
+  },
+  {
+    id: "story-tarot-themessysassy-56",
+    name: "@themessysassy_56",
+    category: "Tarot Reading",
+    source: "Instagram",
+    date: "2025-08",
+    quoteLang: "EN",
+    quote: "Thank you so much for your mini reading!! It gave me the much needed clarity on path forward and definitely put my mind to ease",
+    EN: { role: "Mini tarot reading" },
+    DE: { role: "Mini-Tarot-Lesung" },
+  },
+  {
+    id: "story-yoga-evening",
+    category: "Physical Wellness",
+    serviceId: "yoga",
+    source: "WhatsApp",
+    date: "2024-02",
+    quoteLang: "EN",
+    screenshot: "/testimonials/yoga-evening-session.webp",
+    quote: "Thank you Richa.. It was really lovely and relaxing evening yoga session with you. Enjoyed to the fullest. See you again next Tuesday",
+    EN: { role: "Evening yoga" },
+    DE: { role: "Abend-Yoga" },
+  },
+  {
+    id: "story-tarot-subtly-subtle",
+    name: "@subtly_subtle",
+    category: "Tarot Reading",
+    source: "Instagram",
+    date: "2025-08",
+    quoteLang: "EN",
+    quote: "Thank you so much the reading resonated with me very well and brought clarity. It wasn't a short but quiet detailed reading according to me.",
+    EN: { role: "Tarot reading" },
+    DE: { role: "Tarot-Lesung" },
+  },
+  {
+    id: "story-yoga-knee",
+    category: "Physical Wellness",
+    serviceId: "yoga",
+    quoteLang: "EN",
+    quote: "Richa, I want to thank you for your advice on rehabbing my knee. … I feel much better … Thank you very much",
+    EN: { role: "Yoga for the knee" },
+    DE: { role: "Yoga für das Knie" },
+  },
+  {
+    id: "story-tarot-peace-of-mind",
+    category: "Tarot Reading",
+    source: "Instagram",
+    date: "2025-10",
+    quoteLang: "EN",
+    quote: "Thank u thank u so much for ur kind words niramay.me.....ur words are more positive and brings peace in my mind....thank u so much for ur timely support....let me follow ur words of positivity to bring my mind calm and peaceful ...thank u once again",
+    EN: { role: "Tarot reading" },
+    DE: { role: "Tarot-Lesung" },
+  },
+  {
+    id: "story-tarot-god-bless",
+    category: "Tarot Reading",
+    source: "Instagram",
+    date: "2025-08",
+    quoteLang: "EN",
+    quote: "Thank u thank u so much for ur time..ur msg means a lot to me ... Feeling happy and relaxed now after receiving the answer for my question ...may god bless you abundantly..",
+    EN: { role: "Free tarot reading" },
+    DE: { role: "Kostenlose Tarot-Lesung" },
   },
 ];
 
