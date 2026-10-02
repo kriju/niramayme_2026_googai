@@ -88,10 +88,17 @@ service cloud.firestore {
     }
 
     // Online course booking helper (CourseIntakeModal in src/App.tsx)
+    // Single-date courses carry exactly these 9 fields; multi-date workshops
+    // (COURSES entries with `sessions`) add a 10th, the chosen `session`.
     function isValidCourseBooking(data) {
       return data.keys().hasAll(['course', 'name', 'email', 'whatsapp', 'notes', 'consentAccepted', 'lang', 'createdAt', 'paymentClaimed'])
-          && data.keys().size() == 9
-          && data.course in ['yoga-stress-immunity-sleep']
+          && (
+            (data.course == 'yoga-stress-immunity-sleep' && data.keys().size() == 9)
+            || (data.course == 'yoga-adventure'
+                && data.keys().size() == 10
+                && data.keys().hasAll(['session'])
+                && data.session in ['2026-10-24', '2026-10-29'])
+          )
           && data.name is string && data.name.size() > 0 && data.name.size() <= 100
           && data.email is string && data.email.size() > 0 && data.email.size() <= 200
           && data.email.matches('^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$')

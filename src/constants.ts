@@ -260,7 +260,7 @@ export const TRANSLATIONS = {
             },
             {
               title: "11. Online Course Bookings",
-              content: "If you book an online course (such as the Yoga for Stress, Immunity & Sleep series), we collect your name, email address, WhatsApp number and any optional notes you give us through our booking form, solely to organise the course, match your payment, send you a confirmation email and email you the online meeting link before the session. This data is shared with Riju (riju.kansal@niramay.me) and Richa (richa@niramay.me), is stored only for as long as needed to run the course and handle payment, and is not shared with third parties. You must actively confirm your consent before this data is submitted, and you may withdraw consent and request deletion of this data at any time by contacting riju.kansal@niramay.me."
+              content: "If you book an online course (such as the Yoga for Stress, Immunity & Sleep series or the Yoga Adventure kids workshop), we collect your name, email address, WhatsApp number, the session date you choose and any optional notes you give us (for a children's workshop, e.g. your child's name and age) through our booking form, solely to organise the course, match your payment, send you a confirmation email and email you the online meeting link before the session. This data is shared with Riju (riju.kansal@niramay.me) and Richa (richa@niramay.me), is stored only for as long as needed to run the course and handle payment, and is not shared with third parties. You must actively confirm your consent before this data is submitted, and you may withdraw consent and request deletion of this data at any time by contacting riju.kansal@niramay.me."
             }
           ]
         }
@@ -634,10 +634,55 @@ export const TRANSLATIONS = {
       bookBtn: "Book & Pay",
       bookCta: "Book Your Place — €79",
     },
+    yogaAdventure: {
+      badge: "Online · Kids 9–14 · Workshop",
+      seoTitle: "Yoga Adventure for Kids (9–14) — Online Yoga Workshop | Niramay Wellbeing",
+      seoDescription: "A fun, interactive 1.5-hour online yoga workshop for children aged 9–14: movement, breathing, focus, games and self-discovery in a small group of max. 12. Choose 24 or 29 October. €15 / ₹1500.",
+      breadcrumbCourses: "Courses",
+      intro: "A playful opportunity for children to experience yoga through movement, breathing, focus, games and self-discovery, in a small, interactive group. This is ONE workshop offered on TWO dates — you only choose one date, and the fee is for that one session. Registrations are open until 20 October.",
+      scheduleLabel: "Choose ONE date",
+      schedule: "Sat 24 Oct, 12:30–2:00 pm European time (4:00–5:30 pm IST) — or — Thu 29 Oct, 11:30 am–1:00 pm European time (4:00–5:30 pm IST)",
+      durationLabel: "Duration",
+      duration: "1.5 hours · one session",
+      formatLabel: "Format",
+      format: "Live online in English · ages 9–14 · max. 12 children per session · the meeting link is emailed one day before",
+      priceLabel: "Price",
+      price: "€15 / ₹1500 per child, per session",
+      learnTitle: "What Your Child Will Experience",
+      learnItems: [
+        { title: "Move", description: "Playful yoga poses and flows that build strength, balance and flexibility." },
+        { title: "Breathe", description: "Simple, child-friendly breathing practices to calm down and feel steady." },
+        { title: "Play", description: "Yoga games that make focus and concentration fun." },
+        { title: "Discover", description: "Moments of stillness and self-discovery to notice how body and mind feel." },
+      ],
+      benefitsTitle: "Why It Helps",
+      benefits: [
+        "Releases energy in a healthy, joyful way",
+        "Builds focus and concentration through play",
+        "Gives children simple tools to calm themselves",
+        "A small group, so every child gets attention",
+      ],
+      howTitle: "How Booking Works",
+      howSteps: [
+        "Choose your preferred date and fill in your details (registration closes 20 October).",
+        "Pay €15 via PayPal or bank transfer, or ₹1500 via UPI, using your reference code.",
+        "Confirm your payment — you'll receive a confirmation email straight away.",
+        "One day before the session, we email you the online meeting link.",
+      ],
+      blogTitle: "Read More on This Topic",
+      blogDescription: "",
+      blogLinkLabel: "",
+      questionsNote: "Questions? Email us at",
+      moreInfoBtn: "More Info",
+      bookBtn: "Book & Pay",
+      bookCta: "Reserve Your Child's Spot — €15 / ₹1500",
+    },
     courseIntake: {
       detailsTitle: "Reserve Your Place",
       paymentTitle: "Complete Your Payment",
       selectedLabel: "Selected course",
+      sessionLabel: "Choose ONE date",
+      registrationClosed: "Registration closed",
       fields: {
         name: "Full Name",
         email: "Email",
@@ -660,9 +705,12 @@ export const TRANSLATIONS = {
       paypalNote: "Usually confirmed within hours.",
       bankLabel: "Bank Transfer",
       bankNote: "SEPA transfers can take 1–2 business days to confirm.",
+      paymentINRTitle: "Pay in INR",
+      upiLabel: "UPI",
+      upiNote: "Usually confirmed within hours.",
       paidBtn: "I've Paid",
       paidSubmitting: "Confirming...",
-      paidError: "Couldn't confirm your payment claim. Please try again, or email riju.kansal@niramay.me.",
+      paidError: "Couldn't confirm your payment claim. Please try again, or email {email}.",
       confirmationTitle: "You're booked in!",
       confirmationBody: "Thank you for joining. We'll verify your payment, and you'll receive the online meeting link by email one day before the session.",
       confirmationSentTo: "A confirmation email has been sent to:",
@@ -972,7 +1020,7 @@ export const TRANSLATIONS = {
             },
             {
               title: "11. Buchungen von Online-Kursen",
-              content: "Wenn Sie einen Online-Kurs buchen (etwa die Serie Yoga für Stress, Immunität & Schlaf), erfassen wir über unser Buchungsformular Ihren Namen, Ihre E-Mail-Adresse, Ihre WhatsApp-Nummer und optionale Hinweise, ausschließlich um den Kurs zu organisieren, Ihre Zahlung zuzuordnen, Ihnen eine Bestätigungs-E-Mail und vor der Einheit den Online-Meeting-Link zu senden. Diese Daten werden an Riju (riju.kansal@niramay.me) und Richa (richa@niramay.me) weitergeleitet, nur so lange gespeichert, wie es für die Durchführung des Kurses und die Zahlungsabwicklung erforderlich ist, und nicht an Dritte weitergegeben. Sie müssen Ihre Einwilligung vor dem Absenden dieser Daten aktiv bestätigen; Sie können Ihre Einwilligung jederzeit widerrufen und die Löschung dieser Daten verlangen, indem Sie uns unter riju.kansal@niramay.me kontaktieren."
+              content: "Wenn Sie einen Online-Kurs buchen (etwa die Serie Yoga für Stress, Immunität & Schlaf oder den Kinder-Workshop Yoga-Abenteuer), erfassen wir über unser Buchungsformular Ihren Namen, Ihre E-Mail-Adresse, Ihre WhatsApp-Nummer, den gewählten Termin und optionale Hinweise (bei Kinder-Workshops z. B. Name und Alter Ihres Kindes), ausschließlich um den Kurs zu organisieren, Ihre Zahlung zuzuordnen, Ihnen eine Bestätigungs-E-Mail und vor der Einheit den Online-Meeting-Link zu senden. Diese Daten werden an Riju (riju.kansal@niramay.me) und Richa (richa@niramay.me) weitergeleitet, nur so lange gespeichert, wie es für die Durchführung des Kurses und die Zahlungsabwicklung erforderlich ist, und nicht an Dritte weitergegeben. Sie müssen Ihre Einwilligung vor dem Absenden dieser Daten aktiv bestätigen; Sie können Ihre Einwilligung jederzeit widerrufen und die Löschung dieser Daten verlangen, indem Sie uns unter riju.kansal@niramay.me kontaktieren."
             }
           ]
         }
@@ -1347,10 +1395,55 @@ export const TRANSLATIONS = {
       bookBtn: "Buchen & bezahlen",
       bookCta: "Platz buchen — 79 €",
     },
+    yogaAdventure: {
+      badge: "Online · Kinder 9–14 · Workshop",
+      seoTitle: "Yoga-Abenteuer für Kinder (9–14) — Online-Yoga-Workshop | Niramay Wellbeing",
+      seoDescription: "Ein lustiger, interaktiver 1,5-stündiger Online-Yoga-Workshop für Kinder von 9–14 Jahren: Bewegung, Atmung, Konzentration, Spiele und Selbstentdeckung in einer kleinen Gruppe mit max. 12 Kindern. Wählen Sie den 24. oder 29. Oktober. 15 € / ₹1500.",
+      breadcrumbCourses: "Kurse",
+      intro: "Eine spielerische Gelegenheit für Kinder, Yoga durch Bewegung, Atmung, Konzentration, Spiele und Selbstentdeckung zu erleben – in einer kleinen, interaktiven Gruppe. Es ist EIN Workshop an ZWEI Terminen – Sie wählen nur einen Termin, und die Gebühr gilt für diese eine Einheit. Anmeldung bis zum 20. Oktober.",
+      scheduleLabel: "EINEN Termin wählen",
+      schedule: "Sa, 24. Okt., 12:30–14:00 Uhr europäische Zeit (16:00–17:30 Uhr IST) – oder – Do, 29. Okt., 11:30–13:00 Uhr europäische Zeit (16:00–17:30 Uhr IST)",
+      durationLabel: "Dauer",
+      duration: "1,5 Stunden · eine Einheit",
+      formatLabel: "Format",
+      format: "Live online auf Englisch · 9–14 Jahre · max. 12 Kinder pro Einheit · den Meeting-Link erhalten Sie einen Tag vorher per E-Mail",
+      priceLabel: "Preis",
+      price: "15 € / ₹1500 pro Kind und Einheit",
+      learnTitle: "Was Ihr Kind erlebt",
+      learnItems: [
+        { title: "Bewegen", description: "Spielerische Yoga-Haltungen und Abläufe für Kraft, Gleichgewicht und Beweglichkeit." },
+        { title: "Atmen", description: "Einfache, kindgerechte Atemübungen, um zur Ruhe zu kommen." },
+        { title: "Spielen", description: "Yoga-Spiele, die Konzentration und Fokus zum Vergnügen machen." },
+        { title: "Entdecken", description: "Momente der Stille und Selbstentdeckung, um Körper und Geist bewusst wahrzunehmen." },
+      ],
+      benefitsTitle: "Warum es hilft",
+      benefits: [
+        "Energie auf gesunde, fröhliche Weise rauslassen",
+        "Konzentration spielerisch stärken",
+        "Einfache Werkzeuge, um sich selbst zu beruhigen",
+        "Kleine Gruppe – jedes Kind bekommt Aufmerksamkeit",
+      ],
+      howTitle: "So funktioniert die Buchung",
+      howSteps: [
+        "Wählen Sie Ihren Wunschtermin und geben Sie Ihre Daten ein (Anmeldeschluss: 20. Oktober).",
+        "Zahlen Sie 15 € per PayPal oder Überweisung bzw. ₹1500 per UPI mit Ihrem Referenzcode.",
+        "Bestätigen Sie Ihre Zahlung – Sie erhalten sofort eine Bestätigungs-E-Mail.",
+        "Einen Tag vor der Einheit senden wir Ihnen den Online-Meeting-Link per E-Mail.",
+      ],
+      blogTitle: "Mehr zu diesem Thema",
+      blogDescription: "",
+      blogLinkLabel: "",
+      questionsNote: "Fragen? Schreiben Sie uns an",
+      moreInfoBtn: "Mehr Infos",
+      bookBtn: "Buchen & bezahlen",
+      bookCta: "Platz für Ihr Kind reservieren — 15 € / ₹1500",
+    },
     courseIntake: {
       detailsTitle: "Platz reservieren",
       paymentTitle: "Zahlung abschließen",
       selectedLabel: "Gewählter Kurs",
+      sessionLabel: "EINEN Termin wählen",
+      registrationClosed: "Anmeldung geschlossen",
       fields: {
         name: "Vollständiger Name",
         email: "E-Mail",
@@ -1373,9 +1466,12 @@ export const TRANSLATIONS = {
       paypalNote: "In der Regel innerhalb weniger Stunden bestätigt.",
       bankLabel: "Banküberweisung",
       bankNote: "SEPA-Überweisungen können 1–2 Werktage bis zur Bestätigung dauern.",
+      paymentINRTitle: "Zahlung in INR",
+      upiLabel: "UPI",
+      upiNote: "Meist innerhalb weniger Stunden bestätigt.",
       paidBtn: "Ich habe bezahlt",
       paidSubmitting: "Wird bestätigt...",
-      paidError: "Ihre Zahlungsmeldung konnte nicht bestätigt werden. Bitte versuchen Sie es erneut oder schreiben Sie an riju.kansal@niramay.me.",
+      paidError: "Ihre Zahlungsmeldung konnte nicht bestätigt werden. Bitte versuchen Sie es erneut oder schreiben Sie an {email}.",
       confirmationTitle: "Sie sind angemeldet!",
       confirmationBody: "Vielen Dank für Ihre Anmeldung. Wir prüfen Ihre Zahlung, und Sie erhalten den Online-Meeting-Link einen Tag vor der Einheit per E-Mail.",
       confirmationSentTo: "Eine Bestätigungs-E-Mail wurde gesendet an:",
@@ -2318,6 +2414,9 @@ export const COURSES = [
     // CourseIntakeModal in App.tsx), with a dedicated /courses/:id page.
     id: "yoga-stress-immunity-sleep",
     bookable: true,
+    // TRANSLATIONS key holding this course's /courses/:id page copy.
+    pageKey: "yogaSeries",
+    offerPrice: "79",
     blogSlug: "stress-immunity-and-sleep-how-yoga-restores-your-balance",
     EN: {
       title: "Yoga for Stress, Immunity & Sleep: 8-Session Series",
@@ -2334,6 +2433,51 @@ export const COURSES = [
       price: "79 € · 8 Einheiten",
       instructor: "Riju",
       description: "Sanfte Dehnung, Atemübungen, Meditation und Tiefenentspannung für mehr Gelassenheit, ein starkes Immunsystem und guten Schlaf.",
+    }
+  },
+  {
+    // One workshop offered on two dates: the booker picks one `sessions`
+    // entry (stored as `session` on the courseBookings doc — keep the ids in
+    // sync with firestore.rules and api/notify-course-booking.ts). Payable in
+    // EUR or INR, and bookable only until `bookingClosesAt`.
+    id: "yoga-adventure",
+    bookable: true,
+    pageKey: "yogaAdventure",
+    offerPrice: "15",
+    acceptsINR: true,
+    contactEmail: "richa@niramay.me",
+    bookingClosesAt: "2026-10-20T23:59:59+02:00",
+    sessions: [
+      {
+        id: "2026-10-24",
+        EN: "Sat 24 Oct · 12:30–2:00 pm European time (4:00–5:30 pm IST)",
+        DE: "Sa, 24. Okt. · 12:30–14:00 Uhr europäische Zeit (16:00–17:30 Uhr IST)",
+      },
+      {
+        id: "2026-10-29",
+        EN: "Thu 29 Oct · 11:30 am–1:00 pm European time (4:00–5:30 pm IST)",
+        DE: "Do, 29. Okt. · 11:30–13:00 Uhr europäische Zeit (16:00–17:30 Uhr IST)",
+      },
+    ],
+    EN: {
+      title: "Yoga Adventure – Move • Breathe • Play • Discover!",
+      time: "Sat 24 Oct or Thu 29 Oct · 1.5 hours",
+      location: "Online (live) · English",
+      price: "€15 / ₹1500 per child",
+      instructor: "Richa",
+      description: "A fun, interactive yoga workshop for children aged 9–14 — movement, breathing, focus, games and self-discovery in a small group (max. 12). Choose one date; registration until 20 October.",
+      nameLabel: "Parent's Full Name",
+      notesPlaceholder: "Your child's name and age, and anything we should know (health conditions, yoga experience…)",
+    },
+    DE: {
+      title: "Yoga-Abenteuer – Bewegen • Atmen • Spielen • Entdecken!",
+      time: "Sa, 24. Okt. oder Do, 29. Okt. · 1,5 Stunden",
+      location: "Online (live) · Englisch",
+      price: "15 € / ₹1500 pro Kind",
+      instructor: "Richa",
+      description: "Ein lustiger, interaktiver Yoga-Workshop für Kinder von 9–14 Jahren – Bewegung, Atmung, Konzentration, Spiele und Selbstentdeckung in kleiner Gruppe (max. 12). Einen Termin wählen; Anmeldung bis 20. Oktober.",
+      nameLabel: "Vollständiger Name (Elternteil)",
+      notesPlaceholder: "Name und Alter Ihres Kindes sowie alles, was wir wissen sollten (Gesundheit, Yoga-Erfahrung…)",
     }
   },
   {

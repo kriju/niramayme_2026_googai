@@ -9,7 +9,7 @@ const SITE_URL = "https://www.niramay.me";
 // since service pages are added rarely and deliberately.
 const SERVICE_IDS = ["yoga", "reiki", "subconscious-healing", "astrology", "intuitive-guidance", "tarot"];
 // Likewise for the COURSES entries with `bookable: true` (each has a /courses/:id page).
-const COURSE_IDS = ["yoga-stress-immunity-sleep"];
+const COURSE_IDS = ["yoga-stress-immunity-sleep", "yoga-adventure"];
 
 type LocalizedPair = { en: string; de: string; changefreq: string; priority: string };
 
