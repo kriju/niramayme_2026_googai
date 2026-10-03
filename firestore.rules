@@ -33,13 +33,16 @@ service cloud.firestore {
     }
 
     // Blog helper
+    // Length caps are kept in sync with BLOG_FIELD_LIMITS in
+    // src/pages/WritePage.tsx, and leave room for German translations, which
+    // usually run 20-35% longer than the English original.
     function isValidBlog(data) {
       return data.keys().hasAll(['slug', 'title', 'content', 'createdAt', 'lang', 'published'])
           && data.keys().hasOnly(['slug', 'title', 'excerpt', 'content', 'image', 'audioUrl', 'category', 'author', 'lang', 'createdAt', 'updatedAt', 'published'])
           && data.slug is string && data.slug.size() > 0 && data.slug.size() <= 200 && data.slug.matches('^[a-z0-9-]+$')
-          && data.title is string && data.title.size() > 0 && data.title.size() <= 200
-          && (!('excerpt' in data) || (data.excerpt is string && data.excerpt.size() <= 500))
-          && data.content is string && data.content.size() > 0 && data.content.size() <= 20000
+          && data.title is string && data.title.size() > 0 && data.title.size() <= 300
+          && (!('excerpt' in data) || (data.excerpt is string && data.excerpt.size() <= 1500))
+          && data.content is string && data.content.size() > 0 && data.content.size() <= 100000
           && (!('image' in data) || (data.image is string && data.image.size() <= 2000))
           && (!('audioUrl' in data) || (data.audioUrl is string && data.audioUrl.size() <= 2000))
           && (!('category' in data) || data.category is string)

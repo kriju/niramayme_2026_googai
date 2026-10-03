@@ -181,6 +181,10 @@ function resolveContentType(file: File, kind: "image" | "audio"): string | null 
   return null;
 }
 
+// Mirrors the caps in isValidBlog (firestore.rules), so an over-long field
+// gets a specific message here instead of a generic permission-denied.
+const BLOG_FIELD_LIMITS = { title: 300, excerpt: 1500, content: 100000 } as const;
+
 const EMPTY_POST_FORM = { title: "", excerpt: "", content: "", category: BLOG_CATEGORIES[0], image: "", audioUrl: "", lang: "EN" as "EN" | "DE" };
 
 const WriteDashboard = ({ user }: { user: User }) => {
@@ -273,6 +277,12 @@ const WriteDashboard = ({ user }: { user: User }) => {
 
   const handleSave = async (published: boolean) => {
     if (!form.title.trim() || !form.content.trim()) return;
+    const tooLong = (Object.keys(BLOG_FIELD_LIMITS) as (keyof typeof BLOG_FIELD_LIMITS)[])
+      .find(field => form[field].trim().length > BLOG_FIELD_LIMITS[field]);
+    if (tooLong) {
+      setError(`Couldn't save the post: the ${tooLong} is ${form[tooLong].trim().length} characters, and the limit is ${BLOG_FIELD_LIMITS[tooLong]}.`);
+      return;
+    }
     setSaving(true);
     setError(null);
     try {
