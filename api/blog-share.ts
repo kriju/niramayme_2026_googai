@@ -3,6 +3,7 @@ import path from "node:path";
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { getAdminDb } from "./_lib/firebaseAdmin.js";
 import { escapeHtml } from "./_lib/util.js";
+import { blogPath, findTranslationAdmin } from "./_lib/blogTranslation.js";
 
 const SITE_URL = "https://www.niramay.me";
 const DEFAULT_IMAGE = `${SITE_URL}/og-default.jpg`;
@@ -88,35 +89,83 @@ function shareImage(image: string | undefined): string {
   return /\.(heic|heif|avif)(\?|$)/i.test(image) ? DEFAULT_IMAGE : image;
 }
 
+// index.html carries the homepage's hreflang alternates; they're wrong for a
+// post, so they're dropped and (when the post has a translation) replaced.
+function setAlternates(html: string, alternates: { en: string; de: string } | null): string {
+  html = html.replace(/\s*<link\s+rel="alternate"\s+hreflang="[^"]*"\s+href="[^"]*"\s*\/?>/g, "");
+  if (!alternates) return html;
+  const links = [
+    `<link rel="alternate" hreflang="en" href="${escapeHtml(alternates.en)}" />`,
+    `<link rel="alternate" hreflang="de" href="${escapeHtml(alternates.de)}" />`,
+    `<link rel="alternate" hreflang="x-default" href="${escapeHtml(alternates.en)}" />`,
+  ];
+  return html.replace("</head>", () => `    ${links.join("\n    ")}\n  </head>`);
+}
+
+async function findPost(slug: string, lang: "EN" | "DE"): Promise<{ id: string; post: Post } | null> {
+  const snapshot = await getAdminDb()
+    .collection("blogs")
+    .where("slug", "==", slug)
+    .where("lang", "==", lang)
+    .where("published", "==", true)
+    .limit(1)
+    .get();
+  return snapshot.empty ? null : { id: snapshot.docs[0].id, post: snapshot.docs[0].data() as Post };
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   const slug = typeof req.query.slug === "string" ? req.query.slug : "";
   const lang = req.query.lang === "de" ? "DE" : "EN";
+  const other = lang === "EN" ? "DE" : "EN";
   let html = await loadShell(req);
 
   let post: Post | null = null;
   let postId = "";
+  let translationSlug: string | null = null;
+  // Set when the slug belongs to the other language and has no translation:
+  // the SPA then shows an "only available in …" notice, which isn't a page
+  // of its own for search engines.
+  let otherLanguageOnly = false;
   if (slug) {
     try {
-      const snapshot = await getAdminDb()
-        .collection("blogs")
-        .where("slug", "==", slug)
-        .where("lang", "==", lang)
-        .where("published", "==", true)
-        .limit(1)
-        .get();
-      post = snapshot.empty ? null : (snapshot.docs[0].data() as Post);
-      postId = snapshot.empty ? "" : snapshot.docs[0].id;
+      const found = await findPost(slug, lang);
+      if (found) {
+        post = found.post;
+        postId = found.id;
+        translationSlug = (await findTranslationAdmin(getAdminDb(), { id: postId, ...post }, other))?.slug ?? null;
+      } else {
+        // Each language's post has its own slug, so "/de/blog/<english-slug>"
+        // (the language switch, or a hand-edited link) means the other
+        // language's post: send it to its translation when there is one.
+        const otherPost = await findPost(slug, other);
+        if (otherPost) {
+          const translated = await findTranslationAdmin(getAdminDb(), { id: otherPost.id, ...otherPost.post }, lang);
+          if (translated?.slug) {
+            res.setHeader("Cache-Control", "public, max-age=0, s-maxage=300, stale-while-revalidate=86400");
+            res.setHeader("Location", blogPath(lang, translated.slug));
+            return res.status(302).end();
+          }
+          otherLanguageOnly = true;
+        }
+      }
     } catch (error) {
       console.error("blog-share: failed to load post, serving default tags:", error);
     }
+  }
+
+  if (otherLanguageOnly) {
+    html = setAlternates(html, null);
+    html = setTag(html, /<meta\s+name="robots"\s+content="[^"]*"\s*\/?>/, `<meta name="robots" content="noindex, follow" />`);
   }
 
   // Unknown slug: serve the untouched shell and let the SPA redirect as usual.
   if (post?.title) {
     const title = `${post.title} — Niramay Wellbeing Blog`;
     const description = post.excerpt || "";
-    const url = `${SITE_URL}${lang === "DE" ? "/de" : ""}/blog/${slug}`;
+    const url = `${SITE_URL}${blogPath(lang, slug)}`;
     const image = shareImage(post.image);
+    const translationUrl = translationSlug ? `${SITE_URL}${blogPath(other, translationSlug)}` : null;
+    html = setAlternates(html, translationUrl ? (lang === "EN" ? { en: url, de: translationUrl } : { en: translationUrl, de: url }) : null);
 
     html = setTag(html, /<title>[^<]*<\/title>/, `<title>${escapeHtml(title)}</title>`);
     html = setTag(html, /<link\s+rel="canonical"\s+href="[^"]*"\s*\/?>/, `<link rel="canonical" href="${escapeHtml(url)}" />`);

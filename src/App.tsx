@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, lazy, Suspense } from "react";
+import React, { useState, useEffect, useMemo, useCallback, lazy, Suspense } from "react";
 import { BrowserRouter, Routes, Route, Link, Navigate, Outlet, useParams, useOutletContext, useLocation, useNavigate, matchRoutes } from "react-router-dom";
 import { SpeedInsights } from "@vercel/speed-insights/react";
 import { motion, AnimatePresence } from "motion/react";
@@ -26,7 +26,7 @@ import {
   Volume2,
   Image as ImageIcon
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { db } from "./lib/firebase";
 import { AuthProvider, useAuth } from "./lib/auth";
 import { AuthDialog } from "./components/AuthDialog";
@@ -38,6 +38,7 @@ import {
   addDoc,
   updateDoc,
   getDocs,
+  getDoc,
   limit,
   doc,
   serverTimestamp,
@@ -56,9 +57,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { NavigationMenu } from "@base-ui/react/navigation-menu";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { SERVICES, TESTIMONIALS, type ClientStory, FAQS, HEALER_CERTIFICATIONS, HEALER_IMAGES, TRANSLATIONS, ONGOING_SESSIONS, COURSES, EVENTS, ANNOUNCEMENTS, GOOGLE_CALENDAR_URL, GOOGLE_REVIEW_URL, BUSINESS_STREET_ADDRESS, BUSINESS_POSTAL_CODE, BUSINESS_CITY, GOOGLE_MAPS_URL, GOOGLE_MAPS_EMBED_URL } from "./constants";
+import { SERVICES, TESTIMONIALS, type ClientStory, FAQS, HEALER_CERTIFICATIONS, HEALER_IMAGES, TRANSLATIONS, REVIEW_CATEGORIES, categoryLabel, ONGOING_SESSIONS, COURSES, EVENTS, ANNOUNCEMENTS, GOOGLE_CALENDAR_URL, GOOGLE_REVIEW_URL, BUSINESS_STREET_ADDRESS, BUSINESS_POSTAL_CODE, BUSINESS_CITY, GOOGLE_MAPS_URL, GOOGLE_MAPS_EMBED_URL } from "./constants";
 import { getStoredConsent, grantAnalyticsConsent, denyAnalyticsConsent, initAnalyticsFromStoredConsent, trackPageview } from "./lib/analytics";
-import { SITE_URL, BUSINESS_JSONLD_ID, useJsonLd, useSeo } from "./lib/seo";
+import { SITE_URL, BUSINESS_JSONLD_ID, useJsonLd, useSeo, useNoIndex } from "./lib/seo";
 import { responsiveImage } from "./lib/images";
 
 // A single booking dialog, controlled from the App root (see the other
@@ -82,6 +83,10 @@ type BookingContext = { title?: string; subtitle?: string; meta?: BookingMeta[] 
 function ScrollManager() {
   const location = useLocation();
   useEffect(() => {
+    // The language switch swaps the page for the same page in the other
+    // language, so the reader stays where they were rather than jumping
+    // back to the top (or to a #section they've since scrolled away from).
+    if ((location.state as { keepScroll?: boolean } | null)?.keepScroll) return;
     const raf = requestAnimationFrame(() => {
       if (location.hash) {
         document.getElementById(location.hash.slice(1))?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -96,6 +101,10 @@ function ScrollManager() {
 
 type LayoutContext = {
   lang: "EN" | "DE";
+  // Lets a page whose other-language URL isn't just "/de" added or removed
+  // (a blog post, whose German version has its own slug) point the
+  // language switch at it. null goes back to the default.
+  setAltPath: (path: string | null) => void;
   onBook: (ctx?: BookingContext) => void;
   onBookAstrology: () => void;
   onBookReiki: (pkg: ReikiPackageId) => void;
@@ -111,6 +120,61 @@ type LayoutContext = {
 // that must stay in the current language (Navbar, Footer, ServiceCard,
 // ServicePage's cross-links) need the same mapping.
 const langPrefix = (lang: "EN" | "DE") => (lang === "DE" ? "/de" : "");
+const otherLang = (lang: "EN" | "DE"): "EN" | "DE" => (lang === "EN" ? "DE" : "EN");
+
+// The same page in the other language: "/services/yoga" <-> "/de/services/yoga".
+const toggledPath = (pathname: string, lang: "EN" | "DE") =>
+  lang === "EN"
+    ? (pathname === "/" ? "/de" : `/de${pathname}`)
+    : pathname.replace(/^\/de(?=\/|$)/, "") || "/";
+
+const LANG_CHOICE_KEY = "niramay-lang-choice";
+const rememberLangChoice = (lang: "EN" | "DE") => {
+  try {
+    localStorage.setItem(LANG_CHOICE_KEY, lang);
+  } catch {
+    // Storage blocked (private mode etc.): nothing to remember.
+  }
+};
+
+// "EN | DE" segmented switch, always visible in the navbar on every screen
+// size. The current language is marked rather than a single button showing
+// it, which read as "you are here" more than "tap to change". Real links
+// (not buttons) so crawlers and middle-click see the other-language URL.
+const LangSwitch = ({ lang, altPath, className = "" }: { lang: "EN" | "DE", altPath: string, className?: string }) => {
+  const t = TRANSLATIONS[lang].nav;
+  const option = (code: "EN" | "DE") => {
+    const name = code === "EN" ? t.langNameEN : t.langNameDE;
+    const base = "px-2.5 py-1 rounded-full text-xs font-semibold tracking-wide transition-colors";
+    if (code === lang) {
+      return (
+        <span key={code} aria-current="true" title={name} className={`${base} bg-primary text-primary-foreground`}>
+          <span aria-hidden="true">{code}</span><span className="sr-only">{name}</span>
+        </span>
+      );
+    }
+    return (
+      <Link
+        key={code}
+        to={altPath}
+        state={{ keepScroll: true }}
+        hrefLang={code.toLowerCase()}
+        lang={code.toLowerCase()}
+        title={name}
+        onClick={() => rememberLangChoice(code)}
+        className={`${base} text-foreground/70 hover:text-primary hover:bg-primary/10`}
+      >
+        <span aria-hidden="true">{code}</span><span className="sr-only">{code === "EN" ? "English" : "Deutsch"}</span>
+      </Link>
+    );
+  };
+  return (
+    <div role="group" aria-label={t.languageLabel} className={`flex items-center gap-0.5 rounded-full border border-stone-300/80 bg-background/70 p-0.5 ${className}`}>
+      {option("EN")}
+      {option("DE")}
+    </div>
+  );
+};
 
 const BookingDialog = ({ context, lang, open, onOpenChange }: { context: BookingContext | null, lang: "EN" | "DE", open: boolean, onOpenChange: (o: boolean) => void }) => {
   const t = TRANSLATIONS[lang].booking;
@@ -1136,13 +1200,7 @@ const LeaveReviewModal = ({ lang }: { lang: "EN" | "DE" }) => {
               value={formData.category}
               onChange={e => setFormData({ ...formData, category: e.target.value })}
             >
-              <option value="Physical Wellness">Physical Wellness</option>
-              <option value="Mental Clarity">Mental Clarity</option>
-              <option value="Spiritual Healing">Spiritual Healing</option>
-              <option value="Kids Yoga">Kids Yoga</option>
-              <option value="Dance Therapy">Dance Therapy</option>
-              <option value="Tarot Reading">Tarot Reading</option>
-              <option value="Chair Yoga">Chair Yoga</option>
+              {REVIEW_CATEGORIES.map(c => <option key={c} value={c}>{categoryLabel(c, lang)}</option>)}
             </select>
           </div>
           <div className="grid gap-2">
@@ -1202,14 +1260,14 @@ const BlogCard = ({ blog, lang }: { blog: any, lang: "EN" | "DE", key?: any }) =
               />
               <div className="absolute top-4 left-4">
                 <Badge className="bg-white/90 backdrop-blur-md text-primary border-none">
-                  {blog.category}
+                  {categoryLabel(blog.category, lang)}
                 </Badge>
               </div>
             </div>
           )}
           <CardHeader className="flex-grow">
             {!blog.image && (
-              <Badge variant="outline" className="w-fit mb-2">{blog.category}</Badge>
+              <Badge variant="outline" className="w-fit mb-2">{categoryLabel(blog.category, lang)}</Badge>
             )}
             <CardTitle className="text-xl font-serif mb-2 line-clamp-2 leading-tight">
               {blog.title}
@@ -1498,7 +1556,7 @@ const AnnouncementBar = ({ lang, items, onDismiss }: { lang: "EN" | "DE", items:
   );
 };
 
-const Navbar = ({ lang, onToggleLang, onBook, belowAnnouncement = false }: { lang: "EN" | "DE", onToggleLang: () => void, onBook: (ctx?: BookingContext) => void, belowAnnouncement?: boolean }) => {
+const Navbar = ({ lang, altPath, onBook, belowAnnouncement = false }: { lang: "EN" | "DE", altPath: string, onBook: (ctx?: BookingContext) => void, belowAnnouncement?: boolean }) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const t = TRANSLATIONS[lang].nav;
@@ -1525,10 +1583,10 @@ const Navbar = ({ lang, onToggleLang, onBook, belowAnnouncement = false }: { lan
       className={`fixed top-0 w-full z-50 transition-all duration-300 ${isScrolled ? "bg-background/80 backdrop-blur-md border-b py-3" : "bg-transparent py-6"}`}
       style={belowAnnouncement && !isScrolled ? { top: ANNOUNCEMENT_BAR_HEIGHT } : undefined}
     >
-      <div className="container mx-auto px-6 flex justify-between items-center">
+      <div className="container mx-auto px-4 sm:px-6 flex justify-between items-center gap-3">
         <Link to={prefix || "/"} className="flex items-center gap-2 shrink-0">
           <img src="/logo.svg" alt="Niramay Logo" className="w-10 h-10 object-contain shrink-0" referrerPolicy="no-referrer" />
-          <span className="font-serif text-2xl font-bold tracking-tight whitespace-nowrap">Niramay</span>
+          <span className="font-serif text-xl min-[380px]:text-2xl font-bold tracking-tight whitespace-nowrap">Niramay</span>
         </Link>
 
         {/* Nine individual links used to need ~1250px to lay out without
@@ -1597,10 +1655,7 @@ const Navbar = ({ lang, onToggleLang, onBook, belowAnnouncement = false }: { lan
           </NavigationMenu.Root>
 
           <div className="flex items-center gap-4">
-            <Button variant="ghost" size="sm" onClick={onToggleLang} className="gap-2">
-              <Globe className="w-4 h-4" />
-              {lang}
-            </Button>
+            <LangSwitch lang={lang} altPath={altPath} />
             {!loading && (
               user ? (
                 <div className="flex items-center gap-3">
@@ -1620,9 +1675,18 @@ const Navbar = ({ lang, onToggleLang, onBook, belowAnnouncement = false }: { lan
           </div>
         </div>
 
-        <button className="md:hidden" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
-          {isMobileMenuOpen ? <X /> : <Menu />}
-        </button>
+        {/* Phones: the language switch sits beside the menu button, not
+            inside the menu, so it's visible on first view. */}
+        <div className="md:hidden flex items-center gap-3">
+          <LangSwitch lang={lang} altPath={altPath} />
+          <button
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            aria-label={isMobileMenuOpen ? t.closeMenu : t.openMenu}
+            aria-expanded={isMobileMenuOpen}
+          >
+            {isMobileMenuOpen ? <X /> : <Menu />}
+          </button>
+        </div>
       </div>
 
       <AnimatePresence>
@@ -1681,11 +1745,7 @@ const Navbar = ({ lang, onToggleLang, onBook, belowAnnouncement = false }: { lan
                 </div>
               )
             )}
-            <div className="flex justify-between items-center">
-              <Button variant="ghost" onClick={onToggleLang} className="gap-2">
-                <Globe className="w-4 h-4" />
-                {t.switchLang}
-              </Button>
+            <div className="flex justify-end items-center">
               <Button className="rounded-full" onClick={() => { setIsMobileMenuOpen(false); onBook(); }}>{t.bookNow}</Button>
             </div>
           </motion.div>
@@ -1947,7 +2007,7 @@ const Hero = ({ lang, onBook }: { lang: "EN" | "DE", onBook: (ctx?: BookingConte
                     <Link to={`${prefix}/blog/${post.slug}`} className="group flex items-center gap-3 py-2.5">
                       <div className="min-w-0 flex-1">
                         <p className="font-serif text-base md:text-lg leading-snug line-clamp-1 group-hover:text-stone-600 transition-colors">{post.title}</p>
-                        {post.category && <p className="text-xs text-stone-500 mt-0.5">{post.category}</p>}
+                        {post.category && <p className="text-xs text-stone-500 mt-0.5">{categoryLabel(post.category, lang)}</p>}
                       </div>
                       {post.audioUrl && <Volume2 className="w-4 h-4 text-stone-400 shrink-0" />}
                       <ArrowRight className="w-4 h-4 shrink-0 text-stone-400 group-hover:text-primary group-hover:translate-x-1 transition-all" />
@@ -2030,7 +2090,7 @@ const ServiceCard = ({ service, index, lang, onLearnMore }: { service: any, inde
             <service.icon className="w-6 h-6 text-primary" />
           </div>
           <CardTitle className="text-2xl font-serif">{content.title}</CardTitle>
-          <CardDescription className="font-medium text-primary/70">{service.category}</CardDescription>
+          <CardDescription className="font-medium text-primary/70">{categoryLabel(service.category, lang)}</CardDescription>
         </CardHeader>
         <CardContent>
           <p className="text-muted-foreground mb-6 leading-relaxed">{content.description}</p>
@@ -2174,7 +2234,7 @@ const ServicePage = () => {
       onBook({
         title: content.title,
         subtitle: content.outcome,
-        meta: [{ icon: service.icon, label: service.category }],
+        meta: [{ icon: service.icon, label: categoryLabel(service.category, lang) }],
       });
     }
   };
@@ -2193,7 +2253,7 @@ const ServicePage = () => {
         <div className={`w-14 h-14 ${service.color} rounded-xl flex items-center justify-center mb-6`}>
           <service.icon className="w-7 h-7 text-primary" />
         </div>
-        <p className="font-medium text-primary/70 mb-2">{service.category}</p>
+        <p className="font-medium text-primary/70 mb-2">{categoryLabel(service.category, lang)}</p>
         <h1 className="text-4xl md:text-5xl font-serif font-bold mb-6 leading-tight">{content.title}</h1>
         {isReiki && <p className="text-xl font-serif text-primary/80 -mt-3 mb-6">{tr.badge}</p>}
         <p className="text-lg text-muted-foreground leading-relaxed mb-8">{content.description}</p>
@@ -2598,12 +2658,101 @@ const readEmbeddedPost = (slug: string | undefined, lang: "EN" | "DE"): any => {
 // COVER_SIZES in api/blog-share.ts so the preload matches the <img>.
 const COVER_SIZES = "(min-width: 768px) 720px, calc(100vw - 48px)";
 
+// Blog posts are written per language, each with its own slug (made from
+// its own title), so "/blog/x" and "/de/blog/x" are generally NOT the same
+// article. Instead, a translated post stores the id of the post it
+// translates in `translationOf` (set by WritePage when translating, or by
+// hand there for older posts). The link is followed in both directions:
+// the translation points at its original, the original is found by
+// querying for whatever points at it.
+//
+// Posts translated before that link existed (and anything mirrored onto a
+// preview from production, which overwrites links set there) are matched
+// by their media instead: "Translate to German" carries the original's
+// cover image and audio over unchanged, and each upload has a unique URL,
+// so a published post in the other language with the same image or audio
+// is the same article. An explicit link always wins.
+const findTranslation = async (post: { id: string; translationOf?: string; image?: string; audioUrl?: string }, target: "EN" | "DE"): Promise<any | null> => {
+  if (post.translationOf) {
+    try {
+      const snap = await getDoc(doc(db, "blogs", post.translationOf));
+      const data = snap.data();
+      if (data?.published && data.lang === target) return { id: snap.id, ...data };
+    } catch {
+      // Unpublished (so unreadable to visitors) or deleted: no translation.
+    }
+  }
+  const byField = async (field: string, value: string | undefined) => {
+    if (!value) return null;
+    const snapshot = await getDocs(query(
+      collection(db, "blogs"),
+      where(field, "==", value),
+      where("lang", "==", target),
+      where("published", "==", true),
+      limit(1)
+    ));
+    return snapshot.empty ? null : { id: snapshot.docs[0].id, ...snapshot.docs[0].data() };
+  };
+  return (await byField("translationOf", post.id))
+    ?? (await byField("image", post.image))
+    ?? (await byField("audioUrl", post.audioUrl));
+};
+
+const findPublishedPost = async (slug: string, lang: "EN" | "DE"): Promise<any | null> => {
+  const snapshot = await getDocs(query(
+    collection(db, "blogs"),
+    where("slug", "==", slug),
+    where("lang", "==", lang),
+    where("published", "==", true),
+    limit(1)
+  ));
+  return snapshot.empty ? null : { id: snapshot.docs[0].id, ...snapshot.docs[0].data() };
+};
+
+// Shown at /de/blog/x when x is an English post with no German translation
+// (or the other way round) — typically right after the language switch.
+// Says so plainly instead of silently dropping the reader on the homepage.
+const BlogPostOtherLanguageOnly = ({ lang, post }: { lang: "EN" | "DE", post: any }) => {
+  const bp = TRANSLATIONS[lang].blogPost;
+  const prefix = langPrefix(lang);
+  const target = otherLang(lang);
+  const targetUrl = `${langPrefix(target)}/blog/${post.slug}`;
+  return (
+    <main className="pt-32 pb-24">
+      <div className="container mx-auto px-6 max-w-2xl text-center">
+        <Globe className="w-10 h-10 text-primary mx-auto mb-6" />
+        <p className="text-xl font-serif mb-3">{bp.onlyInOther}</p>
+        <p lang={target.toLowerCase()} className="text-2xl md:text-3xl font-serif font-bold mb-8">{post.title}</p>
+        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+          <Link
+            to={targetUrl}
+            hrefLang={target.toLowerCase()}
+            onClick={() => rememberLangChoice(target)}
+            className={buttonVariants({ className: "rounded-full h-10 px-6 gap-2" })}
+          >
+            {bp.readInOther}<ArrowRight className="w-4 h-4" />
+          </Link>
+          <Link to={`${prefix}/#blog`} className={buttonVariants({ variant: "outline", className: "rounded-full h-10 px-6" })}>
+            {bp.browseBlog}
+          </Link>
+        </div>
+      </div>
+    </main>
+  );
+};
+
 const BlogPostPage = () => {
   const { slug } = useParams<{ slug: string }>();
-  const { lang } = useOutletContext<LayoutContext>();
+  const { lang, setAltPath } = useOutletContext<LayoutContext>();
   const [post, setPost] = useState<any>(() => readEmbeddedPost(slug, lang));
   const [otherPosts, setOtherPosts] = useState<any[]>([]);
   const [notFound, setNotFound] = useState(false);
+  // When this slug isn't a post in this language: the translation to
+  // redirect to, or else the other-language post to point the reader at.
+  const [redirectTo, setRedirectTo] = useState<string | null>(null);
+  const [otherLangOnly, setOtherLangOnly] = useState<any>(null);
+  // This post's published translation, if any.
+  const [translation, setTranslation] = useState<any>(null);
   const bp = TRANSLATIONS[lang].blogPost;
   const prefix = langPrefix(lang);
   const canonical = `${SITE_URL}${prefix}/blog/${slug}`;
@@ -2614,6 +2763,8 @@ const BlogPostPage = () => {
     const embedded = readEmbeddedPost(slug, lang);
     setPost(embedded);
     setNotFound(false);
+    setRedirectTo(null);
+    setOtherLangOnly(null);
     if (!slug) return;
     let cancelled = false;
     const q = query(
@@ -2623,13 +2774,24 @@ const BlogPostPage = () => {
       where("published", "==", true),
       limit(1)
     );
-    getDocs(q).then(snapshot => {
+    getDocs(q).then(async snapshot => {
       if (cancelled) return;
       if (snapshot.empty) {
         // Offline, getDocs answers from the (empty) local cache instead of
         // failing — that's no reason to drop an embedded post the server
         // just confirmed is published.
-        if (!embedded || !snapshot.metadata.fromCache) setNotFound(true);
+        if (embedded && snapshot.metadata.fromCache) return;
+        // Not a post in this language. Usually that's the language switch
+        // (or a shared link) carrying the other language's slug over:
+        // go to its translation if it has one, else say it's only
+        // available in the other language.
+        const other = await findPublishedPost(slug, otherLang(lang)).catch(() => null);
+        if (cancelled) return;
+        if (!other) return setNotFound(true);
+        const translated = await findTranslation(other, lang).catch(() => null);
+        if (cancelled) return;
+        if (translated?.slug) setRedirectTo(`${prefix}/blog/${translated.slug}`);
+        else setOtherLangOnly(other);
       } else {
         const docSnap = snapshot.docs[0];
         setPost({ id: docSnap.id, ...docSnap.data() });
@@ -2637,7 +2799,27 @@ const BlogPostPage = () => {
     // Likewise a failed refresh keeps the embedded post.
     }).catch(() => !cancelled && !embedded && setNotFound(true));
     return () => { cancelled = true; };
-  }, [slug, lang]);
+  }, [slug, lang, prefix]);
+
+  // Point the language switch (and hreflang) at this post's translation
+  // when it has one; otherwise the switch's default "/de" + same slug
+  // lands on the "only available in English" notice above.
+  const postId: string | undefined = post?.id;
+  const postTranslationOf: string | undefined = post?.translationOf;
+  const postImage: string | undefined = post?.image;
+  const postAudio: string | undefined = post?.audioUrl;
+  useEffect(() => {
+    setTranslation(null);
+    if (!postId) return;
+    let cancelled = false;
+    findTranslation({ id: postId, translationOf: postTranslationOf, image: postImage, audioUrl: postAudio }, otherLang(lang))
+      .then(found => !cancelled && setTranslation(found?.slug ? found : null))
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [postId, postTranslationOf, postImage, postAudio, lang]);
+  useEffect(() => {
+    setAltPath(translation ? `${langPrefix(otherLang(lang))}/blog/${translation.slug}` : null);
+  }, [translation, lang, setAltPath]);
 
   useEffect(() => {
     const q = query(
@@ -2657,12 +2839,20 @@ const BlogPostPage = () => {
     return () => { cancelled = true; };
   }, [lang, slug]);
 
+  const translationUrl = translation ? `${SITE_URL}${langPrefix(otherLang(lang))}/blog/${translation.slug}` : null;
+  const seoPost = post ?? otherLangOnly;
   useSeo({
-    title: post ? `${post.title} — Niramay Wellbeing Blog` : "Niramay Wellbeing Blog",
-    description: post?.excerpt || "",
-    canonical,
+    title: seoPost ? `${seoPost.title} — Niramay Wellbeing Blog` : "Niramay Wellbeing Blog",
+    description: seoPost?.excerpt || "",
+    // The "only available in German/English" notice just points at the
+    // real article, so that's its canonical — and it's kept out of the index.
+    canonical: otherLangOnly ? `${SITE_URL}${langPrefix(otherLang(lang))}/blog/${otherLangOnly.slug}` : canonical,
     lang,
+    alternates: translationUrl
+      ? (lang === "EN" ? { en: canonical, de: translationUrl } : { en: translationUrl, de: canonical })
+      : undefined,
   });
+  useNoIndex(!!otherLangOnly);
 
   const postJsonLd = useMemo(() => {
     if (!post) return null;
@@ -2685,6 +2875,8 @@ const BlogPostPage = () => {
   }, [post, lang, canonical]);
   useJsonLd("ld-json-blogpost", postJsonLd);
 
+  if (redirectTo) return <Navigate to={redirectTo} replace />;
+  if (otherLangOnly) return <BlogPostOtherLanguageOnly lang={lang} post={otherLangOnly} />;
   if (notFound) return <Navigate to={prefix || "/"} replace />;
   // Post data is fetched async (unlike the static SERVICES list), so there's
   // a brief gap before it's known to exist — render nothing rather than a
@@ -2708,7 +2900,7 @@ const BlogPostPage = () => {
         </nav>
 
         <div className="flex items-center gap-3 mb-4">
-          {post.category && <Badge variant="outline">{post.category}</Badge>}
+          {post.category && <Badge variant="outline">{categoryLabel(post.category, lang)}</Badge>}
           {dateStr && <span className="text-sm text-stone-400">{dateStr}</span>}
         </div>
         <h1 className="text-4xl md:text-5xl font-serif font-bold mb-4 leading-tight">{post.title}</h1>
@@ -3843,6 +4035,66 @@ const BookSection = ({ lang }: { lang: "EN" | "DE" }) => {
   );
 };
 
+// A one-time nudge for a visitor whose browser prefers the other language
+// (German browser on an English page, or English browser on a German one).
+// Only a suggestion, never an automatic redirect: redirecting by browser
+// language would also redirect Googlebot and hide one language from search.
+// Hidden for good once they pick a language with the switch or dismiss it.
+const LangSuggestion = ({ lang, altPath, belowAnnouncement }: { lang: "EN" | "DE", altPath: string, belowAnnouncement: boolean }) => {
+  const [visible, setVisible] = useState(false);
+  const target = otherLang(lang);
+  const t = TRANSLATIONS[target].langSuggest;
+
+  useEffect(() => {
+    let stored: string | null = null;
+    try {
+      stored = localStorage.getItem(LANG_CHOICE_KEY);
+    } catch {
+      // Storage blocked: fall through and judge by the browser alone.
+    }
+    if (stored) {
+      setVisible(false);
+      return;
+    }
+    const preferred = (navigator.languages?.[0] || navigator.language || "").toLowerCase();
+    setVisible(preferred.startsWith(target.toLowerCase()));
+  }, [target]);
+
+  if (!visible) return null;
+
+  const close = () => {
+    // Staying on this language is a choice too.
+    rememberLangChoice(lang);
+    setVisible(false);
+  };
+
+  return (
+    <div
+      role="region"
+      aria-label={t.message}
+      lang={target.toLowerCase()}
+      className={`fixed ${belowAnnouncement ? "top-32" : "top-24"} inset-x-4 sm:left-auto sm:right-6 sm:w-80 z-[60] rounded-2xl border border-stone-200 bg-background shadow-xl p-4`}
+    >
+      <p className="text-sm text-stone-700 mb-3 flex items-start gap-2">
+        <Globe className="w-4 h-4 mt-0.5 shrink-0 text-primary" />
+        {t.message}
+      </p>
+      <div className="flex justify-end gap-2">
+        <Button variant="ghost" size="sm" onClick={close}>{t.dismiss}</Button>
+        <Link
+          to={altPath}
+          state={{ keepScroll: true }}
+          hrefLang={target.toLowerCase()}
+          onClick={() => { rememberLangChoice(target); setVisible(false); }}
+          className={buttonVariants({ size: "sm", className: "rounded-full" })}
+        >
+          {t.switch}
+        </Link>
+      </div>
+    </div>
+  );
+};
+
 // Shared shell (nav, footer, the booking/legal/astrology/reiki-intake modals, and
 // the site-wide LocalBusiness JSON-LD) rendered on every route. Per-route
 // content — the homepage sections, or a single service's page — comes in
@@ -3856,9 +4108,16 @@ const AppLayout = () => {
   // a real, distinct, indexable page instead of a client-side toggle Google
   // never sees past the first version it crawls.
   const lang: "EN" | "DE" = (location.pathname === "/de" || location.pathname.startsWith("/de/")) ? "DE" : "EN";
-  const toggleLang = () => {
-    navigate(lang === "EN" ? `/de${location.pathname}` : location.pathname.replace(/^\/de/, "") || "/");
-  };
+  // Where the language switch goes: the same page in the other language,
+  // keeping any ?query and #section. A page can override the path (see
+  // setAltPath in LayoutContext); the override is tied to the pathname it
+  // was set on so it can never leak onto the next page.
+  const [altPathOverride, setAltPathOverride] = useState<{ from: string; to: string } | null>(null);
+  const setAltPath = useCallback((to: string | null) => {
+    setAltPathOverride(to ? { from: location.pathname, to } : null);
+  }, [location.pathname]);
+  const altPathname = altPathOverride?.from === location.pathname ? altPathOverride.to : toggledPath(location.pathname, lang);
+  const altPath = `${altPathname}${location.search}${location.hash}`;
   const [legalModal, setLegalModal] = useState<"impressum" | "privacy" | null>(null);
   const [bookingContext, setBookingContext] = useState<BookingContext | null>(null);
   const openBooking = (ctx: BookingContext = {}) => setBookingContext(ctx);
@@ -3936,8 +4195,9 @@ const AppLayout = () => {
     <div className="min-h-screen selection:bg-primary/20">
       <ScrollManager />
       <AnnouncementBar lang={lang} items={announcements} onDismiss={dismissAnnouncements} />
-      <Navbar lang={lang} onToggleLang={toggleLang} onBook={openBooking} belowAnnouncement={announcements.length > 0} />
-      <Outlet context={{ lang, onBook: openBooking, onBookAstrology: () => setAstrologyIntakeOpen(true), onBookReiki: setReikiPackage, onBookGuidance: (pkg = "individual") => { setGuidancePackage(pkg); setGuidanceIntakeOpen(true); }, onBookTarot: () => setTarotIntakeOpen(true), onBookCourse: setCourseBookingId, onOpenLegal: setLegalModal } satisfies LayoutContext} />
+      <Navbar lang={lang} altPath={altPath} onBook={openBooking} belowAnnouncement={announcements.length > 0} />
+      <LangSuggestion lang={lang} altPath={altPath} belowAnnouncement={announcements.length > 0} />
+      <Outlet context={{ lang, setAltPath, onBook: openBooking, onBookAstrology: () => setAstrologyIntakeOpen(true), onBookReiki: setReikiPackage, onBookGuidance: (pkg = "individual") => { setGuidancePackage(pkg); setGuidanceIntakeOpen(true); }, onBookTarot: () => setTarotIntakeOpen(true), onBookCourse: setCourseBookingId, onOpenLegal: setLegalModal } satisfies LayoutContext} />
       <Footer lang={lang} onOpenLegal={setLegalModal} />
 
       <LegalModal
@@ -4112,8 +4372,9 @@ const CoursePage = () => {
           <div className="p-6 rounded-2xl bg-stone-50 border border-stone-100 mb-14">
             <h2 className="text-xl font-serif font-bold mb-2">{ys.blogTitle}</h2>
             <p className="text-muted-foreground text-sm mb-4">{ys.blogDescription}</p>
-            {/* The article exists in English only, so the DE page links to it too. */}
-            <Link to={`/blog/${course.blogSlug}`} className="inline-flex items-center gap-2 text-primary font-medium hover:underline underline-offset-4">
+            {/* blogSlug is the English article's; on the DE page "/de/blog/<slug>"
+                resolves to its German translation (see BlogPostPage). */}
+            <Link to={`${langPrefix(lang)}/blog/${course.blogSlug}`} className="inline-flex items-center gap-2 text-primary font-medium hover:underline underline-offset-4">
               {ys.blogLinkLabel}
               <ArrowRight className="w-4 h-4" />
             </Link>
