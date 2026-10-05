@@ -15,8 +15,9 @@ type LocalizedPair = { en: string; de: string; changefreq: string; priority: str
 
 // Blog posts are written per language, each with its own slug. A post that
 // translates another stores the original's id in `translationOf` (see
-// WritePage.tsx); only such linked, both-published pairs get hreflang
-// alternates — an unlinked post has no "sibling" to point at.
+// WritePage.tsx); older, unlinked translations are paired by the same
+// cover image or audio (see findTranslation in src/App.tsx). Only such
+// both-published pairs get hreflang alternates.
 type BlogEntry = { loc: string; changefreq: string; priority: string; lastmod?: string; alternates?: { en: string; de: string } };
 
 function renderPair({ en, de, changefreq, priority }: LocalizedPair): string {
@@ -81,17 +82,24 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const db = getAdminDb();
     const snapshot = await db.collection("blogs").where("published", "==", true).get();
 
-    type SitemapPost = { id: string; slug?: string; lang?: "EN" | "DE"; translationOf?: string; updatedAt?: unknown; createdAt?: unknown };
+    type SitemapPost = { id: string; slug?: string; lang?: "EN" | "DE"; translationOf?: string; image?: string; audioUrl?: string; updatedAt?: unknown; createdAt?: unknown };
     const posts = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as SitemapPost);
     const byId = new Map(posts.map((post) => [post.id, post]));
     const urlOf = (post: SitemapPost) => `${SITE_URL}${post.lang === "DE" ? "/de" : ""}/blog/${post.slug}`;
     // Each post's published other-language counterpart, in both directions.
     const counterpart = new Map<string, SitemapPost>();
-    for (const post of posts) {
-      const original = post.translationOf ? byId.get(post.translationOf) : undefined;
-      if (original && original.lang && post.lang && original.lang !== post.lang && original.slug && post.slug) {
-        counterpart.set(post.id, original);
-        counterpart.set(original.id, post);
+    const pair = (a: SitemapPost | undefined, b: SitemapPost) => {
+      if (!a || !a.lang || !b.lang || a.lang === b.lang || !a.slug || !b.slug) return;
+      if (counterpart.has(a.id) || counterpart.has(b.id)) return;
+      counterpart.set(a.id, b);
+      counterpart.set(b.id, a);
+    };
+    // Explicit links first, so they win over a media match.
+    for (const post of posts) pair(post.translationOf ? byId.get(post.translationOf) : undefined, post);
+    for (const field of ["image", "audioUrl"] as const) {
+      for (const post of posts) {
+        if (counterpart.has(post.id) || !post[field]) continue;
+        pair(posts.find((other) => other.id !== post.id && other.lang !== post.lang && other[field] === post[field] && !counterpart.has(other.id)), post);
       }
     }
 

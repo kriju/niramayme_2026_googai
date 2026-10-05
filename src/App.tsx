@@ -2665,7 +2665,14 @@ const COVER_SIZES = "(min-width: 768px) 720px, calc(100vw - 48px)";
 // hand there for older posts). The link is followed in both directions:
 // the translation points at its original, the original is found by
 // querying for whatever points at it.
-const findTranslation = async (post: { id: string; translationOf?: string }, target: "EN" | "DE"): Promise<any | null> => {
+//
+// Posts translated before that link existed (and anything mirrored onto a
+// preview from production, which overwrites links set there) are matched
+// by their media instead: "Translate to German" carries the original's
+// cover image and audio over unchanged, and each upload has a unique URL,
+// so a published post in the other language with the same image or audio
+// is the same article. An explicit link always wins.
+const findTranslation = async (post: { id: string; translationOf?: string; image?: string; audioUrl?: string }, target: "EN" | "DE"): Promise<any | null> => {
   if (post.translationOf) {
     try {
       const snap = await getDoc(doc(db, "blogs", post.translationOf));
@@ -2675,14 +2682,20 @@ const findTranslation = async (post: { id: string; translationOf?: string }, tar
       // Unpublished (so unreadable to visitors) or deleted: no translation.
     }
   }
-  const snapshot = await getDocs(query(
-    collection(db, "blogs"),
-    where("translationOf", "==", post.id),
-    where("lang", "==", target),
-    where("published", "==", true),
-    limit(1)
-  ));
-  return snapshot.empty ? null : { id: snapshot.docs[0].id, ...snapshot.docs[0].data() };
+  const byField = async (field: string, value: string | undefined) => {
+    if (!value) return null;
+    const snapshot = await getDocs(query(
+      collection(db, "blogs"),
+      where(field, "==", value),
+      where("lang", "==", target),
+      where("published", "==", true),
+      limit(1)
+    ));
+    return snapshot.empty ? null : { id: snapshot.docs[0].id, ...snapshot.docs[0].data() };
+  };
+  return (await byField("translationOf", post.id))
+    ?? (await byField("image", post.image))
+    ?? (await byField("audioUrl", post.audioUrl));
 };
 
 const findPublishedPost = async (slug: string, lang: "EN" | "DE"): Promise<any | null> => {
@@ -2793,15 +2806,17 @@ const BlogPostPage = () => {
   // lands on the "only available in English" notice above.
   const postId: string | undefined = post?.id;
   const postTranslationOf: string | undefined = post?.translationOf;
+  const postImage: string | undefined = post?.image;
+  const postAudio: string | undefined = post?.audioUrl;
   useEffect(() => {
     setTranslation(null);
     if (!postId) return;
     let cancelled = false;
-    findTranslation({ id: postId, translationOf: postTranslationOf }, otherLang(lang))
+    findTranslation({ id: postId, translationOf: postTranslationOf, image: postImage, audioUrl: postAudio }, otherLang(lang))
       .then(found => !cancelled && setTranslation(found?.slug ? found : null))
       .catch(() => {});
     return () => { cancelled = true; };
-  }, [postId, postTranslationOf, lang]);
+  }, [postId, postTranslationOf, postImage, postAudio, lang]);
   useEffect(() => {
     setAltPath(translation ? `${langPrefix(otherLang(lang))}/blog/${translation.slug}` : null);
   }, [translation, lang, setAltPath]);
@@ -4357,8 +4372,9 @@ const CoursePage = () => {
           <div className="p-6 rounded-2xl bg-stone-50 border border-stone-100 mb-14">
             <h2 className="text-xl font-serif font-bold mb-2">{ys.blogTitle}</h2>
             <p className="text-muted-foreground text-sm mb-4">{ys.blogDescription}</p>
-            {/* The article exists in English only, so the DE page links to it too. */}
-            <Link to={`/blog/${course.blogSlug}`} className="inline-flex items-center gap-2 text-primary font-medium hover:underline underline-offset-4">
+            {/* blogSlug is the English article's; on the DE page "/de/blog/<slug>"
+                resolves to its German translation (see BlogPostPage). */}
+            <Link to={`${langPrefix(lang)}/blog/${course.blogSlug}`} className="inline-flex items-center gap-2 text-primary font-medium hover:underline underline-offset-4">
               {ys.blogLinkLabel}
               <ArrowRight className="w-4 h-4" />
             </Link>

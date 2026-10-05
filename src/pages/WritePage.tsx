@@ -240,9 +240,11 @@ const WriteDashboard = ({ user }: { user: User }) => {
 
   // Posts this one could be a translation of: the other language's, minus itself.
   const translationCandidates = posts.filter(p => p.lang !== form.lang && p.id !== editingId);
-  // Linked in either direction (see findTranslation in App.tsx).
+  // Linked in either direction, or matched by the same cover image/audio
+  // (see findTranslation in App.tsx) — only published pairs count on the site.
   const hasTranslation = (post: BlogPostDoc) =>
-    !!post.translationOf || posts.some(p => p.translationOf === post.id);
+    !!post.translationOf || posts.some(p => p.translationOf === post.id
+      || (p.lang !== post.lang && ((!!post.image && p.image === post.image) || (!!post.audioUrl && p.audioUrl === post.audioUrl))));
 
   const handleUpload = async (file: File, kind: "image" | "audio") => {
     const setUploading = kind === "image" ? setUploadingImage : setUploadingAudio;
