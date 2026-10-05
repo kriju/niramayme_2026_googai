@@ -13,12 +13,11 @@ const COURSE_IDS = ["yoga-stress-immunity-sleep", "yoga-adventure"];
 
 type LocalizedPair = { en: string; de: string; changefreq: string; priority: string };
 
-// Blog posts are written independently per language (see handleSave in
-// WriteDashboard, src/App.tsx) rather than as EN/DE translations of one
-// underlying post, so — unlike the static pages below — a post's <url>
-// carries no hreflang alternates pointing at a "sibling" post that may not
-// exist.
-type BlogEntry = { loc: string; changefreq: string; priority: string; lastmod?: string };
+// Blog posts are written per language, each with its own slug. A post that
+// translates another stores the original's id in `translationOf` (see
+// WritePage.tsx); only such linked, both-published pairs get hreflang
+// alternates — an unlinked post has no "sibling" to point at.
+type BlogEntry = { loc: string; changefreq: string; priority: string; lastmod?: string; alternates?: { en: string; de: string } };
 
 function renderPair({ en, de, changefreq, priority }: LocalizedPair): string {
   return [en, de]
@@ -35,12 +34,18 @@ function renderPair({ en, de, changefreq, priority }: LocalizedPair): string {
     .join("\n");
 }
 
-function renderBlogEntry({ loc, changefreq, priority, lastmod }: BlogEntry): string {
+function renderBlogEntry({ loc, changefreq, priority, lastmod, alternates }: BlogEntry): string {
   const lastmodTag = lastmod ? `\n    <lastmod>${lastmod}</lastmod>` : "";
+  const alternateTags = alternates
+    ? `
+    <xhtml:link rel="alternate" hreflang="en" href="${alternates.en}" />
+    <xhtml:link rel="alternate" hreflang="de" href="${alternates.de}" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="${alternates.en}" />`
+    : "";
   return `  <url>
     <loc>${loc}</loc>${lastmodTag}
     <changefreq>${changefreq}</changefreq>
-    <priority>${priority}</priority>
+    <priority>${priority}</priority>${alternateTags}
   </url>`;
 }
 
@@ -76,15 +81,31 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const db = getAdminDb();
     const snapshot = await db.collection("blogs").where("published", "==", true).get();
 
-    for (const doc of snapshot.docs) {
-      const post = doc.data() as { slug?: string; lang?: "EN" | "DE"; updatedAt?: unknown; createdAt?: unknown };
+    type SitemapPost = { id: string; slug?: string; lang?: "EN" | "DE"; translationOf?: string; updatedAt?: unknown; createdAt?: unknown };
+    const posts = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as SitemapPost);
+    const byId = new Map(posts.map((post) => [post.id, post]));
+    const urlOf = (post: SitemapPost) => `${SITE_URL}${post.lang === "DE" ? "/de" : ""}/blog/${post.slug}`;
+    // Each post's published other-language counterpart, in both directions.
+    const counterpart = new Map<string, SitemapPost>();
+    for (const post of posts) {
+      const original = post.translationOf ? byId.get(post.translationOf) : undefined;
+      if (original && original.lang && post.lang && original.lang !== post.lang && original.slug && post.slug) {
+        counterpart.set(post.id, original);
+        counterpart.set(original.id, post);
+      }
+    }
+
+    for (const post of posts) {
       if (!post.slug || !post.lang) continue;
-      const prefix = post.lang === "DE" ? "/de" : "";
+      const pair = counterpart.get(post.id);
       blogEntries.push({
-        loc: `${SITE_URL}${prefix}/blog/${post.slug}`,
+        loc: urlOf(post),
         changefreq: "monthly",
         priority: "0.6",
         lastmod: isoDate(post.updatedAt) || isoDate(post.createdAt),
+        alternates: pair
+          ? (post.lang === "EN" ? { en: urlOf(post), de: urlOf(pair) } : { en: urlOf(pair), de: urlOf(post) })
+          : undefined,
       });
     }
   } catch (error) {

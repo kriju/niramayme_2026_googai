@@ -82,6 +82,31 @@ export function useSeo({ title, description, canonical, lang, alternates }: {
       // English is the un-prefixed, originally-indexed version, so it's the
       // fallback for a visitor whose language isn't explicitly EN or DE.
       setLink("alternate", alternates.en, "x-default");
+    } else {
+      // A page with no other-language version (e.g. a blog post that was
+      // never translated) mustn't keep the previous page's alternates, nor
+      // the homepage ones index.html starts with.
+      document.querySelectorAll('link[rel="alternate"][hreflang]').forEach(link => link.remove());
     }
   }, [title, description, canonical, lang, alternates?.en, alternates?.de]);
+}
+
+// Keeps a page out of search results (robots noindex) while `active`, e.g.
+// the admin tool, or a placeholder that only points to another URL.
+export function useNoIndex(active = true) {
+  useEffect(() => {
+    if (!active) return;
+    let meta = document.querySelector('meta[name="robots"]') as HTMLMetaElement | null;
+    const created = !meta;
+    if (!meta) {
+      meta = document.createElement("meta");
+      meta.setAttribute("name", "robots");
+      document.head.appendChild(meta);
+    }
+    meta.setAttribute("content", "noindex, nofollow");
+    return () => {
+      if (created) meta?.remove();
+      else meta?.setAttribute("content", "index, follow");
+    };
+  }, [active]);
 }

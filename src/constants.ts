@@ -44,7 +44,6 @@ export const TRANSLATIONS = {
       courses: "Courses",
       bookNow: "Book Now",
       book: "My Book",
-      switchLang: "Switch to German",
       // Navbar group labels: the desktop/mobile nav collapses the flat
       // list of links above into three dropdowns (About, Offerings, Read)
       // plus the standalone Reviews/FAQ links — see Navbar in App.tsx.
@@ -52,6 +51,13 @@ export const TRANSLATIONS = {
       trainers: "Trainers",
       offerings: "Offerings",
       read: "Read",
+      // Language switch (Navbar's LangSwitch): the group's label, and each
+      // option's full name for screen readers and tooltips.
+      languageLabel: "Language",
+      langNameEN: "English",
+      langNameDE: "German",
+      openMenu: "Open menu",
+      closeMenu: "Close menu",
     },
     hero: {
       badge: "Holistic Wellbeing in Ostfildern, Germany",
@@ -321,7 +327,18 @@ export const TRANSLATIONS = {
         translating: "Translating...",
         translateError: "Translation failed. Please try again.",
         translateHint: "Creates a new German draft from this post — review it before publishing.",
+        translationOfLabel: "Translation of",
+        translationOfNone: "Not linked to a translation",
+        translationOfHint: "Link this post to the same article in the other language, so the site's language switch goes straight to it.",
+        translationLinked: "Has translation",
       }
+    },
+    // Offered on German pages to visitors whose browser prefers English
+    // (LangSuggestion in App.tsx), so it's worded in English.
+    langSuggest: {
+      message: "This page is also available in English.",
+      switch: "View in English",
+      dismiss: "No thanks",
     },
     write: {
       pageTitle: "Niramay Blog",
@@ -339,6 +356,11 @@ export const TRANSLATIONS = {
       otherPostsTitle: "More Posts",
       byline: "Written by",
       authoredBy: "Article authored by",
+      // Shown at /blog/:slug when that post exists only in German (e.g.
+      // after the language switch on a German-only article).
+      onlyInOther: "This article is only available in German.",
+      readInOther: "Read it in German",
+      browseBlog: "Browse English articles",
     },
     engagement: {
       like: "Like",
@@ -806,11 +828,15 @@ export const TRANSLATIONS = {
       courses: "Kurse",
       bookNow: "Jetzt buchen",
       book: "Mein Buch",
-      switchLang: "Auf Englisch wechseln",
       aboutGroup: "Über uns",
       trainers: "Trainer",
       offerings: "Angebote",
       read: "Lesen",
+      languageLabel: "Sprache",
+      langNameEN: "Englisch",
+      langNameDE: "Deutsch",
+      openMenu: "Menü öffnen",
+      closeMenu: "Menü schließen",
     },
     hero: {
       badge: "Ganzheitliches Wohlbefinden in Ostfildern, Deutschland",
@@ -897,7 +923,6 @@ export const TRANSLATIONS = {
         dance: "Tanztherapie",
         tarot: "Tarot-Lesung",
         chair: "Stuhl-Yoga",
-        withImage: "Mit Bild",
       }
     },
     faq: {
@@ -1082,7 +1107,17 @@ export const TRANSLATIONS = {
         translating: "Wird übersetzt...",
         translateError: "Übersetzung fehlgeschlagen. Bitte versuchen Sie es erneut.",
         translateHint: "Erstellt einen neuen deutschen Entwurf aus diesem Post — bitte vor der Veröffentlichung prüfen.",
+        translationOfLabel: "Übersetzung von",
+        translationOfNone: "Nicht mit einer Übersetzung verknüpft",
+        translationOfHint: "Verknüpfen Sie diesen Post mit demselben Artikel in der anderen Sprache, damit der Sprachumschalter direkt dorthin führt.",
+        translationLinked: "Hat Übersetzung",
       }
+    },
+    // Offered on English pages to visitors whose browser prefers German.
+    langSuggest: {
+      message: "Diese Seite gibt es auch auf Deutsch.",
+      switch: "Auf Deutsch ansehen",
+      dismiss: "Nein, danke",
     },
     write: {
       pageTitle: "Niramay Blog",
@@ -1100,6 +1135,9 @@ export const TRANSLATIONS = {
       otherPostsTitle: "Weitere Beiträge",
       byline: "Geschrieben von",
       authoredBy: "Artikel verfasst von",
+      onlyInOther: "Dieser Artikel ist nur auf Englisch verfügbar.",
+      readInOther: "Auf Englisch lesen",
+      browseBlog: "Deutsche Artikel ansehen",
     },
     engagement: {
       like: "Gefällt mir",
@@ -1554,6 +1592,23 @@ export const TRANSLATIONS = {
     },
   }
 };
+
+// Display names for the category values stored on services, blog posts and
+// reviews. The stored value stays the English name (firestore.rules checks
+// review categories against it, and blog filters match on it); only what's
+// shown is translated.
+export const CATEGORY_LABELS: Record<string, { EN: string; DE: string }> = {
+  "Physical Wellness": { EN: "Physical Wellness", DE: "Körperliches Wohlbefinden" },
+  "Mental Clarity": { EN: "Mental Clarity", DE: "Geistige Klarheit" },
+  "Spiritual Healing": { EN: "Spiritual Healing", DE: "Spirituelle Heilung" },
+  "Kids Yoga": { EN: "Kids Yoga", DE: "Kinderyoga" },
+  "Dance Therapy": { EN: "Dance Therapy", DE: "Tanztherapie" },
+  "Tarot Reading": { EN: "Tarot Reading", DE: "Tarot-Lesung" },
+  "Chair Yoga": { EN: "Chair Yoga", DE: "Stuhl-Yoga" },
+  "Vedic Astrology": { EN: "Vedic Astrology", DE: "Vedische Astrologie" },
+};
+export const REVIEW_CATEGORIES = ["Physical Wellness", "Mental Clarity", "Spiritual Healing", "Kids Yoga", "Dance Therapy", "Tarot Reading", "Chair Yoga"];
+export const categoryLabel = (category: string, lang: "EN" | "DE") => CATEGORY_LABELS[category]?.[lang] ?? category;
 
 export const SERVICES = [
   {

@@ -38,7 +38,7 @@ service cloud.firestore {
     // usually run 20-35% longer than the English original.
     function isValidBlog(data) {
       return data.keys().hasAll(['slug', 'title', 'content', 'createdAt', 'lang', 'published'])
-          && data.keys().hasOnly(['slug', 'title', 'excerpt', 'content', 'image', 'audioUrl', 'category', 'author', 'lang', 'createdAt', 'updatedAt', 'published'])
+          && data.keys().hasOnly(['slug', 'title', 'excerpt', 'content', 'image', 'audioUrl', 'category', 'author', 'lang', 'createdAt', 'updatedAt', 'published', 'translationOf'])
           && data.slug is string && data.slug.size() > 0 && data.slug.size() <= 200 && data.slug.matches('^[a-z0-9-]+$')
           && data.title is string && data.title.size() > 0 && data.title.size() <= 300
           && (!('excerpt' in data) || (data.excerpt is string && data.excerpt.size() <= 1500))
@@ -47,6 +47,8 @@ service cloud.firestore {
           && (!('audioUrl' in data) || (data.audioUrl is string && data.audioUrl.size() <= 2000))
           && (!('category' in data) || data.category is string)
           && (!('author' in data) || data.author is string)
+          // Id of the other-language post this one translates (WritePage).
+          && (!('translationOf' in data) || (data.translationOf is string && data.translationOf.size() > 0 && data.translationOf.size() <= 100))
           && data.lang in ['EN', 'DE']
           && data.createdAt is timestamp
           && (!('updatedAt' in data) || data.updatedAt is timestamp)

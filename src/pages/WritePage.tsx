@@ -11,6 +11,7 @@ import {
   addDoc,
   updateDoc,
   deleteDoc,
+  deleteField,
   getDocs,
   doc,
   serverTimestamp,
@@ -32,7 +33,7 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { TRANSLATIONS, BLOG_ADMIN_USERNAMES, usernameToLoginEmail } from "../constants";
-import { SITE_URL, useSeo } from "../lib/seo";
+import { SITE_URL, useSeo, useNoIndex } from "../lib/seo";
 
 // Only used by the /write dashboard to greet whoever's signed in and to
 // credit posts by name instead of their internal login username.
@@ -137,6 +138,9 @@ type BlogPostDoc = {
   author?: string;
   lang: "EN" | "DE";
   published: boolean;
+  // Id of the post (in the other language) this one translates — see
+  // findTranslation in App.tsx, which the site's language switch uses.
+  translationOf?: string;
   createdAt?: Timestamp;
 };
 
@@ -185,7 +189,7 @@ function resolveContentType(file: File, kind: "image" | "audio"): string | null 
 // gets a specific message here instead of a generic permission-denied.
 const BLOG_FIELD_LIMITS = { title: 300, excerpt: 1500, content: 100000 } as const;
 
-const EMPTY_POST_FORM = { title: "", excerpt: "", content: "", category: BLOG_CATEGORIES[0], image: "", audioUrl: "", lang: "EN" as "EN" | "DE" };
+const EMPTY_POST_FORM = { title: "", excerpt: "", content: "", category: BLOG_CATEGORIES[0], image: "", audioUrl: "", lang: "EN" as "EN" | "DE", translationOf: "" };
 
 const WriteDashboard = ({ user }: { user: User }) => {
   const wt = TRANSLATIONS.EN.write;
@@ -228,10 +232,17 @@ const WriteDashboard = ({ user }: { user: User }) => {
       image: post.image || "",
       audioUrl: post.audioUrl || "",
       lang: post.lang,
+      translationOf: post.translationOf || "",
     });
     setError(null);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
+
+  // Posts this one could be a translation of: the other language's, minus itself.
+  const translationCandidates = posts.filter(p => p.lang !== form.lang && p.id !== editingId);
+  // Linked in either direction (see findTranslation in App.tsx).
+  const hasTranslation = (post: BlogPostDoc) =>
+    !!post.translationOf || posts.some(p => p.translationOf === post.id);
 
   const handleUpload = async (file: File, kind: "image" | "audio") => {
     const setUploading = kind === "image" ? setUploadingImage : setUploadingAudio;
@@ -297,11 +308,14 @@ const WriteDashboard = ({ user }: { user: User }) => {
         author: displayName,
         published,
       };
+      // Only a post in the other language can be this one's translation
+      // (the language dropdown may have changed since it was picked).
+      const translationOf = translationCandidates.some(p => p.id === form.translationOf) ? form.translationOf : "";
       if (editingId) {
-        await updateDoc(doc(db, "blogs", editingId), { ...payload, updatedAt: serverTimestamp() });
+        await updateDoc(doc(db, "blogs", editingId), { ...payload, translationOf: translationOf || deleteField(), updatedAt: serverTimestamp() });
       } else {
         const slug = await uniqueSlug(slugify(form.title));
-        await addDoc(collection(db, "blogs"), { ...payload, slug, createdAt: serverTimestamp() });
+        await addDoc(collection(db, "blogs"), { ...payload, ...(translationOf ? { translationOf } : {}), slug, createdAt: serverTimestamp() });
       }
       resetForm();
     } catch (err) {
@@ -329,8 +343,11 @@ const WriteDashboard = ({ user }: { user: User }) => {
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Translation failed");
+      // Linked to the English original, so the site's language switch on
+      // either one goes straight to the other once both are published.
+      const originalId = editingId ?? "";
       setEditingId(null);
-      setForm(f => ({ ...f, title: data.title, excerpt: data.excerpt, content: data.content, lang: "DE" }));
+      setForm(f => ({ ...f, title: data.title, excerpt: data.excerpt, content: data.content, lang: "DE", translationOf: originalId }));
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (err) {
       console.error("Error translating post:", err);
@@ -432,6 +449,23 @@ const WriteDashboard = ({ user }: { user: User }) => {
                 <option value="DE">Deutsch</option>
               </select>
             </div>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-stone-600">{et.translationOfLabel}</label>
+            <p className="text-xs text-muted-foreground">{et.translationOfHint}</p>
+            <select
+              className="w-full px-4 py-3 rounded-xl border border-stone-200 bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
+              value={translationCandidates.some(p => p.id === form.translationOf) ? form.translationOf : ""}
+              onChange={e => setForm(f => ({ ...f, translationOf: e.target.value }))}
+            >
+              <option value="">{et.translationOfNone}</option>
+              {translationCandidates.map(p => (
+                <option key={p.id} value={p.id}>
+                  {p.lang} · {p.title}{p.published ? "" : ` (${et.statusDraft})`}
+                </option>
+              ))}
+            </select>
           </div>
 
           <div className="space-y-2">
@@ -576,6 +610,7 @@ const WriteDashboard = ({ user }: { user: User }) => {
                     {post.published ? et.statusPublished : et.statusDraft}
                   </Badge>
                   <Badge variant="outline" className="text-xs">{post.lang}</Badge>
+                  {hasTranslation(post) && <Badge variant="outline" className="text-xs">{et.translationLinked}</Badge>}
                 </div>
                 <p className="font-medium truncate">{post.title}</p>
               </div>
@@ -615,20 +650,7 @@ export default function WritePage() {
 
   // Not content for visitors — keep it out of the index entirely rather
   // than relying on nobody linking to it.
-  useEffect(() => {
-    let meta = document.querySelector('meta[name="robots"]') as HTMLMetaElement | null;
-    const created = !meta;
-    if (!meta) {
-      meta = document.createElement("meta");
-      meta.setAttribute("name", "robots");
-      document.head.appendChild(meta);
-    }
-    meta.setAttribute("content", "noindex, nofollow");
-    return () => {
-      if (created) meta?.remove();
-      else meta?.setAttribute("content", "index, follow");
-    };
-  }, []);
+  useNoIndex();
 
   if (authLoading) return null;
 
