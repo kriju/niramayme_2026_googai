@@ -126,6 +126,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   // the SPA then shows an "only available in …" notice, which isn't a page
   // of its own for search engines.
   let otherLanguageOnly = false;
+  let lookupFailed = false;
   if (slug) {
     try {
       const found = await findPost(slug, lang);
@@ -149,16 +150,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         }
       }
     } catch (error) {
+      lookupFailed = true;
       console.error("blog-share: failed to load post, serving default tags:", error);
     }
   }
 
-  if (otherLanguageOnly) {
+  // Unknown slug: still the app shell, so the SPA redirects visitors as
+  // usual, but as a 404 — with a 200 and the shell's homepage canonical,
+  // Google filed every dead/mistyped blog URL as a duplicate of the
+  // homepage. A failed lookup isn't evidence the post is gone, so that
+  // stays a 200.
+  const notFound = !post?.title && !otherLanguageOnly && !lookupFailed;
+  if (otherLanguageOnly || notFound) {
     html = setAlternates(html, null);
+    html = html.replace(/\s*<link\s+rel="canonical"\s+href="[^"]*"\s*\/?>/, "");
     html = setTag(html, /<meta\s+name="robots"\s+content="[^"]*"\s*\/?>/, `<meta name="robots" content="noindex, follow" />`);
   }
 
-  // Unknown slug: serve the untouched shell and let the SPA redirect as usual.
   if (post?.title) {
     const title = `${post.title} — Niramay Wellbeing Blog`;
     const description = post.excerpt || "";
@@ -199,5 +207,5 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader("Content-Type", "text/html; charset=utf-8");
   // Short edge cache so an edited title/cover shows up in new shares within minutes.
   res.setHeader("Cache-Control", "public, max-age=0, s-maxage=300, stale-while-revalidate=86400");
-  return res.status(200).send(html);
+  return res.status(notFound ? 404 : 200).send(html);
 }
