@@ -1,4 +1,6 @@
 {
+  "cleanUrls": true,
+  "trailingSlash": false,
   "functions": {
     "api/blog-share.ts": { "includeFiles": "dist/index.html" }
   },
@@ -18,7 +20,6 @@
   "rewrites": [
     { "source": "/sitemap.xml", "destination": "/api/sitemap" },
     { "source": "/blog/:slug", "destination": "/api/blog-share?slug=:slug" },
-    { "source": "/de/blog/:slug", "destination": "/api/blog-share?slug=:slug&lang=de" },
-    { "source": "/((?!api/).*)", "destination": "/index.html" }
+    { "source": "/de/blog/:slug", "destination": "/api/blog-share?slug=:slug&lang=de" }
   ]
 }

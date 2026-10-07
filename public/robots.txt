@@ -1,5 +1,6 @@
 User-agent: *
 Allow: /
 Disallow: /write
+Disallow: /api/
 
 Sitemap: https://www.niramay.me/sitemap.xml
