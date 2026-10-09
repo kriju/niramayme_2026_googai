@@ -60,6 +60,7 @@ import { Separator } from "@/components/ui/separator";
 import { SERVICES, TESTIMONIALS, type ClientStory, FAQS, HEALER_CERTIFICATIONS, HEALER_IMAGES, TRANSLATIONS, REVIEW_CATEGORIES, categoryLabel, ONGOING_SESSIONS, COURSES, EVENTS, ANNOUNCEMENTS, GOOGLE_CALENDAR_URL, GOOGLE_REVIEW_URL, BUSINESS_STREET_ADDRESS, BUSINESS_POSTAL_CODE, BUSINESS_CITY, GOOGLE_MAPS_URL, GOOGLE_MAPS_EMBED_URL } from "./constants";
 import { getStoredConsent, grantAnalyticsConsent, denyAnalyticsConsent, initAnalyticsFromStoredConsent, trackPageview } from "./lib/analytics";
 import { SITE_URL, BUSINESS_JSONLD_ID, useJsonLd, useSeo, useNoIndex } from "./lib/seo";
+import { businessJsonLd as businessJsonLdFor, richaJsonLd as richaJsonLdFor, websiteJsonLd as websiteJsonLdFor } from "./lib/structuredData";
 import { responsiveImage } from "./lib/images";
 
 // A single booking dialog, controlled from the App root (see the other
@@ -4146,50 +4147,12 @@ const AppLayout = () => {
     trackPageview(location.pathname);
   }, [location.pathname]);
 
-  const businessJsonLd = useMemo(() => ({
-    "@context": "https://schema.org",
-    "@type": "HealthAndBeautyBusiness",
-    "@id": BUSINESS_JSONLD_ID,
-    name: "Niramay Wellbeing",
-    image: `${SITE_URL}/logo.svg`,
-    url: SITE_URL,
-    telephone: "+49 151 75315761",
-    email: "richa@niramay.me",
-    description: TRANSLATIONS[lang].footer.description,
-    address: {
-      "@type": "PostalAddress",
-      streetAddress: BUSINESS_STREET_ADDRESS,
-      postalCode: BUSINESS_POSTAL_CODE,
-      addressLocality: BUSINESS_CITY,
-      addressRegion: "Baden-Württemberg",
-      addressCountry: "DE",
-    },
-    hasMap: GOOGLE_MAPS_URL,
-    founder: [
-      { "@type": "Person", name: "Richa Kansal", jobTitle: TRANSLATIONS[lang].about.richa.title },
-      { "@type": "Person", name: "Riju Kansal", jobTitle: TRANSLATIONS[lang].about.riju.title },
-    ],
-    sameAs: [
-      "https://www.instagram.com/niramay.me/",
-      "https://www.facebook.com/niramayme/",
-      "https://www.youtube.com/@richaniramayme",
-      GOOGLE_MAPS_URL,
-    ],
-    // Only the sessions Niramay delivers directly — the "openInModal"
-    // entries just link out to standalone third-party tools, not a service
-    // Niramay itself provides, so they don't belong in this list.
-    makesOffer: SERVICES.filter(s => !s.openInModal).map(s => ({
-      "@type": "Offer",
-      itemOffered: {
-        "@type": "Service",
-        name: s[lang].title,
-        description: s[lang].description,
-        areaServed: "Ostfildern, Germany",
-      },
-    })),
-    inLanguage: lang === "EN" ? "en" : "de",
-  }), [lang]);
+  const businessJsonLd = useMemo(() => businessJsonLdFor(lang), [lang]);
   useJsonLd("ld-json-business", businessJsonLd);
+  const richaJsonLd = useMemo(() => richaJsonLdFor(lang), [lang]);
+  useJsonLd("ld-json-richa", richaJsonLd);
+  const websiteJsonLd = useMemo(() => websiteJsonLdFor(lang), [lang]);
+  useJsonLd("ld-json-website", websiteJsonLd);
 
   return (
     <div className="min-h-screen selection:bg-primary/20">
