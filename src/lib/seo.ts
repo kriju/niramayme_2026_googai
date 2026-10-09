@@ -1,10 +1,6 @@
 import { useEffect } from "react";
 
-export const SITE_URL = "https://www.niramay.me";
-// Shared across the LocalBusiness JSON-LD (App root) and the review/
-// aggregateRating JSON-LD (TestimonialsSection) so structured-data consumers
-// resolve both script tags to the same entity.
-export const BUSINESS_JSONLD_ID = `${SITE_URL}/#business`;
+export { SITE_URL, BUSINESS_JSONLD_ID } from "./structuredData";
 
 // Injects/updates a <script type="application/ld+json"> tag in <head>, keyed
 // by id. Structured data must match what's actually visible on the page (a

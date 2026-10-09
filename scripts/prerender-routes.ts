@@ -8,6 +8,16 @@
 // Search Console's "Duplicate without user-selected canonical". useSeo in
 // src/lib/seo.ts still updates the same tags client-side when navigating.
 //
+// Each page also gets, without needing JS: the site-wide JSON-LD (business,
+// Richa Kansal, website — see src/lib/structuredData.ts) and a plain-HTML
+// version of its heading, description, address and links to every other
+// page inside #root, which React replaces on mount. Until Google rendered
+// the JS it saw an empty <div id="root">, no internal links and no brand
+// entity — one reason the site didn't show up even for "Niramay Wellbeing".
+//
+// Set GOOGLE_SITE_VERIFICATION (the content of Search Console's HTML-tag
+// method) to also emit that meta tag; DNS verification needs no code.
+//
 // Also writes dist/404.html (noindex) which Vercel serves, with a real 404
 // status, for any path that isn't one of these files — previously unknown
 // URLs got the homepage with a 200, i.e. more duplicates/soft 404s.
@@ -19,7 +29,8 @@
 
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
-import { COURSES, SERVICES, TRANSLATIONS } from "../src/constants";
+import { BUSINESS_CITY, BUSINESS_POSTAL_CODE, BUSINESS_STREET_ADDRESS, COURSES, SERVICES, TRANSLATIONS } from "../src/constants";
+import { SITE_JSONLD } from "../src/lib/structuredData";
 import { escapeHtml } from "../api/_lib/util";
 
 const SITE_URL = "https://www.niramay.me";
@@ -67,6 +78,10 @@ const routes: Route[] = [
   }),
 ];
 
+// Link text for the fallback body's page list (the homepage is "Home").
+const linkLabel = (route: Route, lang: Lang) =>
+  route.path ? route.title[lang].split(" — ")[0] : lang === "EN" ? "Home" : "Startseite";
+
 const urlOf = (lang: Lang, routePath: string) =>
   lang === "EN" ? `${SITE_URL}${routePath || "/"}` : `${SITE_URL}/de${routePath}`;
 
@@ -87,6 +102,32 @@ function setMeta(html: string, attr: "name" | "property", key: string, value: st
 
 const HREFLANG = /\s*<link\s+rel="alternate"\s+hreflang="[^"]*"\s+href="[^"]*"\s*\/?>/g;
 const CANONICAL = /<link\s+rel="canonical"\s+href="[^"]*"\s*\/?>/;
+
+// JSON-LD content is never HTML-escaped, only kept from closing the tag.
+const jsonForScript = (data: unknown) => JSON.stringify(data).replace(/</g, "\\u003c");
+
+function siteJsonLdTags(lang: Lang): string {
+  return SITE_JSONLD
+    .map(({ id, build }) => `<script type="application/ld+json" id="${id}">${jsonForScript(build(lang))}</script>`)
+    .join("\n    ");
+}
+
+// Marked so api/blog-share.ts, which reuses dist/index.html as its shell,
+// can strip the homepage's body from blog post pages.
+function fallbackBody(route: Route, lang: Lang): string {
+  const prefix = lang === "DE" ? "/de" : "";
+  const links = routes
+    .map((r) => `<li><a href="${prefix}${r.path || (prefix ? "" : "/")}">${escapeHtml(linkLabel(r, lang))}</a></li>`)
+    .join("");
+  const other: Lang = lang === "EN" ? "DE" : "EN";
+  return `<!--prerender-body--><main>
+        <h1>${escapeHtml(route.title[lang])}</h1>
+        <p>${escapeHtml(route.description[lang])}</p>
+        <nav><ul>${links}</ul></nav>
+        <p><a href="${urlOf(other, route.path).replace(SITE_URL, "")}" hreflang="${other.toLowerCase()}">${other === "DE" ? "Deutsch" : "English"}</a></p>
+        <address>Niramay Wellbeing · Richa Kansal · ${escapeHtml(BUSINESS_STREET_ADDRESS)}, ${BUSINESS_POSTAL_CODE} ${BUSINESS_CITY}, Germany · <a href="tel:+4915175315761">+49 151 75315761</a> · <a href="mailto:richa@niramay.me">richa@niramay.me</a></address>
+      </main><!--/prerender-body-->`;
+}
 
 function renderRoute(shell: string, route: Route, lang: Lang): string {
   const title = route.title[lang];
@@ -111,6 +152,8 @@ function renderRoute(shell: string, route: Route, lang: Lang): string {
   html = setMeta(html, "property", "og:locale:alternate", lang === "EN" ? "de_DE" : "en_US");
   html = setMeta(html, "name", "twitter:title", title);
   html = setMeta(html, "name", "twitter:description", description);
+  html = html.replace("</head>", () => `    ${siteJsonLdTags(lang)}\n  </head>`);
+  html = replaceTag(html, /<div id="root"><\/div>/, `<div id="root">${fallbackBody(route, lang)}</div>`);
   return html;
 }
 
@@ -128,7 +171,11 @@ function write(file: string, html: string) {
   writeFileSync(target, html);
 }
 
-const shell = readFileSync(path.join(DIST, "index.html"), "utf8");
+let shell = readFileSync(path.join(DIST, "index.html"), "utf8");
+const verification = process.env.GOOGLE_SITE_VERIFICATION?.trim();
+if (verification) {
+  shell = shell.replace("</head>", () => `    <meta name="google-site-verification" content="${escapeHtml(verification)}" />\n  </head>`);
+}
 let count = 0;
 for (const route of routes) {
   for (const lang of ["EN", "DE"] as const) {

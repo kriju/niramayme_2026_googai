@@ -67,6 +67,9 @@ async function loadShell(req: VercelRequest): Promise<string> {
     if (!response.ok) throw new Error(`blog-share: shell fetch failed (${response.status})`);
     cachedShell = await response.text();
   }
+  // dist/index.html is the prerendered homepage (scripts/prerender-routes.ts),
+  // whose no-JS fallback body describes the homepage, not this post.
+  cachedShell = cachedShell.replace(/<!--prerender-body-->[\s\S]*?<!--\/prerender-body-->/, "");
   return cachedShell;
 }
 
