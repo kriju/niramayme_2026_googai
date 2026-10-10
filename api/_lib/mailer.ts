@@ -30,14 +30,20 @@ export function senderAddress(): { name: string; email: string } {
   };
 }
 
+// Trimmed: a key pasted into Vercel with a stray space or newline is
+// otherwise rejected by Brevo as "Key not found".
+function brevoKey(): string {
+  return (process.env.BREVO_API_KEY ?? "").trim();
+}
+
 export function hasBrevo(): boolean {
-  return Boolean(process.env.BREVO_API_KEY);
+  return Boolean(brevoKey());
 }
 
 // Thin wrapper over Brevo's REST API, shared with the newsletter endpoints.
 // Throws with Brevo's own error body so failures are diagnosable in logs.
 export async function brevoRequest<T = unknown>(method: string, path: string, body?: unknown): Promise<T> {
-  const apiKey = process.env.BREVO_API_KEY;
+  const apiKey = brevoKey();
   if (!apiKey) throw new Error("BREVO_API_KEY is not set.");
   const response = await fetch(`${BREVO_API}${path}`, {
     method,

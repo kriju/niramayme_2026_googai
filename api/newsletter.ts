@@ -34,6 +34,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (typeof req.query.token === "string") {
     return handleConfirm(req, res, req.query.token);
   }
+  if (req.method === "GET") {
+    // A confirmation link that lost its token on the way (e.g. mangled by a
+    // mail client or a redirect) — show the readable page, not raw JSON.
+    return handleConfirm(req, res, "");
+  }
   if (req.method !== "POST") {
     res.setHeader("Allow", "POST");
     return res.status(405).json({ error: "method_not_allowed" });
