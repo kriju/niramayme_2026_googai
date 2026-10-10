@@ -43,9 +43,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (!post.published) return res.status(400).json({ error: "Post is not published" });
 
   const lang: Lang = post.lang === "DE" ? "DE" : "EN";
-  const listId = listIdFor(lang);
-  if (!hasBrevo() || listId === null) {
-    return res.status(503).json({ error: `Newsletter isn't set up yet (BREVO_API_KEY / BREVO_LIST_ID_${lang} missing).` });
+  if (!hasBrevo()) {
+    return res.status(503).json({ error: "Newsletter isn't set up yet (BREVO_API_KEY missing)." });
   }
 
   const claimRef = db.collection("newsletterCampaigns").doc(blogId);
@@ -58,6 +57,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const isPreview = process.env.VERCEL_ENV === "preview";
   const autoSend = !isPreview && process.env.NEWSLETTER_AUTO_SEND === "true";
   try {
+    const listId = await listIdFor(lang);
     const postUrl = `${getSiteUrl(req)}${lang === "DE" ? "/de" : ""}/blog/${encodeURIComponent(post.slug)}`;
     const { id: campaignId } = await brevoRequest<{ id: number }>("POST", "/emailCampaigns", {
       name: `${isPreview ? "[Preview] " : ""}Blog ${lang}: ${String(post.title).slice(0, 150)}`,

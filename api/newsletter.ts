@@ -56,7 +56,7 @@ async function handleSubscribe(req: VercelRequest): Promise<void> {
   if (!email) throw new HttpError(400, "invalid_email");
   const lang: Lang = body.lang === "DE" ? "DE" : "EN";
   const source = typeof body.source === "string" ? body.source.slice(0, 200).replace(/[^\w\-/.]/g, "") : "";
-  if (!hasBrevo() || listIdFor(lang) === null) throw new HttpError(503, "not_configured");
+  if (!hasBrevo()) throw new HttpError(503, "not_configured");
 
   const db = getAdminDb();
   await enforceRateLimit(db, "newsletter_ip", clientKey(req), 5, 3600);
@@ -199,8 +199,7 @@ async function handleConfirm(req: VercelRequest, res: VercelResponse, token: str
   }
 
   try {
-    const listId = listIdFor(parsed.lang);
-    if (listId === null) throw new Error(`No Brevo list configured for ${parsed.lang}.`);
+    const listId = await listIdFor(parsed.lang);
     // updateEnabled makes this idempotent (clicking twice is harmless), and
     // emailBlacklisted:false re-enables someone who unsubscribed earlier —
     // clicking this link is a fresh, explicit opt-in.
