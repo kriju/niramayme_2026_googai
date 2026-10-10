@@ -2632,6 +2632,7 @@ const renderPostContent = (content: string) => {
 // Likes, sharing and comments sit below the article, so their code (and
 // the reads they make) never delays the post itself from rendering.
 const BlogEngagement = lazy(() => import("./components/BlogEngagement"));
+const NewsletterSignup = lazy(() => import("./components/NewsletterSignup"));
 
 // api/blog-share.ts serves /blog/:slug with the post already embedded in
 // the HTML, so the first render needn't wait on a Firestore round trip.
@@ -2744,7 +2745,7 @@ const BlogPostOtherLanguageOnly = ({ lang, post }: { lang: "EN" | "DE", post: an
 
 const BlogPostPage = () => {
   const { slug } = useParams<{ slug: string }>();
-  const { lang, setAltPath } = useOutletContext<LayoutContext>();
+  const { lang, setAltPath, onOpenLegal } = useOutletContext<LayoutContext>();
   const [post, setPost] = useState<any>(() => readEmbeddedPost(slug, lang));
   const [otherPosts, setOtherPosts] = useState<any[]>([]);
   const [notFound, setNotFound] = useState(false);
@@ -2951,6 +2952,11 @@ const BlogPostPage = () => {
             <p className="text-lg font-bold text-stone-800">{authorName}</p>
           </div>
         </div>
+
+        <Suspense fallback={null}>
+          {/* Right after the article, while the reader is most engaged — above the comments. */}
+          <NewsletterSignup lang={lang} onOpenPrivacy={() => onOpenLegal("privacy")} />
+        </Suspense>
 
         <Suspense fallback={null}>
           {/* keyed by post so navigating between posts resets vote/comment state */}

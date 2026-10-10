@@ -267,6 +267,14 @@ export const TRANSLATIONS = {
             {
               title: "11. Online Course Bookings",
               content: "If you book an online course (such as the Yoga for Stress, Immunity & Sleep series or the Yoga Adventure kids workshop), we collect your name, email address, WhatsApp number, the session date you choose and any optional notes you give us (for a children's workshop, e.g. your child's name and age) through our booking form, solely to organise the course, match your payment, send you a confirmation email and email you the online meeting link before the session. This data is shared with Riju (riju.kansal@niramay.me) and Richa (richa@niramay.me), is stored only for as long as needed to run the course and handle payment, and is not shared with third parties. You must actively confirm your consent before this data is submitted, and you may withdraw consent and request deletion of this data at any time by contacting riju.kansal@niramay.me."
+            },
+            {
+              title: "12. Blog Newsletter",
+              content: "If you subscribe to new blog posts, we collect your email address, your preferred language and the page you signed up from. You are only added to the mailing list after you click the link in the confirmation email we send you (double opt-in). To be able to prove your consent, we record the time of your sign-up and of your confirmation, together with the consent wording you agreed to. The legal basis is your consent (Art. 6(1)(a) GDPR). We use your address only to tell you about new blog posts. You can unsubscribe at any time with the link in every email, or by writing to richa@niramay.me; your address is then no longer used for the newsletter. Sign-ups that are never confirmed are deleted automatically after 30 days."
+            },
+            {
+              title: "13. Email Delivery (Brevo)",
+              content: "The newsletter and the website's automated emails (such as booking and request confirmations) are sent via Brevo, a service of Sendinblue SAS (Paris, France). Brevo processes the email addresses and email contents on our behalf, under a data processing agreement pursuant to Art. 28 GDPR, on servers in the EU. Brevo records whether an email was delivered, opened or bounced, which helps us keep the emails reliable. For details, see Brevo's privacy policy at https://www.brevo.com/legal/privacypolicy/."
             }
           ]
         }
@@ -418,6 +426,24 @@ export const TRANSLATIONS = {
         unauthorized: "Your session has expired. Please sign in again.",
         forbidden: "You're not allowed to do that.",
         network: "Couldn't reach the server. Check your connection and try again — your text is kept.",
+        generic: "Something went wrong. Please try again.",
+      },
+    },
+    newsletter: {
+      title: "Enjoyed this post?",
+      subtitle: "Get new posts on holistic wellbeing straight to your inbox.",
+      emailLabel: "Email address",
+      emailPlaceholder: "you@example.com",
+      submit: "Subscribe",
+      submitting: "Subscribing…",
+      consent: "Yes, email me when a new blog post is published. I can unsubscribe at any time with one click. See the",
+      privacyLink: "Privacy Policy",
+      checkInbox: "Almost done — please check your inbox and click the link in our email to confirm. (Can't find it? Look in your spam or promotions folder.)",
+      alreadySubscribed: "You've signed up on this device. Thank you!",
+      errors: {
+        invalid_email: "Please enter a valid email address.",
+        rate_limited: "Too many attempts. Please try again later.",
+        not_configured: "Subscriptions aren't open yet. Please check back soon.",
         generic: "Something went wrong. Please try again.",
       },
     },
@@ -1046,6 +1072,14 @@ export const TRANSLATIONS = {
             {
               title: "11. Buchungen von Online-Kursen",
               content: "Wenn Sie einen Online-Kurs buchen (etwa die Serie Yoga für Stress, Immunität & Schlaf oder den Kinder-Workshop Yoga-Abenteuer), erfassen wir über unser Buchungsformular Ihren Namen, Ihre E-Mail-Adresse, Ihre WhatsApp-Nummer, den gewählten Termin und optionale Hinweise (bei Kinder-Workshops z. B. Name und Alter Ihres Kindes), ausschließlich um den Kurs zu organisieren, Ihre Zahlung zuzuordnen, Ihnen eine Bestätigungs-E-Mail und vor der Einheit den Online-Meeting-Link zu senden. Diese Daten werden an Riju (riju.kansal@niramay.me) und Richa (richa@niramay.me) weitergeleitet, nur so lange gespeichert, wie es für die Durchführung des Kurses und die Zahlungsabwicklung erforderlich ist, und nicht an Dritte weitergegeben. Sie müssen Ihre Einwilligung vor dem Absenden dieser Daten aktiv bestätigen; Sie können Ihre Einwilligung jederzeit widerrufen und die Löschung dieser Daten verlangen, indem Sie uns unter riju.kansal@niramay.me kontaktieren."
+            },
+            {
+              title: "12. Blog-Newsletter",
+              content: "Wenn Sie neue Blogartikel abonnieren, erfassen wir Ihre E-Mail-Adresse, Ihre bevorzugte Sprache und die Seite, auf der Sie sich angemeldet haben. Sie werden erst in den Verteiler aufgenommen, nachdem Sie auf den Link in der Bestätigungs-E-Mail geklickt haben, die wir Ihnen senden (Double-Opt-in). Um Ihre Einwilligung nachweisen zu können, speichern wir den Zeitpunkt Ihrer Anmeldung und Ihrer Bestätigung sowie den Wortlaut der Einwilligung, dem Sie zugestimmt haben. Rechtsgrundlage ist Ihre Einwilligung (Art. 6 Abs. 1 lit. a DSGVO). Wir nutzen Ihre Adresse ausschließlich, um Sie über neue Blogartikel zu informieren. Sie können sich jederzeit über den Link in jeder E-Mail oder per Nachricht an richa@niramay.me abmelden; Ihre Adresse wird dann nicht mehr für den Newsletter verwendet. Nie bestätigte Anmeldungen werden nach 30 Tagen automatisch gelöscht."
+            },
+            {
+              title: "13. E-Mail-Versand (Brevo)",
+              content: "Der Newsletter und die automatischen E-Mails der Website (z. B. Buchungs- und Anfragebestätigungen) werden über Brevo versendet, einen Dienst der Sendinblue SAS (Paris, Frankreich). Brevo verarbeitet die E-Mail-Adressen und E-Mail-Inhalte in unserem Auftrag auf Grundlage eines Auftragsverarbeitungsvertrags nach Art. 28 DSGVO auf Servern in der EU. Brevo erfasst, ob eine E-Mail zugestellt, geöffnet oder abgewiesen wurde, damit wir den zuverlässigen Versand sicherstellen können. Einzelheiten finden Sie in der Datenschutzerklärung von Brevo unter https://www.brevo.com/legal/privacypolicy/."
             }
           ]
         }
@@ -1195,6 +1229,24 @@ export const TRANSLATIONS = {
         unauthorized: "Ihre Sitzung ist abgelaufen. Bitte melden Sie sich erneut an.",
         forbidden: "Diese Aktion ist nicht erlaubt.",
         network: "Server nicht erreichbar. Prüfen Sie Ihre Verbindung und versuchen Sie es erneut — Ihr Text bleibt erhalten.",
+        generic: "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut.",
+      },
+    },
+    newsletter: {
+      title: "Hat Ihnen dieser Artikel gefallen?",
+      subtitle: "Erhalten Sie neue Artikel über ganzheitliches Wohlbefinden direkt in Ihr Postfach.",
+      emailLabel: "E-Mail-Adresse",
+      emailPlaceholder: "sie@beispiel.de",
+      submit: "Abonnieren",
+      submitting: "Wird angemeldet…",
+      consent: "Ja, ich möchte per E-Mail über neue Blogartikel informiert werden. Ich kann mich jederzeit mit einem Klick abmelden. Siehe",
+      privacyLink: "Datenschutzerklärung",
+      checkInbox: "Fast geschafft – bitte prüfen Sie Ihr Postfach und klicken Sie auf den Link in unserer E-Mail, um die Anmeldung zu bestätigen. (Nicht gefunden? Schauen Sie im Spam- oder Werbung-Ordner nach.)",
+      alreadySubscribed: "Sie haben sich auf diesem Gerät angemeldet. Vielen Dank!",
+      errors: {
+        invalid_email: "Bitte geben Sie eine gültige E-Mail-Adresse ein.",
+        rate_limited: "Zu viele Versuche. Bitte versuchen Sie es später erneut.",
+        not_configured: "Die Anmeldung ist noch nicht geöffnet. Bitte schauen Sie bald wieder vorbei.",
         generic: "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut.",
       },
     },

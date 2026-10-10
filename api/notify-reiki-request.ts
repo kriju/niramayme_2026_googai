@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import nodemailer from "nodemailer";
 import { getAdminDb } from "./_lib/firebaseAdmin.js";
+import { sendEmail } from "./_lib/mailer.js";
 import { adminSubject, escapeHtml } from "./_lib/util.js";
 
 // Called by the browser right after ReikiIntakeModal (see src/App.tsx)
@@ -10,6 +10,7 @@ import { adminSubject, escapeHtml } from "./_lib/util.js";
 // re-fetches the doc server-side by ID rather than trusting whatever the
 // client posts, so it can't be used to send made-up content to anyone.
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const CUSTOMER_REPLY_TO = "richa@niramay.me";
 
 type NotifyKind = "submitted" | "payment_claimed";
 type PackageId = "in-person" | "distance-single" | "distance-renewal";
@@ -69,17 +70,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       timeZone: "Europe/Berlin",
     }).format(createdAt);
 
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: process.env.GMAIL_USER,
-        pass: process.env.GMAIL_APP_PASSWORD,
-      },
-    });
-
     const adminParams = { refCode, kind, request, formattedDate, pkgTitle: pkg.EN.title, price: pkg.EN.price, isInPerson };
-    await transporter.sendMail({
-      from: process.env.GMAIL_USER,
+    await sendEmail({
       to: process.env.REIKI_NOTIFY_EMAIL || "richa@niramay.me",
       replyTo: EMAIL_RE.test(String(request.email || "")) ? request.email : undefined,
       subject: adminSubject(kind === "submitted"
@@ -87,16 +79,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         : `Payment claimed for in-person Reiki — ${refCode}`),
       text: renderAdminEmailText(adminParams),
       html: renderAdminEmailHtml(adminParams),
+      tag: "admin-reiki",
     });
 
     if (EMAIL_RE.test(String(request.email || "").trim())) {
       const customerParams = { refCode, kind, lang, name: request.name, pkgTitle: pkg[lang].title, price: pkg[lang].price, isInPerson };
-      await transporter.sendMail({
-        from: process.env.GMAIL_USER,
+      await sendEmail({
         to: request.email,
+        // The email invites them to "just reply" — that should reach Richa,
+        // not the no-reply notifications sender.
+        replyTo: CUSTOMER_REPLY_TO,
         subject: customerSubject(customerParams),
         text: renderCustomerEmailText(customerParams),
         html: renderCustomerEmailHtml(customerParams),
+        tag: "customer-reiki",
       });
     }
 

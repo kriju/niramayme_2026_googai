@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import nodemailer from "nodemailer";
 import { getAdminDb } from "./_lib/firebaseAdmin.js";
+import { sendEmail } from "./_lib/mailer.js";
 import { makeReviewToken } from "./_lib/reviewToken.js";
 import { adminSubject, escapeHtml, getSiteUrl } from "./_lib/util.js";
 
@@ -55,19 +55,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       rejectUrl,
     });
 
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: process.env.GMAIL_USER,
-        pass: process.env.GMAIL_APP_PASSWORD,
-      },
-    });
-
-    await transporter.sendMail({
-      from: process.env.GMAIL_USER,
+    await sendEmail({
       to: process.env.ADMIN_NOTIFY_EMAIL || "riju.kansal@niramay.me",
       subject: adminSubject(`New review from ${review.name || "a visitor"} — needs approval`),
       html,
+      tag: "admin-review",
     });
 
     return res.status(200).json({ ok: true });

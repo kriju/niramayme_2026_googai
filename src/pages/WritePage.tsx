@@ -205,6 +205,7 @@ const WriteDashboard = ({ user }: { user: User }) => {
   const [saving, setSaving] = useState(false);
   const [translating, setTranslating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
 
   useEffect(() => {
     // No published filter here — Richa/Riju signed in can see every post,
@@ -220,6 +221,7 @@ const WriteDashboard = ({ user }: { user: User }) => {
     setEditingId(null);
     setForm({ ...EMPTY_POST_FORM });
     setError(null);
+    setNotice(null);
   };
 
   const startEdit = (post: BlogPostDoc) => {
@@ -298,6 +300,7 @@ const WriteDashboard = ({ user }: { user: User }) => {
     }
     setSaving(true);
     setError(null);
+    setNotice(null);
     try {
       const payload = {
         title: form.title.trim(),
@@ -313,18 +316,45 @@ const WriteDashboard = ({ user }: { user: User }) => {
       // Only a post in the other language can be this one's translation
       // (the language dropdown may have changed since it was picked).
       const translationOf = translationCandidates.some(p => p.id === form.translationOf) ? form.translationOf : "";
+      // Only a draft -> published transition announces a post to newsletter
+      // subscribers; edits to an already-live post never do.
+      const wasPublished = !!editingId && !!posts.find(p => p.id === editingId)?.published;
+      let savedId = editingId;
       if (editingId) {
         await updateDoc(doc(db, "blogs", editingId), { ...payload, translationOf: translationOf || deleteField(), updatedAt: serverTimestamp() });
       } else {
         const slug = await uniqueSlug(slugify(form.title));
-        await addDoc(collection(db, "blogs"), { ...payload, ...(translationOf ? { translationOf } : {}), slug, createdAt: serverTimestamp() });
+        savedId = (await addDoc(collection(db, "blogs"), { ...payload, ...(translationOf ? { translationOf } : {}), slug, createdAt: serverTimestamp() })).id;
       }
       resetForm();
+      if (published && !wasPublished && savedId) void announceToSubscribers(savedId);
     } catch (err) {
       console.error("Error saving post:", err);
       setError("Couldn't save the post. Please try again.");
     } finally {
       setSaving(false);
+    }
+  };
+
+  // Best-effort and after the save: the post is live either way, so a
+  // newsletter hiccup is reported but never blocks publishing. The server
+  // guarantees each post is announced at most once.
+  const announceToSubscribers = async (blogId: string) => {
+    try {
+      const idToken = await user.getIdToken();
+      const response = await fetch("/api/newsletter-announce", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${idToken}` },
+        body: JSON.stringify({ blogId }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || `HTTP ${response.status}`);
+      if (data.status === "draft") setNotice("Published. A newsletter email for subscribers is ready as a draft in Brevo — review and send it there.");
+      else if (data.status === "sent") setNotice("Published, and subscribers are being emailed about it.");
+    } catch (err) {
+      console.error("Error announcing post:", err);
+      const reason = err instanceof Error ? err.message : String(err);
+      setError(`The post is published, but the newsletter email couldn't be prepared: ${reason}`);
     }
   };
 
@@ -560,6 +590,7 @@ const WriteDashboard = ({ user }: { user: User }) => {
           </div>
 
           {error && <p className="text-sm text-red-600">{error}</p>}
+          {notice && <p className="text-sm text-green-700">{notice}</p>}
 
           {editingId && form.lang === "EN" && form.title.trim() && form.content.trim() && (
             <div className="flex items-center justify-between gap-3 rounded-xl border border-dashed border-stone-300 px-4 py-3">

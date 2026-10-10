@@ -1,7 +1,7 @@
 import crypto from "node:crypto";
 import type { VercelRequest } from "@vercel/node";
 import { Timestamp, type Firestore } from "firebase-admin/firestore";
-import nodemailer from "nodemailer";
+import { sendEmail } from "./mailer.js";
 import { adminSubject } from "./util.js";
 
 // Shared plumbing for the public blog engagement endpoints (comments and
@@ -142,18 +142,14 @@ export function isReservedName(name: string): boolean {
 }
 
 export async function sendAdminEmail(subject: string, html: string): Promise<void> {
-  if (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD) {
-    console.warn("Skipping admin email — GMAIL_USER/GMAIL_APP_PASSWORD not set.");
+  if (!process.env.BREVO_API_KEY && (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD)) {
+    console.warn("Skipping admin email — neither BREVO_API_KEY nor GMAIL_USER/GMAIL_APP_PASSWORD is set.");
     return;
   }
-  const transporter = nodemailer.createTransport({
-    service: "gmail",
-    auth: { user: process.env.GMAIL_USER, pass: process.env.GMAIL_APP_PASSWORD },
-  });
-  await transporter.sendMail({
-    from: process.env.GMAIL_USER,
+  await sendEmail({
     to: process.env.ADMIN_NOTIFY_EMAIL || "riju.kansal@niramay.me",
     subject: adminSubject(subject),
     html,
+    tag: "admin-engagement",
   });
 }

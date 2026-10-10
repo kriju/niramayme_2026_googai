@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import nodemailer from "nodemailer";
 import { getAdminDb } from "./_lib/firebaseAdmin.js";
+import { sendEmail } from "./_lib/mailer.js";
 import { adminSubject, escapeHtml } from "./_lib/util.js";
 
 // Called by the browser right after AstrologyIntakeModal (see src/App.tsx)
@@ -11,6 +11,8 @@ import { adminSubject, escapeHtml } from "./_lib/util.js";
 // rather than trusting whatever the client posts, so it can't be used to
 // blast the admin's inbox (or a stranger's) with made-up content.
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+// Replies to a customer receipt go to Richa, not the no-reply sender.
+const CUSTOMER_REPLY_TO = "richa@niramay.me";
 
 type NotifyKind = "submitted" | "payment_claimed";
 
@@ -119,36 +121,30 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       timeZone: "Europe/Berlin",
     }).format(createdAt);
 
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: process.env.GMAIL_USER,
-        pass: process.env.GMAIL_APP_PASSWORD,
-      },
-    });
-
-    await transporter.sendMail({
-      from: process.env.GMAIL_USER,
+    await sendEmail({
       to: process.env.ADMIN_NOTIFY_EMAIL || "riju.kansal@niramay.me",
+      replyTo: isEmailContact ? String(request.contact).trim() : undefined,
       subject: adminSubject(kind === "submitted"
         ? `New ${svc.adminLabel} request — ${refCode}`
         : `Payment claimed for ${svc.adminLabel} request — ${refCode}`),
       text: renderAdminEmailText({ refCode, kind, request, formattedDate, isEmailContact, svc }),
       html: renderAdminEmailHtml({ refCode, kind, request, formattedDate, isEmailContact, svc }),
+      tag: "admin-astrology",
     });
 
     // Only send a customer receipt when the contact they gave us is an
     // email address — a WhatsApp number needs a manual reply instead, which
     // the admin email above already flags.
     if (isEmailContact) {
-      await transporter.sendMail({
-        from: process.env.GMAIL_USER,
+      await sendEmail({
         to: request.contact,
+        replyTo: CUSTOMER_REPLY_TO,
         subject: kind === "submitted"
           ? `${lang === "DE" ? svc.receivedDE : svc.receivedEN} — ${refCode}`
           : (lang === "DE" ? `Zahlung erhalten — ${refCode}` : `Payment received — ${refCode}`),
         text: renderCustomerEmailText({ refCode, kind, lang, name: request.name, svc }),
         html: renderCustomerEmailHtml({ refCode, kind, lang, name: request.name, svc }),
+        tag: "customer-astrology",
       });
     }
 

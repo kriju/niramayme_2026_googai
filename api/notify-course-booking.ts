@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import nodemailer from "nodemailer";
 import { getAdminDb } from "./_lib/firebaseAdmin.js";
+import { sendEmail } from "./_lib/mailer.js";
 import { adminSubject, escapeHtml } from "./_lib/util.js";
 
 // Called by the browser right after CourseIntakeModal (see src/App.tsx)
@@ -106,22 +106,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       timeZone: "Europe/Berlin",
     }).format(createdAt);
 
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: process.env.GMAIL_USER,
-        pass: process.env.GMAIL_APP_PASSWORD,
-      },
-    });
-
     const adminParams = {
       refCode, kind, booking, formattedDate,
       courseTitle: course.EN.title,
       price: course.inrPrice ? `${course.EN.price} / ${course.inrPrice}` : course.EN.price,
       session: session?.EN,
     };
-    await transporter.sendMail({
-      from: process.env.GMAIL_USER,
+    await sendEmail({
       to: process.env.COURSE_NOTIFY_EMAIL || `${CONTACT_EMAIL}, richa@niramay.me`,
       replyTo: EMAIL_RE.test(String(booking.email || "")) ? booking.email : undefined,
       subject: adminSubject(kind === "submitted"
@@ -129,6 +120,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         : `Payment claimed for course — ${refCode}`),
       text: renderAdminEmailText(adminParams),
       html: renderAdminEmailHtml(adminParams),
+      tag: "admin-course",
     });
 
     if (EMAIL_RE.test(String(booking.email || "").trim())) {
@@ -138,13 +130,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         inrPrice: course.inrPrice,
         contactEmail: course.contactEmail ?? CONTACT_EMAIL,
       };
-      await transporter.sendMail({
-        from: process.env.GMAIL_USER,
+      await sendEmail({
         to: booking.email,
         replyTo: course.contactEmail ?? CONTACT_EMAIL,
         subject: customerSubject(customerParams),
         text: renderCustomerEmailText(customerParams),
         html: renderCustomerEmailHtml(customerParams),
+        tag: "customer-course",
       });
     }
 
