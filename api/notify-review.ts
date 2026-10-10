@@ -1,6 +1,7 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import nodemailer from "nodemailer";
 import { getAdminDb } from "./_lib/firebaseAdmin.js";
+import { sendEmail } from "./_lib/mailer.js";
+import { handleReviewAction } from "./_lib/reviewAction.js";
 import { makeReviewToken } from "./_lib/reviewToken.js";
 import { adminSubject, escapeHtml, getSiteUrl } from "./_lib/util.js";
 
@@ -10,6 +11,8 @@ import { adminSubject, escapeHtml, getSiteUrl } from "./_lib/util.js";
 // can't be used to blast the admin's inbox with made-up content that was
 // never actually written to the database.
 export default async function handler(req: VercelRequest, res: VercelResponse) {
+  // The approve/reject links in the email (/api/review-action, rewritten here).
+  if (req.query.op === "action") return handleReviewAction(req, res);
   if (req.method !== "POST") {
     res.setHeader("Allow", "POST");
     return res.status(405).json({ error: "Method not allowed" });
@@ -55,19 +58,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       rejectUrl,
     });
 
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: process.env.GMAIL_USER,
-        pass: process.env.GMAIL_APP_PASSWORD,
-      },
-    });
-
-    await transporter.sendMail({
-      from: process.env.GMAIL_USER,
+    await sendEmail({
       to: process.env.ADMIN_NOTIFY_EMAIL || "riju.kansal@niramay.me",
       subject: adminSubject(`New review from ${review.name || "a visitor"} — needs approval`),
       html,
+      tag: "admin-review",
     });
 
     return res.status(200).json({ ok: true });
