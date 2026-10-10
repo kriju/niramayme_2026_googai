@@ -2,7 +2,7 @@ import { hmac, safeEqual } from "./engagement.js";
 import { brevoRequest } from "./mailer.js";
 
 // Shared by api/newsletter.ts (sign-up + double opt-in) and
-// api/newsletter-announce.ts (new-post campaigns).
+// api/_lib/newsletterAnnounce.ts (new-post campaigns).
 //
 // Subscribers live in Brevo, one contact list per language ("Blog EN" /
 // "Blog DE", created automatically on first use). Firestore keeps

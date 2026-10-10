@@ -1,13 +1,16 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { FieldValue } from "firebase-admin/firestore";
-import { getAdminDb } from "./_lib/firebaseAdmin.js";
-import { verifyReviewToken } from "./_lib/reviewToken.js";
-import { escapeHtml } from "./_lib/util.js";
+import { getAdminDb } from "./firebaseAdmin.js";
+import { verifyReviewToken } from "./reviewToken.js";
+import { escapeHtml } from "./util.js";
 
 // The link an admin clicks from the notification email. Deliberately a
 // plain GET so it works as an ordinary link with no JavaScript required —
 // the security boundary is the per-review token, not the HTTP method.
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+//
+// Served by api/notify-review.ts: vercel.json rewrites /api/review-action
+// there, since the Hobby plan caps a deployment at 12 functions.
+export async function handleReviewAction(req: VercelRequest, res: VercelResponse) {
   const reviewId = firstQueryValue(req.query.reviewId);
   const action = firstQueryValue(req.query.action);
   const token = firstQueryValue(req.query.token);

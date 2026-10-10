@@ -1,11 +1,14 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { FieldValue } from "firebase-admin/firestore";
-import { getAdminDb } from "./_lib/firebaseAdmin.js";
-import { requireBlogAdmin } from "./_lib/blogAuth.js";
-import { brevoRequest, hasBrevo, senderAddress } from "./_lib/mailer.js";
-import { type Lang, listIdFor } from "./_lib/newsletter.js";
-import { escapeHtml, getSiteUrl } from "./_lib/util.js";
+import { getAdminDb } from "./firebaseAdmin.js";
+import { requireBlogAdmin } from "./blogAuth.js";
+import { brevoRequest, hasBrevo, senderAddress } from "./mailer.js";
+import { type Lang, listIdFor } from "./newsletter.js";
+import { escapeHtml, getSiteUrl } from "./util.js";
 
+// Served by api/newsletter.ts (vercel.json rewrites /api/newsletter-announce
+// there, since the Hobby plan caps a deployment at 12 functions).
+//
 // Called by the Write dashboard (src/pages/WritePage.tsx) right after a post
 // goes from draft to published. Creates a Brevo email campaign for that
 // post's language list, so subscribers hear about it.
@@ -21,7 +24,7 @@ import { escapeHtml, getSiteUrl } from "./_lib/util.js";
 
 const REPLY_TO = "richa@niramay.me";
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+export async function handleAnnounce(req: VercelRequest, res: VercelResponse) {
   if (req.method !== "POST") {
     res.setHeader("Allow", "POST");
     return res.status(405).json({ error: "Method not allowed" });

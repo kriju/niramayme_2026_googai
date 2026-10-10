@@ -1,6 +1,7 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { FieldValue, Timestamp, type Firestore } from "firebase-admin/firestore";
 import { getAdminDb } from "./_lib/firebaseAdmin.js";
+import { handleAnnounce } from "./_lib/newsletterAnnounce.js";
 import { HttpError, clientKey, enforceRateLimit, hmac, requireJson } from "./_lib/engagement.js";
 import { brevoRequest, hasBrevo, sendEmail } from "./_lib/mailer.js";
 import {
@@ -27,6 +28,9 @@ import { escapeHtml, getSiteUrl } from "./_lib/util.js";
 // Nobody is added to a list until they click the emailed link, which is what
 // proves the address owner — not just whoever typed it — consented.
 export default async function handler(req: VercelRequest, res: VercelResponse) {
+  // New-post campaigns from the Write dashboard (/api/newsletter-announce,
+  // rewritten here).
+  if (req.query.op === "announce") return handleAnnounce(req, res);
   if (typeof req.query.token === "string") {
     return handleConfirm(req, res, req.query.token);
   }
