@@ -1,15 +1,17 @@
+import { LEGAL_DOCS } from "./legal";
+import { ADDRESS } from "./legal/config";
 import { Heart, Sparkles, Brain, ShieldCheck, Moon, Star, GraduationCap, Award, History, WandSparkles } from "lucide-react";
 
 export const GOOGLE_CALENDAR_URL = "https://calendar.google.com/calendar/appointments/schedules/AcZssZ0bFjK2E2xI3wiT55LqPigmiOHHDxGTghizdBbhy4MSdbw1p6CRUsxVk8gZYqJTnMgoKOAcJjZO?gv=true";
 export const GOOGLE_REVIEW_URL = "https://www.google.com/search?q=Niramay+Ostfildern+reviews";
 
 // The registered business address (same one disclosed in the Impressum,
-// § 5 TMG requires it there anyway) — reused for the LocalBusiness JSON-LD,
+// § 5 DDG requires it there anyway; the values live in src/legal/config.ts) — reused for the LocalBusiness JSON-LD,
 // the visible footer NAP, and the Google Maps link/embed so all three stay
 // in sync instead of drifting the way the old city-only footer text did.
-export const BUSINESS_STREET_ADDRESS = "Ernst Kirchner Str 13/3";
-export const BUSINESS_POSTAL_CODE = "73760";
-export const BUSINESS_CITY = "Ostfildern";
+export const BUSINESS_STREET_ADDRESS = ADDRESS.street;
+export const BUSINESS_POSTAL_CODE = ADDRESS.postalCode;
+export const BUSINESS_CITY = ADDRESS.city;
 export const GOOGLE_MAPS_QUERY = `Niramay Wellbeing, ${BUSINESS_STREET_ADDRESS}, ${BUSINESS_POSTAL_CODE} ${BUSINESS_CITY}, Germany`;
 // The claimed Google Business Profile listing itself — used for the footer's
 // address link and for LocalBusiness JSON-LD's sameAs/hasMap, since those
@@ -200,85 +202,7 @@ export const TRANSLATIONS = {
       rights: "All rights reserved.",
       impressum: "Impressum",
       privacy: "Privacy Policy",
-      legal: {
-        impressum: {
-          title: "Legal Notice (Impressum)",
-          section1: {
-            title: "Information according to § 5 TMG",
-            content: "Niramay - Holistic Wellbeing\nRicha Kansal\nErnst Kirchner Str 13/3\n73760 Ostfildern\nGermany"
-          },
-          section2: {
-            title: "Contact",
-            content: "Phone: +49-15175315761\nEmail: richa@niramay.me"
-          },
-          section3: {
-            title: "Professional Regulation",
-            content: "Professional designation: Therapist/Coach\nState where the professional title was awarded: Germany"
-          },
-          section4: {
-            title: "EU Dispute Resolution",
-            content: "The European Commission provides a platform for online dispute resolution (OS): https://ec.europa.eu/consumers/odr. We are not obliged or willing to participate in dispute resolution proceedings before a consumer arbitration board."
-          }
-        },
-        privacy: {
-          title: "Privacy Policy",
-          intro: "We take the protection of your personal data very seriously. We treat your personal data confidentially and in accordance with the statutory data protection regulations and this privacy policy.",
-          sections: [
-            {
-              title: "1. Data Protection at a Glance",
-              content: "The following information provides a simple overview of what happens to your personal data when you visit our website. Personal data is any data with which you can be personally identified."
-            },
-            {
-              title: "2. Responsibility",
-              content: "The controller for data processing on this website is:\nRicha Kansal\nErnst Kirchner Str 13/3\n73760 Ostfildern\nEmail: richa@niramay.me"
-            },
-            {
-              title: "3. Data Collection on our Website",
-              content: "Data is collected on the one hand by you communicating it to us. This can be, for example, data that you enter in a contact form or during appointment booking. Other data is collected automatically by our IT systems when you visit the website (e.g., browser, operating system, or time of page view)."
-            },
-            {
-              title: "4. Third-Party Services (Google Calendar & Reviews)",
-              content: "Our website uses services from Google Ireland Limited (Gordon House, Barrow Street, Dublin 4, Ireland) for appointment booking and reviews. When you use these services, data may be transmitted to Google."
-            },
-            {
-              title: "5. Your Rights",
-              content: "You have the right to receive information about the origin, recipient, and purpose of your stored personal data at any time free of charge. You also have the right to request the correction, blocking, or deletion of this data."
-            },
-            {
-              title: "6. Event & Workshop Photography",
-              content: "We occasionally take photographs at our workshops, classes, and community events (e.g. International Yoga Day) to share on this website and our social media channels. We select images that favor group or candid shots over close-ups of individuals, and we obtain consent from clearly identifiable attendees where practicable. If you appear in a photo on this site and would like it removed, please contact us at richa@niramay.me and we will take it down promptly."
-            },
-            {
-              title: "7. Vedic Astrology & Tarot Requests",
-              content: "If you request a Vedic Astrology reading, we collect your name, place of birth, date of birth, time of birth, and an email address or WhatsApp number through our booking form (or, if you contact us directly, via email or WhatsApp) solely to prepare your birth chart and coordinate your session. This data is stored only for as long as needed to prepare your chart and deliver your session, and is not shared with third parties. Likewise, if you book a Tarot Guidance & Clarity Session, we collect your name, the question you would like guidance on, and an email address or WhatsApp number solely to prepare your reading and coordinate your session, under the same terms. You must actively confirm your consent before this data is submitted, and you may withdraw consent and request deletion of this data at any time by contacting richa@niramay.me."
-            },
-            {
-              title: "8. Analytics (Google Analytics)",
-              content: "With your consent, given via the cookie banner shown on your first visit, this website uses Google Analytics 4, a web analytics service provided by Google Ireland Limited (Gordon House, Barrow Street, Dublin 4, Ireland). Google Analytics uses cookies to help us understand how visitors use the site (e.g. which pages are viewed and for how long). Google may transfer this data to servers in the United States. We use Google Analytics only after you accept via the banner; you may decline or withdraw consent at any time, in which case no Google Analytics cookies are set or, if already set, are no longer used for tracking. Withdraw your consent by clearing your browser's cookies for this site and choosing \"Decline\" on the banner shown afterward."
-            },
-            {
-              title: "9. Blog Comments, Likes & Sharing",
-              content: "When you comment on a blog post, we store your comment, the time it was posted and — unless you choose to post anonymously — the name you enter. Comments are published on this website. No email address is required. To prevent spam and abuse, a one-way keyed hash of your IP address is kept briefly for rate limiting and then deleted automatically; it is never stored with your comment. Likes and dislikes are counted using a random identifier stored in your browser's local storage, which is not linked to you personally. Share buttons are plain links: no third-party social media scripts are loaded, and no data is sent to a social network unless you click one. To have a comment removed, contact richa@niramay.me."
-            },
-            {
-              title: "10. Reiki Session Requests",
-              content: "If you book or request a Reiki session, we collect your name, email address, WhatsApp number and what you would like Reiki support with through our booking form, solely to arrange and deliver your session and to send you a confirmation email. This data is shared with Richa (richa@niramay.me) to contact you about next steps, is stored only for as long as needed to arrange and deliver your session, and is not shared with third parties. In-person sessions are scheduled via Google Calendar (see section 4). You must actively confirm your consent before this data is submitted, and you may withdraw consent and request deletion of this data at any time by contacting richa@niramay.me."
-            },
-            {
-              title: "11. Online Course Bookings",
-              content: "If you book an online course (such as the Yoga for Stress, Immunity & Sleep series or the Yoga Adventure kids workshop), we collect your name, email address, WhatsApp number, the session date you choose and any optional notes you give us (for a children's workshop, e.g. your child's name and age) through our booking form, solely to organise the course, match your payment, send you a confirmation email and email you the online meeting link before the session. This data is shared with Riju (riju.kansal@niramay.me) and Richa (richa@niramay.me), is stored only for as long as needed to run the course and handle payment, and is not shared with third parties. You must actively confirm your consent before this data is submitted, and you may withdraw consent and request deletion of this data at any time by contacting riju.kansal@niramay.me."
-            },
-            {
-              title: "12. Blog Newsletter",
-              content: "If you subscribe to new blog posts, we collect your email address, your preferred language and the page you signed up from. You are only added to the mailing list after you click the link in the confirmation email we send you (double opt-in). To be able to prove your consent, we record the time of your sign-up and of your confirmation, together with the consent wording you agreed to. The legal basis is your consent (Art. 6(1)(a) GDPR). We use your address only to tell you about new blog posts. You can unsubscribe at any time with the link in every email, or by writing to richa@niramay.me; your address is then no longer used for the newsletter. Sign-ups that are never confirmed are deleted automatically after 30 days."
-            },
-            {
-              title: "13. Email Delivery (Brevo)",
-              content: "The newsletter and the website's automated emails (such as booking and request confirmations) are sent via Brevo, a service of Sendinblue SAS (Paris, France). Brevo processes the email addresses and email contents on our behalf, under a data processing agreement pursuant to Art. 28 GDPR, on servers in the EU. Brevo records whether an email was delivered, opened or bounced, which helps us keep the emails reliable. For details, see Brevo's privacy policy at https://www.brevo.com/legal/privacypolicy/."
-            }
-          ]
-        }
-      }
+      legal: LEGAL_DOCS.EN,
     },
     cookieConsent: {
       message: "We use cookies to understand how visitors use this site via Google Analytics. We only set them with your consent.",
@@ -1005,85 +929,7 @@ export const TRANSLATIONS = {
       rights: "Alle Rechte vorbehalten.",
       impressum: "Impressum",
       privacy: "Datenschutz",
-      legal: {
-        impressum: {
-          title: "Impressum",
-          section1: {
-            title: "Angaben gemäß § 5 TMG",
-            content: "Niramay - Ganzheitliches Wohlbefinden\nRicha Kansal\nErnst Kirchner Str 13/3\n73760 Ostfildern\nDeutschland"
-          },
-          section2: {
-            title: "Kontakt",
-            content: "Telefon: +49-15175315761\nE-Mail: richa@niramay.me"
-          },
-          section3: {
-            title: "Berufsbezeichnung",
-            content: "Berufsbezeichnung: Therapeutin/Coach\nStaat, in dem die Berufsbezeichnung verliehen wurde: Deutschland"
-          },
-          section4: {
-            title: "EU-Streitschlichtung",
-            content: "Die Europäische Kommission stellt eine Plattform zur Online-Streitbeilegung (OS) bereit: https://ec.europa.eu/consumers/odr. Wir sind nicht bereit oder verpflichtet, an Streitbeilegungsverfahren vor einer Verbraucherschlichtungsstelle teilzunehmen."
-          }
-        },
-        privacy: {
-          title: "Datenschutzerklärung",
-          intro: "Wir nehmen den Schutz Ihrer persönlichen Daten sehr ernst. Wir behandeln Ihre personenbezogenen Daten vertraulich und entsprechend der gesetzlichen Datenschutzvorschriften sowie dieser Datenschutzerklärung.",
-          sections: [
-            {
-              title: "1. Datenschutz auf einen Blick",
-              content: "Die folgenden Hinweise geben einen einfachen Überblick darüber, was mit Ihren personenbezogenen Daten passiert, wenn Sie unsere Website besuchen. Personenbezogene Daten sind alle Daten, mit denen Sie persönlich identifiziert werden können."
-            },
-            {
-              title: "2. Verantwortlicher",
-              content: "Verantwortlicher für die Datenverarbeitung auf dieser Website ist:\nRicha Kansal\nErnst Kirchner Str 13/3\n73760 Ostfildern\nE-Mail: richa@niramay.me"
-            },
-            {
-              title: "3. Datenerfassung auf unserer Website",
-              content: "Die Datenerfassung erfolgt einerseits dadurch, dass Sie uns diese mitteilen. Hierbei kann es sich z. B. um Daten handeln, die Sie in ein Kontaktformular oder bei der Terminbuchung eingeben. Andere Daten werden automatisch beim Besuch der Website durch unsere IT-Systeme erfasst (z. B. Browser, Betriebssystem oder Uhrzeit des Seitenaufrufs)."
-            },
-            {
-              title: "4. Drittanbieter (Google Calendar & Bewertungen)",
-              content: "Unsere Website nutzt Dienste der Google Ireland Limited (Gordon House, Barrow Street, Dublin 4, Irland) für die Terminbuchung und Bewertungen. Bei der Nutzung dieser Dienste können Daten an Google übertragen werden."
-            },
-            {
-              title: "5. Ihre Rechte",
-              content: "Sie haben jederzeit das Recht, unentgeltlich Auskunft über Herkunft, Empfänger und Zweck Ihrer gespeicherten personenbezogenen Daten zu erhalten. Sie haben außerdem ein Recht, die Berichtigung, Sperrung oder Löschung dieser Daten zu verlangen."
-            },
-            {
-              title: "6. Foto- und Videoaufnahmen bei Veranstaltungen",
-              content: "Wir fertigen gelegentlich Fotos bei unseren Workshops, Kursen und Gemeinschaftsveranstaltungen (z. B. Internationaler Tag des Yoga) an, um diese auf dieser Website und in unseren Social-Media-Kanälen zu teilen. Wir bevorzugen dabei Gruppen- und Spontanaufnahmen gegenüber Nahaufnahmen einzelner Personen und holen, soweit praktikabel, die Einwilligung deutlich erkennbarer Teilnehmer:innen ein. Falls Sie auf einem Foto dieser Website zu erkennen sind und dessen Entfernung wünschen, kontaktieren Sie uns bitte unter richa@niramay.me — wir nehmen es umgehend herunter."
-            },
-            {
-              title: "7. Anfragen für vedische Astrologie & Tarot",
-              content: "Wenn Sie eine vedische Astrologie-Lesung anfragen, erfassen wir über unser Buchungsformular (oder, falls Sie uns direkt kontaktieren, per E-Mail oder WhatsApp) Ihren Namen, Geburtsort, Ihr Geburtsdatum, Ihre Geburtszeit sowie eine E-Mail-Adresse oder WhatsApp-Nummer, ausschließlich zur Erstellung Ihres Geburtshoroskops und zur Koordination Ihrer Sitzung. Diese Daten werden nur so lange gespeichert, wie es für die Vorbereitung Ihres Horoskops und die Durchführung Ihrer Sitzung erforderlich ist, und nicht an Dritte weitergegeben. Ebenso erfassen wir, wenn Sie eine Tarot-Beratung & Klarheits-Sitzung buchen, Ihren Namen, die Frage, zu der Sie sich Begleitung wünschen, sowie eine E-Mail-Adresse oder WhatsApp-Nummer, ausschließlich zur Vorbereitung Ihrer Lesung und zur Koordination Ihrer Sitzung, zu denselben Bedingungen. Sie müssen Ihre Einwilligung vor dem Absenden dieser Daten aktiv bestätigen; Sie können Ihre Einwilligung jederzeit widerrufen und die Löschung dieser Daten verlangen, indem Sie uns unter richa@niramay.me kontaktieren."
-            },
-            {
-              title: "8. Analyse (Google Analytics)",
-              content: "Mit Ihrer über den beim ersten Besuch angezeigten Cookie-Banner erteilten Einwilligung nutzt diese Website Google Analytics 4, einen Webanalysedienst der Google Ireland Limited (Gordon House, Barrow Street, Dublin 4, Irland). Google Analytics verwendet Cookies, damit wir nachvollziehen können, wie Besucher:innen die Website nutzen (z. B. welche Seiten aufgerufen und wie lange sie betrachtet werden). Google kann diese Daten an Server in den USA übertragen. Wir setzen Google Analytics nur nach Ihrer Zustimmung über den Banner ein; Sie können die Zustimmung jederzeit ablehnen oder widerrufen — in diesem Fall werden keine Google-Analytics-Cookies gesetzt bzw. bereits gesetzte nicht mehr zu Tracking-Zwecken verwendet. Widerrufen Sie Ihre Zustimmung, indem Sie die Cookies Ihres Browsers für diese Website löschen und beim danach angezeigten Banner „Ablehnen“ wählen."
-            },
-            {
-              title: "9. Blog-Kommentare, Bewertungen & Teilen",
-              content: "Wenn Sie einen Blogbeitrag kommentieren, speichern wir Ihren Kommentar, den Zeitpunkt und — sofern Sie nicht anonym posten — den eingegebenen Namen. Kommentare werden auf dieser Website veröffentlicht. Eine E-Mail-Adresse ist nicht erforderlich. Zum Schutz vor Spam und Missbrauch wird ein nicht umkehrbarer, verschlüsselter Hash Ihrer IP-Adresse kurzzeitig zur Begrenzung der Anfragen gespeichert und danach automatisch gelöscht; er wird nie mit Ihrem Kommentar gespeichert. „Gefällt mir“-Bewertungen werden über eine zufällige Kennung im lokalen Speicher Ihres Browsers gezählt, die nicht mit Ihrer Person verknüpft ist. Die Teilen-Schaltflächen sind einfache Links: Es werden keine Skripte sozialer Netzwerke geladen, und es werden keine Daten an ein soziales Netzwerk übermittelt, solange Sie keine davon anklicken. Für die Löschung eines Kommentars wenden Sie sich an richa@niramay.me."
-            },
-            {
-              title: "10. Anfragen für Reiki-Sitzungen",
-              content: "Wenn Sie eine Reiki-Sitzung buchen oder anfragen, erfassen wir über unser Buchungsformular Ihren Namen, Ihre E-Mail-Adresse, Ihre WhatsApp-Nummer und wobei Sie sich Unterstützung durch Reiki wünschen, ausschließlich zur Organisation und Durchführung Ihrer Sitzung und zum Versand einer Bestätigungs-E-Mail. Diese Daten werden an Richa (richa@niramay.me) weitergeleitet, damit sie Sie wegen der nächsten Schritte kontaktieren kann, nur so lange gespeichert, wie es für die Organisation und Durchführung Ihrer Sitzung erforderlich ist, und nicht an Dritte weitergegeben. Sitzungen vor Ort werden über Google Calendar terminiert (siehe Abschnitt 4). Sie müssen Ihre Einwilligung vor dem Absenden dieser Daten aktiv bestätigen; Sie können Ihre Einwilligung jederzeit widerrufen und die Löschung dieser Daten verlangen, indem Sie uns unter richa@niramay.me kontaktieren."
-            },
-            {
-              title: "11. Buchungen von Online-Kursen",
-              content: "Wenn Sie einen Online-Kurs buchen (etwa die Serie Yoga für Stress, Immunität & Schlaf oder den Kinder-Workshop Yoga-Abenteuer), erfassen wir über unser Buchungsformular Ihren Namen, Ihre E-Mail-Adresse, Ihre WhatsApp-Nummer, den gewählten Termin und optionale Hinweise (bei Kinder-Workshops z. B. Name und Alter Ihres Kindes), ausschließlich um den Kurs zu organisieren, Ihre Zahlung zuzuordnen, Ihnen eine Bestätigungs-E-Mail und vor der Einheit den Online-Meeting-Link zu senden. Diese Daten werden an Riju (riju.kansal@niramay.me) und Richa (richa@niramay.me) weitergeleitet, nur so lange gespeichert, wie es für die Durchführung des Kurses und die Zahlungsabwicklung erforderlich ist, und nicht an Dritte weitergegeben. Sie müssen Ihre Einwilligung vor dem Absenden dieser Daten aktiv bestätigen; Sie können Ihre Einwilligung jederzeit widerrufen und die Löschung dieser Daten verlangen, indem Sie uns unter riju.kansal@niramay.me kontaktieren."
-            },
-            {
-              title: "12. Blog-Newsletter",
-              content: "Wenn Sie neue Blogartikel abonnieren, erfassen wir Ihre E-Mail-Adresse, Ihre bevorzugte Sprache und die Seite, auf der Sie sich angemeldet haben. Sie werden erst in den Verteiler aufgenommen, nachdem Sie auf den Link in der Bestätigungs-E-Mail geklickt haben, die wir Ihnen senden (Double-Opt-in). Um Ihre Einwilligung nachweisen zu können, speichern wir den Zeitpunkt Ihrer Anmeldung und Ihrer Bestätigung sowie den Wortlaut der Einwilligung, dem Sie zugestimmt haben. Rechtsgrundlage ist Ihre Einwilligung (Art. 6 Abs. 1 lit. a DSGVO). Wir nutzen Ihre Adresse ausschließlich, um Sie über neue Blogartikel zu informieren. Sie können sich jederzeit über den Link in jeder E-Mail oder per Nachricht an richa@niramay.me abmelden; Ihre Adresse wird dann nicht mehr für den Newsletter verwendet. Nie bestätigte Anmeldungen werden nach 30 Tagen automatisch gelöscht."
-            },
-            {
-              title: "13. E-Mail-Versand (Brevo)",
-              content: "Der Newsletter und die automatischen E-Mails der Website (z. B. Buchungs- und Anfragebestätigungen) werden über Brevo versendet, einen Dienst der Sendinblue SAS (Paris, Frankreich). Brevo verarbeitet die E-Mail-Adressen und E-Mail-Inhalte in unserem Auftrag auf Grundlage eines Auftragsverarbeitungsvertrags nach Art. 28 DSGVO auf Servern in der EU. Brevo erfasst, ob eine E-Mail zugestellt, geöffnet oder abgewiesen wurde, damit wir den zuverlässigen Versand sicherstellen können. Einzelheiten finden Sie in der Datenschutzerklärung von Brevo unter https://www.brevo.com/legal/privacypolicy/."
-            }
-          ]
-        }
-      }
+      legal: LEGAL_DOCS.DE,
     },
     cookieConsent: {
       message: "Wir verwenden Cookies, um mit Google Analytics zu verstehen, wie Besucher:innen diese Website nutzen. Wir setzen sie nur mit Ihrer Einwilligung.",

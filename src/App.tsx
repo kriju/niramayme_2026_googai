@@ -58,6 +58,7 @@ import { NavigationMenu } from "@base-ui/react/navigation-menu";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { SERVICES, TESTIMONIALS, type ClientStory, FAQS, HEALER_CERTIFICATIONS, HEALER_IMAGES, TRANSLATIONS, REVIEW_CATEGORIES, categoryLabel, ONGOING_SESSIONS, COURSES, EVENTS, ANNOUNCEMENTS, GOOGLE_CALENDAR_URL, GOOGLE_REVIEW_URL, BUSINESS_STREET_ADDRESS, BUSINESS_POSTAL_CODE, BUSINESS_CITY, GOOGLE_MAPS_URL, GOOGLE_MAPS_EMBED_URL } from "./constants";
+import { LEGAL_DOCS, LEGAL_LINK_LABELS, type LegalDocType, type LegalLink } from "./legal";
 import { getStoredConsent, grantAnalyticsConsent, denyAnalyticsConsent, initAnalyticsFromStoredConsent, trackPageview } from "./lib/analytics";
 import { SITE_URL, BUSINESS_JSONLD_ID, useJsonLd, useSeo, useNoIndex } from "./lib/seo";
 import { businessJsonLd as businessJsonLdFor, richaJsonLd as richaJsonLdFor, websiteJsonLd as websiteJsonLdFor } from "./lib/structuredData";
@@ -112,7 +113,7 @@ type LayoutContext = {
   onBookGuidance: (pkg?: GuidancePackage) => void;
   onBookTarot: () => void;
   onBookCourse: (courseId: string) => void;
-  onOpenLegal: (type: "impressum" | "privacy") => void;
+  onOpenLegal: (type: LegalDocType) => void;
 };
 
 // EN pages live unprefixed ("/", "/services/yoga") since that's what was
@@ -3755,7 +3756,7 @@ const FAQPage = () => {
   );
 };
 
-const Footer = ({ lang, onOpenLegal }: { lang: "EN" | "DE", onOpenLegal: (type: "impressum" | "privacy") => void }) => {
+const Footer = ({ lang, onOpenLegal }: { lang: "EN" | "DE", onOpenLegal: (type: LegalDocType) => void }) => {
   const t = TRANSLATIONS[lang].footer;
   const nav = TRANSLATIONS[lang].nav;
   const prefix = langPrefix(lang);
@@ -3900,41 +3901,39 @@ const CookieConsent = ({ lang, onOpenPrivacy }: { lang: "EN" | "DE", onOpenPriva
   );
 };
 
-const LegalModal = ({ type, open, setOpen, lang }: { type: "impressum" | "privacy" | null, open: boolean, setOpen: (o: boolean) => void, lang: "EN" | "DE" }) => {
+// Impressum, privacy policy (and further legal documents): all share the
+// same shape ({ title, intro?, sections[] }, see src/legal), so one dialog
+// renders them. `links` in a section become buttons that switch to another
+// document.
+const LegalModal = ({ type, open, setOpen, lang, onNavigate }: { type: LegalDocType | null, open: boolean, setOpen: (o: boolean) => void, lang: "EN" | "DE", onNavigate: (link: LegalLink) => void }) => {
   if (!type) return null;
-  const t = TRANSLATIONS[lang].footer.legal[type];
+  const doc = LEGAL_DOCS[lang][type];
+  const linkLabels = LEGAL_LINK_LABELS[lang];
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent className="sm:max-w-3xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-3xl font-serif font-bold text-primary">{t.title}</DialogTitle>
+          <DialogTitle className="text-3xl font-serif font-bold text-primary">{doc.title}</DialogTitle>
         </DialogHeader>
-        
-        <div className="mt-8 space-y-12">
-          {type === "impressum" ? (
-            <div className="space-y-8">
-              {["section1", "section2", "section3", "section4"].map((s) => {
-                const section = (t as any)[s];
-                return (
-                  <div key={s}>
-                    <h3 className="text-xl font-bold mb-4 text-stone-800">{section.title}</h3>
-                    <p className="text-stone-600 leading-relaxed whitespace-pre-wrap">{section.content}</p>
-                  </div>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="space-y-8">
-              <p className="text-lg text-stone-600 italic">{(t as any).intro}</p>
-              {(t as any).sections.map((section: any, idx: number) => (
-                <div key={idx}>
-                  <h3 className="text-xl font-bold mb-4 text-stone-800">{section.title}</h3>
-                  <p className="text-stone-600 leading-relaxed whitespace-pre-wrap">{section.content}</p>
+
+        <div className="mt-8 space-y-8">
+          {doc.intro && <p className="text-lg text-stone-600 italic">{doc.intro}</p>}
+          {doc.sections.map((section, idx) => (
+            <div key={idx}>
+              <h3 className="text-xl font-bold mb-4 text-stone-800">{section.title}</h3>
+              <p className="text-stone-600 leading-relaxed whitespace-pre-wrap">{section.content}</p>
+              {section.links && (
+                <div className="mt-3 flex flex-wrap gap-x-5 gap-y-2">
+                  {section.links.map(link => (
+                    <button key={link} type="button" onClick={() => onNavigate(link)} className="text-primary underline underline-offset-2 hover:opacity-80 bg-transparent border-none p-0 cursor-pointer">
+                      {linkLabels[link]}
+                    </button>
+                  ))}
                 </div>
-              ))}
+              )}
             </div>
-          )}
+          ))}
         </div>
       </DialogContent>
     </Dialog>
@@ -4125,7 +4124,7 @@ const AppLayout = () => {
   }, [location.pathname]);
   const altPathname = altPathOverride?.from === location.pathname ? altPathOverride.to : toggledPath(location.pathname, lang);
   const altPath = `${altPathname}${location.search}${location.hash}`;
-  const [legalModal, setLegalModal] = useState<"impressum" | "privacy" | null>(null);
+  const [legalModal, setLegalModal] = useState<LegalDocType | null>(null);
   const [bookingContext, setBookingContext] = useState<BookingContext | null>(null);
   const openBooking = (ctx: BookingContext = {}) => setBookingContext(ctx);
   const [astrologyIntakeOpen, setAstrologyIntakeOpen] = useState(false);
@@ -4174,6 +4173,7 @@ const AppLayout = () => {
         open={!!legalModal}
         setOpen={(o) => !o && setLegalModal(null)}
         lang={lang}
+        onNavigate={setLegalModal}
       />
 
       <BookingDialog
