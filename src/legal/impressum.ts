@@ -10,7 +10,10 @@ import type { LegalDoc } from "./types";
 //  - "Professional designation: Therapist/Coach / State where the title was
 //    awarded" removed. That block only belongs in an Impressum for REGULATED
 //    professions (Kammer/Aufsichtsbehörde, Berufsrecht). The site shows no
-//    Heilpraktiker licence, so no professional-title claim is made.
+//    Heilpraktiker licence, so no professional-title claim is made. Owners
+//    confirmed (2026-10-11): no Heilpraktiker licence; Richa's certificates
+//    (yoga trainer, Reiki Master, past life regression therapist, NLP coach,
+//    tarot, astrology) and Riju's (yoga trainer) are not regulated titles.
 //    TODO(owner)/LEGAL-REVIEW: re-add such a block ONLY IF a regulated title
 //    applies (e.g. Heilpraktiker/Heilpraktikerin: Berufsbezeichnung, Staat der
 //    Verleihung, zuständige Behörde/Gesundheitsamt, berufsrechtliche Regeln

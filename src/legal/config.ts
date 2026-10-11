@@ -24,15 +24,17 @@ export const LEGAL_CONFIG = {
 
   /**
    * Natural persons named as business owner(s) in Impressum, AGB and privacy
-   * policy. TODO(owner): Riju Kansal also teaches and receives course-booking
-   * data. If the business is run by both partners (e.g. as a GbR), add
-   * "Riju Kansal" here and set legalForm below. Default: Richa Kansal only.
+   * policy. Confirmed by the owners (2026-10-11): Richa Kansal offers all
+   * courses and sessions under her own German freelance registration
+   * (freiberuflich). Riju Kansal teaches yoga courses for Niramay and receives
+   * course-booking data, but is not a contracting party, so he is not named
+   * as an owner.
    */
   owners: ["Richa Kansal"] as string[],
 
   /**
-   * Legal form, e.g. "GbR". TODO(owner): only set if the business really is
-   * such a company. null = sole trader (Einzelunternehmen), no legal form shown.
+   * Legal form, e.g. "GbR". null = sole freelancer, no legal form shown
+   * (confirmed by the owners, 2026-10-11).
    */
   legalForm: null as string | null,
 
@@ -43,7 +45,7 @@ export const LEGAL_CONFIG = {
 
   /**
    * Umsatzsteuer-Identifikationsnummer (§ 27a UStG), e.g. "DE123456789".
-   * TODO(owner): enter it if you have one. null = not set.
+   * null = none (owners confirmed no VAT is charged, 2026-10-11).
    */
   vatId: null as string | null,
 
@@ -52,7 +54,11 @@ export const LEGAL_CONFIG = {
    * (prices include VAT), null = UNKNOWN (a visible TODO is shown).
    * Only consulted when vatId is null.
    */
-  smallBusinessSection19: null as boolean | null,
+  // Owners confirmed (2026-10-11) that no VAT is charged. LEGAL-REVIEW: confirm
+  // with the tax adviser that § 19 UStG is the right basis (freelance status
+  // alone does not exempt from VAT); if another exemption applies (e.g.
+  // § 4 Nr. 21 UStG), adjust vatImpressumLine/vatPriceNote wording.
+  smallBusinessSection19: true as boolean | null,
 
   /**
    * PROPOSED retention periods used in the privacy policy. TODO(owner): confirm

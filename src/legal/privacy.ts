@@ -1,4 +1,4 @@
-import { ADDRESS, LEGAL_CONFIG, LEGAL_UPDATED, ownersLine, todo } from "./config";
+import { ADDRESS, LEGAL_CONFIG, LEGAL_UPDATED, ownersLine } from "./config";
 import type { LegalDoc, LegalSection } from "./types";
 
 // Privacy policy (Art. 13/14 GDPR). German = authoritative text, English =
@@ -60,11 +60,10 @@ const R = LEGAL_CONFIG.retention;
 const controllerDE = [ownersLine("DE"), ADDRESS.street, `${ADDRESS.postalCode} ${ADDRESS.city}`, ADDRESS.country.DE].join("\n");
 const controllerEN = [ownersLine("EN"), ADDRESS.street, `${ADDRESS.postalCode} ${ADDRESS.city}`, ADDRESS.country.EN].join("\n");
 
-// LEGAL-REVIEW: the Firestore database location is not stated anywhere in the
-// repository. Fill in the region (ideally an EU region) once confirmed in the
-// Firebase console; keep the TODO visible until then.
-const firestoreRegionDE = todo("DE", "Standort/Region der Firestore-Datenbank in der Firebase-Konsole prüfen und hier eintragen", "");
-const firestoreRegionEN = todo("EN", "", "check the Firestore database location/region in the Firebase console and enter it here");
+// Firestore database location confirmed by the owners in the Firebase
+// console (2026-10-11): Germany.
+const firestoreRegionDE = "Deutschland";
+const firestoreRegionEN = "Germany";
 
 // ---------------------------------------------------------------------------
 // German (authoritative)
