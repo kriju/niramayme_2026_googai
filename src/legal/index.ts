@@ -21,10 +21,12 @@ export const LEGAL_LINK_LABELS: Record<LegalLang, Record<LegalLink, string>> = {
   DE: {
     impressum: "Impressum",
     privacy: "Datenschutzerklärung",
+    cookieSettings: "Cookie-Einstellungen öffnen",
   },
   EN: {
     impressum: "Legal Notice (Impressum)",
     privacy: "Privacy Policy",
+    cookieSettings: "Open cookie settings",
   },
 };
 

@@ -14,6 +14,41 @@ declare global {
 }
 
 let scriptLoaded = false;
+// In-memory mirror of the stored choice: the gtag script, once loaded, can't
+// be unloaded, so withdrawing consent has to switch it off instead.
+let consentGranted = false;
+
+// Google's documented kill switch: with window["ga-disable-<ID>"] = true,
+// gtag.js sends nothing and writes no cookies.
+function setGaDisabled(disabled: boolean) {
+  if (!GA_MEASUREMENT_ID) return;
+  (window as unknown as Record<string, unknown>)[`ga-disable-${GA_MEASUREMENT_ID}`] = disabled;
+}
+
+// Removes the cookies Google Analytics set for this site (_ga, _ga_<ID>, and
+// the legacy _gid/_gat*). GA writes them on the registrable domain
+// (".niramay.me"), so every parent domain of the current host is tried.
+function clearGaCookies() {
+  try {
+    const names = document.cookie
+      .split(";")
+      .map(c => c.split("=")[0].trim())
+      .filter(n => n === "_ga" || n === "_gid" || n.startsWith("_ga_") || n.startsWith("_gat"));
+    const parts = window.location.hostname.split(".");
+    const domains: (string | null)[] = [null];
+    for (let i = 0; i < parts.length - 1; i++) {
+      const d = parts.slice(i).join(".");
+      domains.push(d, `.${d}`);
+    }
+    for (const name of names) {
+      for (const domain of domains) {
+        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/${domain ? `; domain=${domain}` : ""}`;
+      }
+    }
+  } catch {
+    // Cookies unavailable: nothing to clear.
+  }
+}
 
 function loadGtagScript() {
   if (scriptLoaded || !GA_MEASUREMENT_ID) return;
@@ -66,7 +101,10 @@ export function getStoredConsent(): ConsentState | null {
 // Called once on app start so a returning visitor who already granted
 // consent doesn't have to see the banner again before GA loads.
 export function initAnalyticsFromStoredConsent() {
-  if (getStoredConsent() === "granted") loadGtagScript();
+  if (getStoredConsent() === "granted") {
+    consentGranted = true;
+    loadGtagScript();
+  }
 }
 
 export function grantAnalyticsConsent() {
@@ -76,22 +114,37 @@ export function grantAnalyticsConsent() {
     // Storage unavailable (private mode, blocked cookies) — GA simply
     // won't persist consent across visits; not worth surfacing to the user.
   }
-  loadGtagScript();
+  consentGranted = true;
+  setGaDisabled(false);
+  if (scriptLoaded) {
+    // Re-granting after an earlier withdrawal in the same page view: the
+    // script is already there, it only needs to be told to measure again.
+    window.gtag("consent", "update", { analytics_storage: "granted" });
+  } else {
+    loadGtagScript();
+  }
   // Accepting the banner doesn't change the route, so the route-change
   // effect that normally calls trackPageview won't fire on its own here —
   // without this, GA would never see a single hit until the next navigation.
   trackPageview(window.location.pathname);
 }
 
+// Also the *withdrawal* path ("Cookie settings" in the footer reopens the
+// banner): if GA was already running, stop it and delete its cookies, so
+// withdrawing is as effective as it is easy. Withdrawing doesn't need a reload.
 export function denyAnalyticsConsent() {
   try {
     localStorage.setItem(CONSENT_KEY, "denied");
   } catch {
     // See grantAnalyticsConsent.
   }
+  consentGranted = false;
+  setGaDisabled(true);
+  if (scriptLoaded) window.gtag("consent", "update", { analytics_storage: "denied" });
+  clearGaCookies();
 }
 
 export function trackPageview(path: string) {
-  if (!scriptLoaded) return;
+  if (!scriptLoaded || !consentGranted) return;
   window.gtag("event", "page_view", { page_path: path });
 }

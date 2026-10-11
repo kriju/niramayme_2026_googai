@@ -64,6 +64,8 @@ export const LEGAL_CONFIG = {
   retention: {
     /** Requests that never turned into a contract. */
     unansweredInquiryMonths: 6,
+    /** Free-text fields that may contain health information (Art. 9 GDPR). */
+    healthFreeTextMonths: 6,
     /** Contract data (booking record, correspondence): limitation period, §§ 195, 199 BGB. */
     limitationYears: 3,
     /** Invoices / accounting vouchers (§ 147 AO, § 257 HGB; 8 years since 1 Jan 2025). */

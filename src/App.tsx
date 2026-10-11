@@ -1034,7 +1034,7 @@ const CourseIntakeModal = ({ lang, courseId, onClose, onOpenPrivacy }: { lang: "
               <label className="flex items-start gap-2 text-sm">
                 <input type="checkbox" required className="mt-1 h-4 w-4 shrink-0" checked={form.consent} onChange={e => setForm({ ...form, consent: e.target.checked })} />
                 <span>
-                  {t.consentPrefix}{" "}
+                  {content.consentPrefix ?? t.consentPrefix}{" "}
                   <button type="button" onClick={onOpenPrivacy} className="underline underline-offset-2 hover:text-primary">
                     {t.consentLinkLabel}
                   </button>.
@@ -3756,7 +3756,7 @@ const FAQPage = () => {
   );
 };
 
-const Footer = ({ lang, onOpenLegal }: { lang: "EN" | "DE", onOpenLegal: (type: LegalDocType) => void }) => {
+const Footer = ({ lang, onOpenLegal, onOpenCookieSettings }: { lang: "EN" | "DE", onOpenLegal: (type: LegalDocType) => void, onOpenCookieSettings: () => void }) => {
   const t = TRANSLATIONS[lang].footer;
   const nav = TRANSLATIONS[lang].nav;
   const prefix = langPrefix(lang);
@@ -3844,9 +3844,10 @@ const Footer = ({ lang, onOpenLegal }: { lang: "EN" | "DE", onOpenLegal: (type: 
         
         <div className="flex flex-col md:flex-row justify-between items-center gap-6 text-sm text-muted-foreground">
           <p>© {new Date().getFullYear()} Niramay Wellness. {t.rights}</p>
-          <div className="flex gap-8">
+          <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 md:gap-x-8">
             <button onClick={() => onOpenLegal("impressum")} className="hover:text-primary transition-colors cursor-pointer bg-transparent border-none p-0">{t.impressum}</button>
             <button onClick={() => onOpenLegal("privacy")} className="hover:text-primary transition-colors cursor-pointer bg-transparent border-none p-0">{t.privacy}</button>
+            <button onClick={onOpenCookieSettings} className="hover:text-primary transition-colors cursor-pointer bg-transparent border-none p-0">{t.cookieSettings}</button>
           </div>
         </div>
       </div>
@@ -3864,37 +3865,54 @@ const Footer = ({ lang, onOpenLegal }: { lang: "EN" | "DE", onOpenLegal: (type: 
   );
 };
 
-// Shown once, on first visit, until the visitor picks Accept or Decline —
-// Google Analytics only loads (see src/lib/analytics.ts) after Accept, since
-// GA sets cookies and this is a German business site subject to GDPR consent
-// requirements. The choice is remembered in localStorage, so returning
-// visitors who already decided don't see it again.
-const CookieConsent = ({ lang, onOpenPrivacy }: { lang: "EN" | "DE", onOpenPrivacy: () => void }) => {
-  const [visible, setVisible] = useState(false);
+// Shown on first visit until the visitor picks Accept or Decline — Google
+// Analytics only loads (see src/lib/analytics.ts) after Accept, since GA sets
+// cookies and this is a German business site subject to GDPR/TDDDG consent
+// requirements. The choice is remembered in localStorage.
+// The footer's "Cookie settings" link reopens this same banner (`reopen`), so
+// a visitor can withdraw or change the choice as easily as they gave it;
+// choosing "Decline" there stops GA and deletes its cookies (denyAnalyticsConsent).
+const CookieConsent = ({ lang, reopen, onClose, onOpenPrivacy }: { lang: "EN" | "DE", reopen: boolean, onClose: () => void, onOpenPrivacy: () => void }) => {
+  const [firstVisit, setFirstVisit] = useState(false);
   const t = TRANSLATIONS[lang].cookieConsent;
 
   useEffect(() => {
-    setVisible(getStoredConsent() === null);
+    setFirstVisit(getStoredConsent() === null);
   }, []);
 
-  if (!visible) return null;
+  if (!firstVisit && !reopen) return null;
+
+  const decide = (granted: boolean) => {
+    if (granted) grantAnalyticsConsent(); else denyAnalyticsConsent();
+    setFirstVisit(false);
+    onClose();
+  };
 
   return (
-    <div className="fixed bottom-0 inset-x-0 z-[100] p-4 sm:p-6">
+    <div className="fixed bottom-0 inset-x-0 z-[100] p-4 sm:p-6" role="region" aria-label={TRANSLATIONS[lang].footer.cookieSettings}>
       <div className="max-w-3xl mx-auto bg-background border border-stone-200 shadow-xl rounded-2xl p-5 sm:p-6 flex flex-col sm:flex-row sm:items-center gap-4">
-        <p className="text-sm text-muted-foreground flex-1">
-          {t.message}{" "}
-          <button type="button" onClick={onOpenPrivacy} className="underline underline-offset-2 hover:text-primary">
-            {t.privacyLink}
-          </button>
-        </p>
-        <div className="flex gap-3 shrink-0">
-          <Button variant="outline" size="sm" className="rounded-full" onClick={() => { denyAnalyticsConsent(); setVisible(false); }}>
+        <div className="flex-1 text-sm text-muted-foreground space-y-2">
+          <p>
+            {t.message}{" "}
+            <button type="button" onClick={onOpenPrivacy} className="underline underline-offset-2 hover:text-primary">
+              {t.privacyLink}
+            </button>
+          </p>
+          {reopen && <p className="font-medium text-foreground">{getStoredConsent() === "granted" ? t.statusOn : t.statusOff}</p>}
+        </div>
+        {/* Equal prominence for both choices (no nudging towards Accept). */}
+        <div className="flex flex-wrap gap-3 shrink-0">
+          <Button size="sm" className="rounded-full" onClick={() => decide(false)}>
             {t.reject}
           </Button>
-          <Button size="sm" className="rounded-full" onClick={() => { grantAnalyticsConsent(); setVisible(false); }}>
+          <Button size="sm" className="rounded-full" onClick={() => decide(true)}>
             {t.accept}
           </Button>
+          {reopen && !firstVisit && (
+            <Button variant="ghost" size="sm" className="rounded-full" onClick={onClose}>
+              {t.close}
+            </Button>
+          )}
         </div>
       </div>
     </div>
@@ -4125,6 +4143,10 @@ const AppLayout = () => {
   const altPathname = altPathOverride?.from === location.pathname ? altPathOverride.to : toggledPath(location.pathname, lang);
   const altPath = `${altPathname}${location.search}${location.hash}`;
   const [legalModal, setLegalModal] = useState<LegalDocType | null>(null);
+  // "Cookie settings" (footer / privacy policy) reopens the consent banner.
+  const [cookieSettingsOpen, setCookieSettingsOpen] = useState(false);
+  const openCookieSettings = () => { setLegalModal(null); setCookieSettingsOpen(true); };
+  const handleLegalLink = (link: LegalLink) => (link === "cookieSettings" ? openCookieSettings() : setLegalModal(link));
   const [bookingContext, setBookingContext] = useState<BookingContext | null>(null);
   const openBooking = (ctx: BookingContext = {}) => setBookingContext(ctx);
   const [astrologyIntakeOpen, setAstrologyIntakeOpen] = useState(false);
@@ -4166,14 +4188,14 @@ const AppLayout = () => {
       <Navbar lang={lang} altPath={altPath} onBook={openBooking} belowAnnouncement={announcements.length > 0} />
       <LangSuggestion lang={lang} altPath={altPath} belowAnnouncement={announcements.length > 0} />
       <Outlet context={{ lang, setAltPath, onBook: openBooking, onBookAstrology: () => setAstrologyIntakeOpen(true), onBookReiki: setReikiPackage, onBookGuidance: (pkg = "individual") => { setGuidancePackage(pkg); setGuidanceIntakeOpen(true); }, onBookTarot: () => setTarotIntakeOpen(true), onBookCourse: setCourseBookingId, onOpenLegal: setLegalModal } satisfies LayoutContext} />
-      <Footer lang={lang} onOpenLegal={setLegalModal} />
+      <Footer lang={lang} onOpenLegal={setLegalModal} onOpenCookieSettings={openCookieSettings} />
 
       <LegalModal
         type={legalModal}
         open={!!legalModal}
         setOpen={(o) => !o && setLegalModal(null)}
         lang={lang}
-        onNavigate={setLegalModal}
+        onNavigate={handleLegalLink}
       />
 
       <BookingDialog
@@ -4221,7 +4243,7 @@ const AppLayout = () => {
         onOpenPrivacy={() => setLegalModal("privacy")}
       />
 
-      <CookieConsent lang={lang} onOpenPrivacy={() => setLegalModal("privacy")} />
+      <CookieConsent lang={lang} reopen={cookieSettingsOpen} onClose={() => setCookieSettingsOpen(false)} onOpenPrivacy={() => { setCookieSettingsOpen(false); setLegalModal("privacy"); }} />
     </div>
   );
 };
