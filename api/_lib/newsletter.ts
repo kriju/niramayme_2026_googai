@@ -16,13 +16,13 @@ export const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 // Bump whenever the consent wording below changes, so each stored record
 // says exactly which text that person agreed to.
-export const CONSENT_VERSION = "2026-10-10b";
+export const CONSENT_VERSION = "2026-10-11";
 
 // Must match the wording shown under the sign-up form (newsletter.consent in
 // src/constants.ts).
 export const CONSENT_TEXT: Record<Lang, string> = {
-  EN: "Yes, email me when a new blog post is published (about once a week). I can unsubscribe at any time with one click. See the Privacy Policy.",
-  DE: "Ja, ich möchte per E-Mail über neue Blogartikel informiert werden (etwa einmal pro Woche). Ich kann mich jederzeit mit einem Klick abmelden. Siehe Datenschutzerklärung.",
+  EN: "Yes, email me when a new blog post is published (about once a week). I can unsubscribe at any time with one click. By subscribing I also agree that opens and link clicks in these emails are measured (open and click tracking by our email provider Brevo). See the Privacy Policy.",
+  DE: "Ja, ich möchte per E-Mail über neue Blogartikel informiert werden (etwa einmal pro Woche). Ich kann mich jederzeit mit einem Klick abmelden. Mit der Anmeldung willige ich auch ein, dass Öffnungen und Klicks auf Links in diesen E-Mails gemessen werden (Öffnungs- und Klickmessung durch unseren E-Mail-Dienstleister Brevo). Siehe Datenschutzerklärung.",
 };
 
 const LIST_NAMES: Record<Lang, string> = { EN: "Blog EN", DE: "Blog DE" };

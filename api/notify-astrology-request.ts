@@ -1,6 +1,7 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { getAdminDb } from "./_lib/firebaseAdmin.js";
 import { sendEmail } from "./_lib/mailer.js";
+import { withNotice } from "./_lib/withdrawal.js";
 import { adminSubject, escapeHtml } from "./_lib/util.js";
 
 // Called by the browser right after AstrologyIntakeModal (see src/App.tsx)
@@ -142,8 +143,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         subject: kind === "submitted"
           ? `${lang === "DE" ? svc.receivedDE : svc.receivedEN} — ${refCode}`
           : (lang === "DE" ? `Zahlung erhalten — ${refCode}` : `Payment received — ${refCode}`),
-        text: renderCustomerEmailText({ refCode, kind, lang, name: request.name, svc }),
-        html: renderCustomerEmailHtml({ refCode, kind, lang, name: request.name, svc }),
+        // Contract confirmation incl. withdrawal information (§ 312f Abs. 2 BGB).
+        ...(kind === "submitted"
+          ? withNotice({ text: renderCustomerEmailText({ refCode, kind, lang, name: request.name, svc }), html: renderCustomerEmailHtml({ refCode, kind, lang, name: request.name, svc }) }, lang, request.legalAcks?.earlyStart === true)
+          : { text: renderCustomerEmailText({ refCode, kind, lang, name: request.name, svc }), html: renderCustomerEmailHtml({ refCode, kind, lang, name: request.name, svc }) }),
         tag: "customer-astrology",
       });
     }

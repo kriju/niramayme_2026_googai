@@ -2,6 +2,7 @@ import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { getAdminDb } from "./_lib/firebaseAdmin.js";
 import { sendEmail } from "./_lib/mailer.js";
 import { adminSubject, escapeHtml } from "./_lib/util.js";
+import { withNotice } from "./_lib/withdrawal.js";
 
 // Called by the browser right after CourseIntakeModal (see src/App.tsx)
 // writes/updates a doc in the courseBookings Firestore collection — once when
@@ -134,8 +135,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         to: booking.email,
         replyTo: course.contactEmail ?? CONTACT_EMAIL,
         subject: customerSubject(customerParams),
-        text: renderCustomerEmailText(customerParams),
-        html: renderCustomerEmailHtml(customerParams),
+        // Contract confirmation incl. withdrawal information (§ 312f Abs. 2 BGB).
+        ...(kind === "submitted"
+          ? withNotice({ text: renderCustomerEmailText(customerParams), html: renderCustomerEmailHtml(customerParams) }, lang, booking.legalAcks?.earlyStart === true)
+          : { text: renderCustomerEmailText(customerParams), html: renderCustomerEmailHtml(customerParams) }),
         tag: "customer-course",
       });
     }

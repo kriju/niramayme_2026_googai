@@ -58,6 +58,9 @@ import { NavigationMenu } from "@base-ui/react/navigation-menu";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { SERVICES, TESTIMONIALS, type ClientStory, FAQS, HEALER_CERTIFICATIONS, HEALER_IMAGES, TRANSLATIONS, REVIEW_CATEGORIES, categoryLabel, ONGOING_SESSIONS, COURSES, EVENTS, ANNOUNCEMENTS, GOOGLE_CALENDAR_URL, GOOGLE_REVIEW_URL, BUSINESS_STREET_ADDRESS, BUSINESS_POSTAL_CODE, BUSINESS_CITY, GOOGLE_MAPS_URL, GOOGLE_MAPS_EMBED_URL } from "./constants";
+import { LEGAL_DOCS, LEGAL_LINK_LABELS, type LegalDocType, type LegalLink } from "./legal";
+import { BOOKING_LEGAL_TEXT, EMPTY_LEGAL_STATE, WITHDRAW_TEXT, isLegalComplete, toLegalAcks, type BookingLegalState } from "./legal/booking";
+import { LEGAL_CONFIG, vatPriceNote } from "./legal/config";
 import { getStoredConsent, grantAnalyticsConsent, denyAnalyticsConsent, initAnalyticsFromStoredConsent, trackPageview } from "./lib/analytics";
 import { SITE_URL, BUSINESS_JSONLD_ID, useJsonLd, useSeo, useNoIndex } from "./lib/seo";
 import { businessJsonLd as businessJsonLdFor, richaJsonLd as richaJsonLdFor, websiteJsonLd as websiteJsonLdFor } from "./lib/structuredData";
@@ -112,7 +115,7 @@ type LayoutContext = {
   onBookGuidance: (pkg?: GuidancePackage) => void;
   onBookTarot: () => void;
   onBookCourse: (courseId: string) => void;
-  onOpenLegal: (type: "impressum" | "privacy") => void;
+  onOpenLegal: (type: LegalDocType) => void;
 };
 
 // EN pages live unprefixed ("/", "/services/yoga") since that's what was
@@ -258,6 +261,42 @@ const EMPTY_ASTROLOGY_FORM: AstrologyForm = {
 };
 const INPUT_CLASS = "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2";
 
+
+// Legal block of the booking forms: price + VAT note directly above the order
+// button (§ 312j Abs. 2 BGB), checkboxes for AGB and Widerrufsbelehrung, and
+// (binding bookings only) the optional express request to start before the
+// withdrawal period ends. The button itself stays in each form. See
+// src/legal/booking.ts for the LEGAL-REVIEW notes.
+const BookingLegalBlock = ({ lang, binding, price, value, onChange, onOpenLegal }: { lang: "EN" | "DE", binding: boolean, price: string, value: BookingLegalState, onChange: (v: BookingLegalState) => void, onOpenLegal: (type: LegalDocType) => void }) => {
+  const t = BOOKING_LEGAL_TEXT[lang];
+  const linkClass = "underline underline-offset-2 hover:text-primary";
+  return (
+    <div className="grid gap-3 rounded-xl border border-stone-200 bg-stone-50/60 p-4" data-testid="booking-legal">
+      <p className="text-xs font-bold uppercase tracking-wider text-primary/60">{t.heading}</p>
+      <div className="text-sm">
+        <span className="text-muted-foreground">{t.priceLabel}: </span>
+        <span className="font-semibold">{price}</span>
+        <p className="text-xs text-muted-foreground">{vatPriceNote(lang)}</p>
+      </div>
+      <label className="flex items-start gap-2 text-sm">
+        <input type="checkbox" required className="mt-1 h-4 w-4 shrink-0" checked={value.agb} onChange={e => onChange({ ...value, agb: e.target.checked })} />
+        <span>{t.agbPrefix} <button type="button" onClick={() => onOpenLegal("agb")} className={linkClass}>{t.agbLink}</button>{t.agbSuffix.startsWith(".") ? "" : " "}{t.agbSuffix}</span>
+      </label>
+      <label className="flex items-start gap-2 text-sm">
+        <input type="checkbox" required className="mt-1 h-4 w-4 shrink-0" checked={value.withdrawalInfo} onChange={e => onChange({ ...value, withdrawalInfo: e.target.checked })} />
+        <span>{t.withdrawalPrefix} <button type="button" onClick={() => onOpenLegal("widerruf")} className={linkClass}>{t.withdrawalLink}</button> {t.withdrawalSuffix}</span>
+      </label>
+      {binding && (
+        <label className="flex items-start gap-2 text-sm">
+          <input type="checkbox" className="mt-1 h-4 w-4 shrink-0" checked={value.earlyStart} onChange={e => onChange({ ...value, earlyStart: e.target.checked })} />
+          <span>{t.earlyStart}<span className="block text-xs text-muted-foreground mt-1">{t.earlyStartHint}</span></span>
+        </label>
+      )}
+      <p className="text-xs text-muted-foreground">{binding ? t.bindingNote : t.requestNote}</p>
+    </div>
+  );
+};
+
 type BirthDetails = { name: string; placeOfBirth: string; dateOfBirth: string; timeOfBirth: string };
 const BirthDetailsFields = ({ t, nameLabel, values, onChange }: { t: typeof TRANSLATIONS["EN"]["astrologyIntake"], nameLabel: string, values: BirthDetails, onChange: (v: Partial<BirthDetails>) => void }) => (
   <>
@@ -283,7 +322,7 @@ const BirthDetailsFields = ({ t, nameLabel, values, onChange }: { t: typeof TRAN
   </>
 );
 
-const AstrologyIntakeModal = ({ lang, open, onOpenChange, onOpenPrivacy, variant = "astrology", initialPackage = "individual" }: { lang: "EN" | "DE", open: boolean, onOpenChange: (o: boolean) => void, onOpenPrivacy: () => void, variant?: IntakeVariant, initialPackage?: GuidancePackage }) => {
+const AstrologyIntakeModal = ({ lang, open, onOpenChange, onOpenPrivacy, onOpenLegal, variant = "astrology", initialPackage = "individual" }: { lang: "EN" | "DE", open: boolean, onOpenChange: (o: boolean) => void, onOpenPrivacy: () => void, onOpenLegal: (type: LegalDocType) => void, variant?: IntakeVariant, initialPackage?: GuidancePackage }) => {
   const t = TRANSLATIONS[lang].astrologyIntake;
   const tg = TRANSLATIONS[lang].guidanceIntake;
   const isGuidance = variant === "guidance";
@@ -293,6 +332,7 @@ const AstrologyIntakeModal = ({ lang, open, onOpenChange, onOpenPrivacy, variant
   const { profile } = useAuth();
   const [step, setStep] = useState<AstrologyStep>("details");
   const [form, setForm] = useState<AstrologyForm>(EMPTY_ASTROLOGY_FORM);
+  const [legal, setLegal] = useState<BookingLegalState>(EMPTY_LEGAL_STATE);
   const [pkg, setPkg] = useState<GuidancePackage>(initialPackage);
   const isCouple = isGuidance && pkg === "couple";
 
@@ -326,7 +366,7 @@ const AstrologyIntakeModal = ({ lang, open, onOpenChange, onOpenPrivacy, variant
   const detailsValid = isTarot
     ? Boolean(form.question.trim())
     : Boolean(form.placeOfBirth.trim() && form.dateOfBirth && form.timeOfBirth && partnerValid);
-  const isValid = Boolean(form.name.trim() && detailsValid && form.contact.trim() && form.consent);
+  const isValid = Boolean(form.name.trim() && detailsValid && form.contact.trim() && form.consent && isLegalComplete(legal));
   const whatsappHref = `https://wa.me/${ASTROLOGY_WHATSAPP_NUMBER}?text=${encodeURIComponent(isGuidance ? tg.whatsappTemplate : isTarot ? tt.whatsappTemplate : t.whatsappTemplate)}`;
   const priceValue = isGuidance ? tg.packages[pkg].priceValue : isTarot ? tt.priceValue : t.priceValue;
 
@@ -337,6 +377,7 @@ const AstrologyIntakeModal = ({ lang, open, onOpenChange, onOpenPrivacy, variant
     setTimeout(() => {
       setStep("details");
       setForm(EMPTY_ASTROLOGY_FORM);
+      setLegal(EMPTY_LEGAL_STATE);
       setRequestId(null);
       setError(null);
     }, 300);
@@ -362,6 +403,7 @@ const AstrologyIntakeModal = ({ lang, open, onOpenChange, onOpenPrivacy, variant
         lang,
         createdAt: serverTimestamp(),
         paymentClaimed: false,
+        legalAcks: toLegalAcks(legal),
         ...(isGuidance && {
           service: "intuitive-guidance",
           package: pkg,
@@ -507,9 +549,10 @@ const AstrologyIntakeModal = ({ lang, open, onOpenChange, onOpenPrivacy, variant
                   </button>.
                 </span>
               </label>
+              <BookingLegalBlock lang={lang} binding price={priceValue} value={legal} onChange={setLegal} onOpenLegal={onOpenLegal} />
               {error && <p className="text-sm text-red-600">{error}</p>}
               <Button type="submit" size="lg" className="rounded-full w-full" disabled={!isValid || submitting}>
-                {submitting ? t.submitting : t.continueBtn}
+                {submitting ? t.submitting : BOOKING_LEGAL_TEXT[lang].bindingButton}
               </Button>
               <a href={whatsappHref} target="_blank" rel="noopener noreferrer" className="text-center text-sm text-muted-foreground hover:text-primary underline underline-offset-2">
                 {t.whatsappFallbackTitle} — {t.whatsappFallbackBtn}
@@ -604,7 +647,7 @@ type ReikiForm = { name: string; email: string; whatsapp: string; reason: string
 const EMPTY_REIKI_FORM: ReikiForm = { name: "", email: "", whatsapp: "", reason: "", consent: false };
 const REIKI_PACKAGE_IDS: ReikiPackageId[] = ["in-person", "distance-single", "distance-renewal"];
 
-const ReikiIntakeModal = ({ lang, pkg, onClose, onOpenPrivacy }: { lang: "EN" | "DE", pkg: ReikiPackageId | null, onClose: () => void, onOpenPrivacy: () => void }) => {
+const ReikiIntakeModal = ({ lang, pkg, onClose, onOpenPrivacy, onOpenLegal }: { lang: "EN" | "DE", pkg: ReikiPackageId | null, onClose: () => void, onOpenPrivacy: () => void, onOpenLegal: (type: LegalDocType) => void }) => {
   const t = TRANSLATIONS[lang].reikiIntake;
   const tr = TRANSLATIONS[lang].reiki;
   const { profile } = useAuth();
@@ -613,6 +656,7 @@ const ReikiIntakeModal = ({ lang, pkg, onClose, onOpenPrivacy }: { lang: "EN" | 
   const [shownPkg, setShownPkg] = useState<ReikiPackageId>("in-person");
   const [step, setStep] = useState<ReikiStep>("details");
   const [form, setForm] = useState<ReikiForm>(EMPTY_REIKI_FORM);
+  const [legal, setLegal] = useState<BookingLegalState>(EMPTY_LEGAL_STATE);
   const [requestId, setRequestId] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [paying, setPaying] = useState(false);
@@ -639,7 +683,7 @@ const ReikiIntakeModal = ({ lang, pkg, onClose, onOpenPrivacy }: { lang: "EN" | 
   // Derived from the Firestore doc ID, the same way api/notify-reiki-request.ts
   // derives it — never stored separately, so the two can't drift.
   const refCode = requestId ? `RKI-${requestId.slice(-6).toUpperCase()}` : "";
-  const isValid = Boolean(form.name.trim() && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim()) && form.whatsapp.trim() && form.reason.trim() && form.consent);
+  const isValid = Boolean(form.name.trim() && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim()) && form.whatsapp.trim() && form.reason.trim() && form.consent && isLegalComplete(legal));
 
   const resetAndClose = () => {
     onClose();
@@ -648,6 +692,7 @@ const ReikiIntakeModal = ({ lang, pkg, onClose, onOpenPrivacy }: { lang: "EN" | 
     setTimeout(() => {
       setStep("details");
       setForm(EMPTY_REIKI_FORM);
+      setLegal(EMPTY_LEGAL_STATE);
       setRequestId(null);
       setError(null);
     }, 300);
@@ -676,6 +721,8 @@ const ReikiIntakeModal = ({ lang, pkg, onClose, onOpenPrivacy }: { lang: "EN" | 
         lang,
         createdAt: serverTimestamp(),
         paymentClaimed: false,
+        // Distance requests are non-binding: no early-start request is shown.
+        legalAcks: toLegalAcks(isInPerson ? legal : { ...legal, earlyStart: false }),
       });
       setRequestId(docRef.id);
       setStep(isInPerson ? "calendar" : "done");
@@ -758,9 +805,10 @@ const ReikiIntakeModal = ({ lang, pkg, onClose, onOpenPrivacy }: { lang: "EN" | 
                   </button>.
                 </span>
               </label>
+              <BookingLegalBlock lang={lang} binding={isInPerson} price={pkgContent.investment} value={legal} onChange={setLegal} onOpenLegal={onOpenLegal} />
               {error && <p className="text-sm text-red-600">{error}</p>}
               <Button type="submit" size="lg" className="rounded-full w-full" disabled={!isValid || submitting}>
-                {submitting ? t.submitting : isInPerson ? t.continueBtn : t.sendBtn}
+                {submitting ? t.submitting : isInPerson ? BOOKING_LEGAL_TEXT[lang].bindingButton : BOOKING_LEGAL_TEXT[lang].requestButton}
               </Button>
             </form>
           </>
@@ -867,13 +915,14 @@ type Course = (typeof COURSES)[number];
 const isCourseBookingClosed = (course: Course) =>
   Boolean(course.bookingClosesAt && Date.now() > new Date(course.bookingClosesAt).getTime());
 
-const CourseIntakeModal = ({ lang, courseId, onClose, onOpenPrivacy }: { lang: "EN" | "DE", courseId: string | null, onClose: () => void, onOpenPrivacy: () => void }) => {
+const CourseIntakeModal = ({ lang, courseId, onClose, onOpenPrivacy, onOpenLegal }: { lang: "EN" | "DE", courseId: string | null, onClose: () => void, onOpenPrivacy: () => void, onOpenLegal: (type: LegalDocType) => void }) => {
   const t = TRANSLATIONS[lang].courseIntake;
   const { profile } = useAuth();
   // Keep the last course around while the dialog fades out (see ReikiIntakeModal).
   const [shownCourseId, setShownCourseId] = useState<string | null>(courseId);
   const [step, setStep] = useState<CourseStep>("details");
   const [form, setForm] = useState<CourseForm>(EMPTY_COURSE_FORM);
+  const [legal, setLegal] = useState<BookingLegalState>(EMPTY_LEGAL_STATE);
   const [requestId, setRequestId] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [paying, setPaying] = useState(false);
@@ -902,13 +951,14 @@ const CourseIntakeModal = ({ lang, courseId, onClose, onOpenPrivacy }: { lang: "
   const sessions = course?.sessions;
   const chosenSession = sessions?.find(s => s.id === form.session);
   const contactEmail = course?.contactEmail ?? COURSE_CONTACT_EMAIL;
-  const isValid = Boolean(form.name.trim() && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim()) && form.whatsapp.trim() && form.consent && (!sessions || chosenSession));
+  const isValid = Boolean(form.name.trim() && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim()) && form.whatsapp.trim() && form.consent && isLegalComplete(legal) && (!sessions || chosenSession));
 
   const resetAndClose = () => {
     onClose();
     setTimeout(() => {
       setStep("details");
       setForm(EMPTY_COURSE_FORM);
+      setLegal(EMPTY_LEGAL_STATE);
       setRequestId(null);
       setError(null);
     }, 300);
@@ -938,6 +988,7 @@ const CourseIntakeModal = ({ lang, courseId, onClose, onOpenPrivacy }: { lang: "
         lang,
         createdAt: serverTimestamp(),
         paymentClaimed: false,
+        legalAcks: toLegalAcks(legal),
       });
       setRequestId(docRef.id);
       setStep("payment");
@@ -1033,15 +1084,16 @@ const CourseIntakeModal = ({ lang, courseId, onClose, onOpenPrivacy }: { lang: "
               <label className="flex items-start gap-2 text-sm">
                 <input type="checkbox" required className="mt-1 h-4 w-4 shrink-0" checked={form.consent} onChange={e => setForm({ ...form, consent: e.target.checked })} />
                 <span>
-                  {t.consentPrefix}{" "}
+                  {content.consentPrefix ?? t.consentPrefix}{" "}
                   <button type="button" onClick={onOpenPrivacy} className="underline underline-offset-2 hover:text-primary">
                     {t.consentLinkLabel}
                   </button>.
                 </span>
               </label>
+              <BookingLegalBlock lang={lang} binding price={content.price} value={legal} onChange={setLegal} onOpenLegal={onOpenLegal} />
               {error && <p className="text-sm text-red-600">{error}</p>}
               <Button type="submit" size="lg" className="rounded-full w-full" disabled={!isValid || submitting}>
-                {submitting ? t.submitting : t.continueBtn}
+                {submitting ? t.submitting : BOOKING_LEGAL_TEXT[lang].bindingButton}
               </Button>
             </form>
           </>
@@ -3755,7 +3807,7 @@ const FAQPage = () => {
   );
 };
 
-const Footer = ({ lang, onOpenLegal }: { lang: "EN" | "DE", onOpenLegal: (type: "impressum" | "privacy") => void }) => {
+const Footer = ({ lang, onOpenLegal, onOpenCookieSettings, onOpenWithdraw }: { lang: "EN" | "DE", onOpenLegal: (type: LegalDocType) => void, onOpenCookieSettings: () => void, onOpenWithdraw: () => void }) => {
   const t = TRANSLATIONS[lang].footer;
   const nav = TRANSLATIONS[lang].nav;
   const prefix = langPrefix(lang);
@@ -3843,9 +3895,13 @@ const Footer = ({ lang, onOpenLegal }: { lang: "EN" | "DE", onOpenLegal: (type: 
         
         <div className="flex flex-col md:flex-row justify-between items-center gap-6 text-sm text-muted-foreground">
           <p>© {new Date().getFullYear()} Niramay Wellness. {t.rights}</p>
-          <div className="flex gap-8">
+          <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 md:gap-x-8">
             <button onClick={() => onOpenLegal("impressum")} className="hover:text-primary transition-colors cursor-pointer bg-transparent border-none p-0">{t.impressum}</button>
             <button onClick={() => onOpenLegal("privacy")} className="hover:text-primary transition-colors cursor-pointer bg-transparent border-none p-0">{t.privacy}</button>
+            <button onClick={() => onOpenLegal("agb")} className="hover:text-primary transition-colors cursor-pointer bg-transparent border-none p-0">{t.agb}</button>
+            <button onClick={() => onOpenLegal("widerruf")} className="hover:text-primary transition-colors cursor-pointer bg-transparent border-none p-0">{t.widerruf}</button>
+            <button onClick={onOpenCookieSettings} className="hover:text-primary transition-colors cursor-pointer bg-transparent border-none p-0">{t.cookieSettings}</button>
+            <button onClick={onOpenWithdraw} className="font-semibold text-foreground hover:text-primary transition-colors cursor-pointer bg-transparent border-none p-0">{t.withdraw}</button>
           </div>
         </div>
       </div>
@@ -3863,79 +3919,185 @@ const Footer = ({ lang, onOpenLegal }: { lang: "EN" | "DE", onOpenLegal: (type: 
   );
 };
 
-// Shown once, on first visit, until the visitor picks Accept or Decline —
-// Google Analytics only loads (see src/lib/analytics.ts) after Accept, since
-// GA sets cookies and this is a German business site subject to GDPR consent
-// requirements. The choice is remembered in localStorage, so returning
-// visitors who already decided don't see it again.
-const CookieConsent = ({ lang, onOpenPrivacy }: { lang: "EN" | "DE", onOpenPrivacy: () => void }) => {
-  const [visible, setVisible] = useState(false);
+// Shown on first visit until the visitor picks Accept or Decline — Google
+// Analytics only loads (see src/lib/analytics.ts) after Accept, since GA sets
+// cookies and this is a German business site subject to GDPR/TDDDG consent
+// requirements. The choice is remembered in localStorage.
+// The footer's "Cookie settings" link reopens this same banner (`reopen`), so
+// a visitor can withdraw or change the choice as easily as they gave it;
+// choosing "Decline" there stops GA and deletes its cookies (denyAnalyticsConsent).
+const CookieConsent = ({ lang, reopen, onClose, onOpenPrivacy }: { lang: "EN" | "DE", reopen: boolean, onClose: () => void, onOpenPrivacy: () => void }) => {
+  const [firstVisit, setFirstVisit] = useState(false);
   const t = TRANSLATIONS[lang].cookieConsent;
 
   useEffect(() => {
-    setVisible(getStoredConsent() === null);
+    setFirstVisit(getStoredConsent() === null);
   }, []);
 
-  if (!visible) return null;
+  if (!firstVisit && !reopen) return null;
+
+  const decide = (granted: boolean) => {
+    if (granted) grantAnalyticsConsent(); else denyAnalyticsConsent();
+    setFirstVisit(false);
+    onClose();
+  };
 
   return (
-    <div className="fixed bottom-0 inset-x-0 z-[100] p-4 sm:p-6">
+    <div className="fixed bottom-0 inset-x-0 z-[100] p-4 sm:p-6" role="region" aria-label={TRANSLATIONS[lang].footer.cookieSettings}>
       <div className="max-w-3xl mx-auto bg-background border border-stone-200 shadow-xl rounded-2xl p-5 sm:p-6 flex flex-col sm:flex-row sm:items-center gap-4">
-        <p className="text-sm text-muted-foreground flex-1">
-          {t.message}{" "}
-          <button type="button" onClick={onOpenPrivacy} className="underline underline-offset-2 hover:text-primary">
-            {t.privacyLink}
-          </button>
-        </p>
-        <div className="flex gap-3 shrink-0">
-          <Button variant="outline" size="sm" className="rounded-full" onClick={() => { denyAnalyticsConsent(); setVisible(false); }}>
+        <div className="flex-1 text-sm text-muted-foreground space-y-2">
+          <p>
+            {t.message}{" "}
+            <button type="button" onClick={onOpenPrivacy} className="underline underline-offset-2 hover:text-primary">
+              {t.privacyLink}
+            </button>
+          </p>
+          {reopen && <p className="font-medium text-foreground">{getStoredConsent() === "granted" ? t.statusOn : t.statusOff}</p>}
+        </div>
+        {/* Equal prominence for both choices (no nudging towards Accept). */}
+        <div className="flex flex-wrap gap-3 shrink-0">
+          <Button size="sm" className="rounded-full" onClick={() => decide(false)}>
             {t.reject}
           </Button>
-          <Button size="sm" className="rounded-full" onClick={() => { grantAnalyticsConsent(); setVisible(false); }}>
+          <Button size="sm" className="rounded-full" onClick={() => decide(true)}>
             {t.accept}
           </Button>
+          {reopen && !firstVisit && (
+            <Button variant="ghost" size="sm" className="rounded-full" onClick={onClose}>
+              {t.close}
+            </Button>
+          )}
         </div>
       </div>
     </div>
   );
 };
 
-const LegalModal = ({ type, open, setOpen, lang }: { type: "impressum" | "privacy" | null, open: boolean, setOpen: (o: boolean) => void, lang: "EN" | "DE" }) => {
+// Impressum, privacy policy (and further legal documents): all share the
+// same shape ({ title, intro?, sections[] }, see src/legal), so one dialog
+// renders them. `links` in a section become buttons that switch to another
+// document.
+const LegalModal = ({ type, open, setOpen, lang, onNavigate }: { type: LegalDocType | null, open: boolean, setOpen: (o: boolean) => void, lang: "EN" | "DE", onNavigate: (link: LegalLink) => void }) => {
   if (!type) return null;
-  const t = TRANSLATIONS[lang].footer.legal[type];
+  const doc = LEGAL_DOCS[lang][type];
+  const linkLabels = LEGAL_LINK_LABELS[lang];
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent className="sm:max-w-3xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-3xl font-serif font-bold text-primary">{t.title}</DialogTitle>
+          <DialogTitle className="text-3xl font-serif font-bold text-primary">{doc.title}</DialogTitle>
         </DialogHeader>
-        
-        <div className="mt-8 space-y-12">
-          {type === "impressum" ? (
-            <div className="space-y-8">
-              {["section1", "section2", "section3", "section4"].map((s) => {
-                const section = (t as any)[s];
-                return (
-                  <div key={s}>
-                    <h3 className="text-xl font-bold mb-4 text-stone-800">{section.title}</h3>
-                    <p className="text-stone-600 leading-relaxed whitespace-pre-wrap">{section.content}</p>
-                  </div>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="space-y-8">
-              <p className="text-lg text-stone-600 italic">{(t as any).intro}</p>
-              {(t as any).sections.map((section: any, idx: number) => (
-                <div key={idx}>
-                  <h3 className="text-xl font-bold mb-4 text-stone-800">{section.title}</h3>
-                  <p className="text-stone-600 leading-relaxed whitespace-pre-wrap">{section.content}</p>
+
+        <div className="mt-8 space-y-8">
+          {doc.intro && <p className="text-lg text-stone-600 italic">{doc.intro}</p>}
+          {doc.sections.map((section, idx) => (
+            <div key={idx}>
+              <h3 className="text-xl font-bold mb-4 text-stone-800">{section.title}</h3>
+              <p className="text-stone-600 leading-relaxed whitespace-pre-wrap">{section.content}</p>
+              {section.links && (
+                <div className="mt-3 flex flex-wrap gap-x-5 gap-y-2">
+                  {section.links.map(link => (
+                    <button key={link} type="button" onClick={() => onNavigate(link)} className="text-primary underline underline-offset-2 hover:opacity-80 bg-transparent border-none p-0 cursor-pointer">
+                      {linkLabels[link]}
+                    </button>
+                  ))}
                 </div>
-              ))}
+              )}
             </div>
-          )}
+          ))}
         </div>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+
+// Electronic withdrawal function (§ 356a BGB): form -> confirmation step
+// ("Jetzt widerrufen") -> POST /api/withdraw, which emails the acknowledgement
+// of receipt (api/_lib/withdrawal.ts). Texts: src/legal/booking.ts.
+const WithdrawalModal = ({ lang, open, onOpenChange, onOpenWiderruf }: { lang: "EN" | "DE", open: boolean, onOpenChange: (o: boolean) => void, onOpenWiderruf: () => void }) => {
+  const t = WITHDRAW_TEXT[lang];
+  const [step, setStep] = useState<"form" | "confirm" | "done">("form");
+  const [form, setForm] = useState({ name: "", email: "", contract: "", address: "" });
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const valid = Boolean(form.name.trim() && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim()) && form.contract.trim());
+
+  const handleOpenChange = (o: boolean) => {
+    onOpenChange(o);
+    if (!o) setTimeout(() => { setStep("form"); setForm({ name: "", email: "", contract: "", address: "" }); setError(null); }, 300);
+  };
+
+  const send = async () => {
+    if (sending) return;
+    setSending(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/withdraw", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...form, lang }),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      setStep("done");
+    } catch (err) {
+      console.error("Withdrawal failed:", err);
+      setError(t.error);
+    } finally {
+      setSending(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogContent className="sm:max-w-lg max-h-[85vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="text-2xl font-serif">{step === "confirm" ? t.reviewTitle : step === "done" ? t.doneTitle : t.title}</DialogTitle>
+        </DialogHeader>
+        {step === "form" && (
+          <form onSubmit={e => { e.preventDefault(); if (valid) setStep("confirm"); }} className="grid gap-4 py-2">
+            <p className="text-sm text-muted-foreground">{t.intro}{" "}
+              <button type="button" onClick={onOpenWiderruf} className="underline underline-offset-2 hover:text-primary">{t.infoLink}</button>
+            </p>
+            <div className="grid gap-2">
+              <label className="text-sm font-medium">{t.name}</label>
+              <input required maxLength={100} className={INPUT_CLASS} value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} />
+            </div>
+            <div className="grid gap-2">
+              <label className="text-sm font-medium">{t.email}</label>
+              <input required type="email" maxLength={200} className={INPUT_CLASS} value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} />
+            </div>
+            <div className="grid gap-2">
+              <label className="text-sm font-medium">{t.contract}</label>
+              <textarea required maxLength={500} rows={3} placeholder={t.contractPlaceholder} className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2" value={form.contract} onChange={e => setForm({ ...form, contract: e.target.value })} />
+            </div>
+            <div className="grid gap-2">
+              <label className="text-sm font-medium">{t.address}</label>
+              <input maxLength={300} className={INPUT_CLASS} value={form.address} onChange={e => setForm({ ...form, address: e.target.value })} />
+            </div>
+            <Button type="submit" size="lg" className="rounded-full w-full" disabled={!valid}>{t.reviewBtn}</Button>
+          </form>
+        )}
+        {step === "confirm" && (
+          <div className="grid gap-4 py-2">
+            <p className="text-sm">{t.reviewIntro}</p>
+            <div className="bg-stone-50 p-4 rounded-xl border border-stone-100 text-sm whitespace-pre-wrap break-words">
+              {[form.name, form.email, form.address, form.contract].filter(Boolean).join("\n")}
+            </div>
+            {error && <p className="text-sm text-red-600">{error}</p>}
+            <div className="flex gap-3">
+              <Button variant="outline" className="rounded-full" onClick={() => setStep("form")} disabled={sending}>{t.back}</Button>
+              <Button size="lg" className="rounded-full flex-1" onClick={send} disabled={sending}>{sending ? t.sending : t.confirmBtn}</Button>
+            </div>
+          </div>
+        )}
+        {step === "done" && (
+          <div className="grid gap-4 py-2">
+            <p className="text-sm">{t.doneBody} <a className="underline underline-offset-2" href={`mailto:${LEGAL_CONFIG.email}`}>{LEGAL_CONFIG.email}</a>.</p>
+            <Button size="lg" className="rounded-full w-full" onClick={() => handleOpenChange(false)}>{t.close}</Button>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );
@@ -4125,7 +4287,14 @@ const AppLayout = () => {
   }, [location.pathname]);
   const altPathname = altPathOverride?.from === location.pathname ? altPathOverride.to : toggledPath(location.pathname, lang);
   const altPath = `${altPathname}${location.search}${location.hash}`;
-  const [legalModal, setLegalModal] = useState<"impressum" | "privacy" | null>(null);
+  const [legalModal, setLegalModal] = useState<LegalDocType | null>(null);
+  // "Cookie settings" (footer / privacy policy) reopens the consent banner.
+  const [cookieSettingsOpen, setCookieSettingsOpen] = useState(false);
+  const openCookieSettings = () => { setLegalModal(null); setCookieSettingsOpen(true); };
+  // "Vertrag widerrufen" (§ 356a BGB) - footer + links inside the Widerrufsbelehrung.
+  const [withdrawOpen, setWithdrawOpen] = useState(false);
+  const openWithdraw = () => { setLegalModal(null); setWithdrawOpen(true); };
+  const handleLegalLink = (link: LegalLink) => (link === "cookieSettings" ? openCookieSettings() : link === "withdraw" ? openWithdraw() : setLegalModal(link));
   const [bookingContext, setBookingContext] = useState<BookingContext | null>(null);
   const openBooking = (ctx: BookingContext = {}) => setBookingContext(ctx);
   const [astrologyIntakeOpen, setAstrologyIntakeOpen] = useState(false);
@@ -4167,14 +4336,17 @@ const AppLayout = () => {
       <Navbar lang={lang} altPath={altPath} onBook={openBooking} belowAnnouncement={announcements.length > 0} />
       <LangSuggestion lang={lang} altPath={altPath} belowAnnouncement={announcements.length > 0} />
       <Outlet context={{ lang, setAltPath, onBook: openBooking, onBookAstrology: () => setAstrologyIntakeOpen(true), onBookReiki: setReikiPackage, onBookGuidance: (pkg = "individual") => { setGuidancePackage(pkg); setGuidanceIntakeOpen(true); }, onBookTarot: () => setTarotIntakeOpen(true), onBookCourse: setCourseBookingId, onOpenLegal: setLegalModal } satisfies LayoutContext} />
-      <Footer lang={lang} onOpenLegal={setLegalModal} />
+      <Footer lang={lang} onOpenLegal={setLegalModal} onOpenCookieSettings={openCookieSettings} onOpenWithdraw={openWithdraw} />
 
       <LegalModal
         type={legalModal}
         open={!!legalModal}
         setOpen={(o) => !o && setLegalModal(null)}
         lang={lang}
+        onNavigate={handleLegalLink}
       />
+
+      <WithdrawalModal lang={lang} open={withdrawOpen} onOpenChange={setWithdrawOpen} onOpenWiderruf={() => { setWithdrawOpen(false); setLegalModal("widerruf"); }} />
 
       <BookingDialog
         context={bookingContext}
@@ -4188,6 +4360,7 @@ const AppLayout = () => {
         open={astrologyIntakeOpen}
         onOpenChange={setAstrologyIntakeOpen}
         onOpenPrivacy={() => setLegalModal("privacy")}
+        onOpenLegal={setLegalModal}
       />
 
       <ReikiIntakeModal
@@ -4195,6 +4368,7 @@ const AppLayout = () => {
         pkg={reikiPackage}
         onClose={() => setReikiPackage(null)}
         onOpenPrivacy={() => setLegalModal("privacy")}
+        onOpenLegal={setLegalModal}
       />
 
       <AstrologyIntakeModal
@@ -4204,6 +4378,7 @@ const AppLayout = () => {
         open={guidanceIntakeOpen}
         onOpenChange={setGuidanceIntakeOpen}
         onOpenPrivacy={() => setLegalModal("privacy")}
+        onOpenLegal={setLegalModal}
       />
 
       <AstrologyIntakeModal
@@ -4212,6 +4387,7 @@ const AppLayout = () => {
         open={tarotIntakeOpen}
         onOpenChange={setTarotIntakeOpen}
         onOpenPrivacy={() => setLegalModal("privacy")}
+        onOpenLegal={setLegalModal}
       />
 
       <CourseIntakeModal
@@ -4219,9 +4395,10 @@ const AppLayout = () => {
         courseId={courseBookingId}
         onClose={() => setCourseBookingId(null)}
         onOpenPrivacy={() => setLegalModal("privacy")}
+        onOpenLegal={setLegalModal}
       />
 
-      <CookieConsent lang={lang} onOpenPrivacy={() => setLegalModal("privacy")} />
+      <CookieConsent lang={lang} reopen={cookieSettingsOpen} onClose={() => setCookieSettingsOpen(false)} onOpenPrivacy={() => { setCookieSettingsOpen(false); setLegalModal("privacy"); }} />
     </div>
   );
 };
