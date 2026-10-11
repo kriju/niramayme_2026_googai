@@ -7,14 +7,15 @@
 
 import { impressum } from "./impressum";
 import { privacy } from "./privacy";
+import { agb, widerruf } from "./terms";
 import type { LegalLang } from "./config";
 import type { LegalDoc, LegalDocType, LegalLink } from "./types";
 
 export type { LegalDocType, LegalLink, LegalSection, LegalDoc } from "./types";
 
 export const LEGAL_DOCS: Record<LegalLang, Record<LegalDocType, LegalDoc>> = {
-  DE: { impressum: impressum.DE, privacy: privacy.DE },
-  EN: { impressum: impressum.EN, privacy: privacy.EN },
+  DE: { impressum: impressum.DE, privacy: privacy.DE, agb: agb.DE, widerruf: widerruf.DE },
+  EN: { impressum: impressum.EN, privacy: privacy.EN, agb: agb.EN, widerruf: widerruf.EN },
 };
 
 export const LEGAL_LINK_LABELS: Record<LegalLang, Record<LegalLink, string>> = {
@@ -22,11 +23,17 @@ export const LEGAL_LINK_LABELS: Record<LegalLang, Record<LegalLink, string>> = {
     impressum: "Impressum",
     privacy: "Datenschutzerklärung",
     cookieSettings: "Cookie-Einstellungen öffnen",
+    agb: "Allgemeine Geschäftsbedingungen (AGB)",
+    widerruf: "Widerrufsbelehrung",
+    withdraw: "Vertrag widerrufen",
   },
   EN: {
     impressum: "Legal Notice (Impressum)",
     privacy: "Privacy Policy",
     cookieSettings: "Open cookie settings",
+    agb: "Terms and Conditions (AGB)",
+    widerruf: "Withdrawal Information (Widerrufsbelehrung)",
+    withdraw: "Withdraw from contract",
   },
 };
 

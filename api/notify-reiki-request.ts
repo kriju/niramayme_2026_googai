@@ -2,6 +2,7 @@ import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { getAdminDb } from "./_lib/firebaseAdmin.js";
 import { sendEmail } from "./_lib/mailer.js";
 import { adminSubject, escapeHtml } from "./_lib/util.js";
+import { handleWithdrawal, withNotice } from "./_lib/withdrawal.js";
 
 // Called by the browser right after ReikiIntakeModal (see src/App.tsx)
 // writes/updates a doc in the reikiRequests Firestore collection — once when
@@ -32,6 +33,8 @@ const PACKAGES: Record<PackageId, Record<Lang, { title: string; price: string }>
 };
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
+  // Electronic withdrawal function (/api/withdraw, rewritten here in vercel.json).
+  if (req.query.op === "withdraw") return handleWithdrawal(req, res);
   if (req.method !== "POST") {
     res.setHeader("Allow", "POST");
     return res.status(405).json({ error: "Method not allowed" });
@@ -90,8 +93,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         // not the no-reply notifications sender.
         replyTo: CUSTOMER_REPLY_TO,
         subject: customerSubject(customerParams),
-        text: renderCustomerEmailText(customerParams),
-        html: renderCustomerEmailHtml(customerParams),
+        // Contract confirmation on a durable medium incl. withdrawal
+        // information (§ 312f Abs. 2 BGB) - sent with the first email.
+        ...(kind === "submitted"
+          ? withNotice({ text: renderCustomerEmailText(customerParams), html: renderCustomerEmailHtml(customerParams) }, lang, request.legalAcks?.earlyStart === true)
+          : { text: renderCustomerEmailText(customerParams), html: renderCustomerEmailHtml(customerParams) }),
         tag: "customer-reiki",
       });
     }

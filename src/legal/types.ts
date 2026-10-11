@@ -1,7 +1,7 @@
-export type LegalDocType = "impressum" | "privacy";
+export type LegalDocType = "impressum" | "privacy" | "agb" | "widerruf";
 
 /** Things a section can link to from inside a legal dialog. */
-export type LegalLink = LegalDocType | "cookieSettings";
+export type LegalLink = LegalDocType | "cookieSettings" | "withdraw";
 
 export type LegalSection = {
   title: string;

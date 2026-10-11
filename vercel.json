@@ -19,6 +19,7 @@
   ],
   "rewrites": [
     { "source": "/api/review-action", "destination": "/api/notify-review?op=action" },
+    { "source": "/api/withdraw", "destination": "/api/notify-reiki-request?op=withdraw" },
     { "source": "/api/newsletter-announce", "destination": "/api/newsletter?op=announce" },
     { "source": "/sitemap.xml", "destination": "/api/sitemap" },
     { "source": "/blog/:slug", "destination": "/api/blog-share?slug=:slug" },
