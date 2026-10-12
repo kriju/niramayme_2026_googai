@@ -44,13 +44,14 @@ export const TRANSLATIONS = {
       faq: "FAQ",
       sessions: "Sessions",
       courses: "Courses",
+      astrology: "Astrology & Tarot",
       bookNow: "Book Now",
-      book: "My Book",
+      book: "The Book",
       // Navbar group labels: the desktop/mobile nav collapses the flat
       // list of links above into three dropdowns (About, Offerings, Read)
       // plus the standalone Reviews/FAQ links — see Navbar in App.tsx.
       aboutGroup: "About",
-      trainers: "Trainers",
+      trainers: "Richa & Riju",
       offerings: "Offerings",
       read: "Read",
       // Language switch (Navbar's LangSwitch): the group's label, and each
@@ -68,8 +69,11 @@ export const TRANSLATIONS = {
       description: "Bridging ancient wisdom and modern psychology to help you find balance, clarity, and lasting transformation.",
       ctaPrimary: "Book a Free 15-Min Call",
       ctaSecondary: "Explore Services",
-      latestReads: "Latest reads",
-      seeAll: "All articles",
+      // The first screen introduces the two people behind Niramay.
+      foundersLabel: "Your teachers",
+      foundersNames: "Richa & Riju Kansal",
+      foundersLine: "Certified yoga therapists, teaching side by side in Ostfildern since 2018.",
+      foundersCta: "Meet us",
       reviewsLabel: "Client stories",
       bookLabel: "The book",
       bookCta: "Discover the book",
@@ -80,6 +84,22 @@ export const TRANSLATIONS = {
       outcomeLabel: "The Outcome",
       learnMore: "Learn more & Book",
       priceLabel: "Investment",
+    },
+    // /astrology-tarot: Vedic astrology, tarot and intuitive guidance have
+    // their own page, apart from the yoga and wellbeing services.
+    astrologyPage: {
+      seoTitle: "Vedic Astrology & Tarot Readings — Niramay Wellbeing",
+      seoDescription: "Vedic astrology (Kundali) readings, tarot guidance and intuitive soul counselling with Richa Kansal, online or in Ostfildern near Stuttgart.",
+      badge: "Astrology & Tarot",
+      title: "Vedic Astrology & Tarot",
+      intro: "Alongside yoga and holistic wellbeing, Richa offers readings rooted in Vedic astrology (Jyotish) and tarot: a quiet hour to reflect on where you stand, the patterns that keep returning and the choices ahead. Most sessions take place online, so they work from anywhere, including India.",
+      servicesTitle: "Readings and guidance",
+      storiesTitle: "What clients say",
+      note: "Astrology and tarot readings are for reflection and personal guidance. They are not a forecast you can rely on, and they don't replace medical, psychological, legal or financial advice.",
+      breadcrumb: "Astrology & Tarot",
+      teaserTitle: "Vedic Astrology & Tarot",
+      teaserDescription: "Kundali readings, tarot guidance and intuitive soul counselling with Richa, online from anywhere.",
+      teaserCta: "Explore astrology & tarot",
     },
     servicePage: {
       home: "Home",
@@ -117,7 +137,7 @@ export const TRANSLATIONS = {
       title: "Real Stories of Transformation",
       description: "In their own words: messages clients sent Richa after their sessions, shared here with their permission.",
       via: "via",
-      client: "Client",
+      client: "A Niramay client",
       originalIn: { EN: "Original in English", HI: "Original in Hindi" },
       translationLabel: "Translation",
       seeOriginal: "See original message",
@@ -208,8 +228,19 @@ export const TRANSLATIONS = {
       cookieSettings: "Cookie settings",
       legal: LEGAL_DOCS.EN,
     },
+    // Click-to-load notices for Google embeds (ConsentEmbed in App.tsx).
+    consentEmbed: {
+      calendar: {
+        notice: "The booking calendar is provided by Google. Loading it sends your IP address to Google (see the privacy policy). You can also book by WhatsApp or email.",
+        load: "Load Google Calendar",
+      },
+      map: {
+        notice: "Showing the map loads Google Maps, which sends your IP address to Google.",
+        load: "Show map",
+      },
+    },
     cookieConsent: {
-      message: "We would like to use Google Analytics (Google Ireland Limited, with cookies) to understand how this site is used. This only happens with your consent. You can change or withdraw your choice at any time via \"Cookie settings\" in the footer.",
+      message: "May we use Google Analytics (cookies) to see how the site is used? Only with your OK; change it any time under \"Cookie settings\".",
       privacyLink: "Privacy Policy",
       accept: "Accept",
       reject: "Decline",
@@ -300,6 +331,11 @@ export const TRANSLATIONS = {
       onlyInOther: "This article is only available in German.",
       readInOther: "Read it in German",
       browseBlog: "Browse English articles",
+      imageCredit: "Image:",
+      // Under posts with "Show the standard health disclaimer" ticked in
+      // /write (api/_lib/claimsCheck.ts warns when it's missing).
+      disclaimerTitle: "Please note",
+      disclaimer: "This article shares experiences and general information about yoga, breathwork and holistic practices. It is not medical advice and does not replace diagnosis or treatment by a doctor, psychotherapist or other health professional. If you have a health condition, please speak to your doctor before starting a new practice, and never stop a prescribed treatment on the basis of this article.",
     },
     engagement: {
       like: "Like",
@@ -330,7 +366,10 @@ export const TRANSLATIONS = {
       submit: "Post Comment",
       submitting: "Posting…",
       posted: "Thank you — your comment is live.",
-      pendingNotice: "Thank you! Comments containing links are reviewed before they appear.",
+      pendingNotice: "Thank you! Your comment will appear once we've read it. Comments with links or health claims are checked first.",
+      report: "Report comment",
+      reportConfirm: "Report this comment to Richa and Riju? They'll check it and remove it if it breaks the law or the site's rules.",
+      reported: "Thank you — we'll take a look.",
       publicNotice: "Comments are public. Please don't share private health details.",
       anonymous: "Anonymous",
       authorBadge: "Author",
@@ -775,7 +814,7 @@ export const TRANSLATIONS = {
   },
   DE: {
     nav: {
-      services: "Dienstleistungen",
+      services: "Leistungen",
       about: "Über uns",
       events: "Veranstaltungen",
       reviews: "Bewertungen",
@@ -783,10 +822,11 @@ export const TRANSLATIONS = {
       faq: "FAQ",
       sessions: "Sitzungen",
       courses: "Kurse",
+      astrology: "Astrologie & Tarot",
       bookNow: "Jetzt buchen",
-      book: "Mein Buch",
+      book: "Das Buch",
       aboutGroup: "Über uns",
-      trainers: "Trainer",
+      trainers: "Richa & Riju",
       offerings: "Angebote",
       read: "Lesen",
       languageLabel: "Sprache",
@@ -801,9 +841,11 @@ export const TRANSLATIONS = {
       titleItalic: "Heilungs",
       description: "Die Verbindung von altem Wissen und moderner Psychologie, um Ihnen zu helfen, Balance, Klarheit und dauerhafte Transformation zu finden.",
       ctaPrimary: "Kostenloses 15-Min-Gespräch buchen",
-      ctaSecondary: "Dienstleistungen erkunden",
-      latestReads: "Neu zu lesen",
-      seeAll: "Alle Artikel",
+      ctaSecondary: "Leistungen entdecken",
+      foundersLabel: "Ihre Lehrenden",
+      foundersNames: "Richa & Riju Kansal",
+      foundersLine: "Zertifizierte Yogatherapeutin und Yogatherapeut, gemeinsam in Ostfildern seit 2018.",
+      foundersCta: "Lernen Sie uns kennen",
       reviewsLabel: "Stimmen unserer Klienten",
       bookLabel: "Das Buch",
       bookCta: "Buch entdecken",
@@ -814,6 +856,20 @@ export const TRANSLATIONS = {
       outcomeLabel: "Das Ergebnis",
       learnMore: "Mehr erfahren & buchen",
       priceLabel: "Investition",
+    },
+    astrologyPage: {
+      seoTitle: "Vedische Astrologie & Tarot — Niramay Wellbeing",
+      seoDescription: "Vedische Astrologie (Kundali-Lesungen), Tarot-Beratung und intuitive Seelenberatung mit Richa Kansal, online oder in Ostfildern bei Stuttgart.",
+      badge: "Astrologie & Tarot",
+      title: "Vedische Astrologie & Tarot",
+      intro: "Neben Yoga und ganzheitlichem Wohlbefinden bietet Richa Lesungen auf Grundlage der vedischen Astrologie (Jyotish) und des Tarot an: eine ruhige Stunde, um zu betrachten, wo Sie stehen, welche Muster wiederkehren und welche Entscheidungen vor Ihnen liegen. Die meisten Sitzungen finden online statt, also von überall aus, auch aus Indien.",
+      servicesTitle: "Lesungen und Begleitung",
+      storiesTitle: "Das sagen Klientinnen und Klienten",
+      note: "Astrologische und Tarot-Lesungen dienen der Reflexion und persönlichen Orientierung. Sie sind keine verlässliche Vorhersage und ersetzen keine medizinische, psychologische, rechtliche oder finanzielle Beratung.",
+      breadcrumb: "Astrologie & Tarot",
+      teaserTitle: "Vedische Astrologie & Tarot",
+      teaserDescription: "Kundali-Lesungen, Tarot-Beratung und intuitive Seelenberatung mit Richa, online von überall.",
+      teaserCta: "Astrologie & Tarot entdecken",
     },
     servicePage: {
       home: "Startseite",
@@ -851,7 +907,7 @@ export const TRANSLATIONS = {
       title: "Echte Geschichten der Transformation",
       description: "In ihren eigenen Worten: Nachrichten, die Klientinnen und Klienten Richa nach ihren Sitzungen geschickt haben, hier mit ihrer Erlaubnis geteilt.",
       via: "über",
-      client: "Klient:in",
+      client: "Klient:in von Niramay",
       originalIn: { EN: "Originalzitat auf Englisch", HI: "Originalzitat auf Hindi" },
       translationLabel: "Übersetzung",
       seeOriginal: "Originalnachricht ansehen",
@@ -942,8 +998,18 @@ export const TRANSLATIONS = {
       cookieSettings: "Cookie-Einstellungen",
       legal: LEGAL_DOCS.DE,
     },
+    consentEmbed: {
+      calendar: {
+        notice: "Der Buchungskalender wird von Google bereitgestellt. Beim Laden wird Ihre IP-Adresse an Google übertragen (siehe Datenschutzerklärung). Sie können auch per WhatsApp oder E-Mail buchen.",
+        load: "Google Kalender laden",
+      },
+      map: {
+        notice: "Beim Anzeigen der Karte wird Google Maps geladen und Ihre IP-Adresse an Google übertragen.",
+        load: "Karte anzeigen",
+      },
+    },
     cookieConsent: {
-      message: "Wir möchten Google Analytics (Google Ireland Limited, mit Cookies) nutzen, um zu verstehen, wie diese Website genutzt wird. Das geschieht nur mit Ihrer Einwilligung. Sie können Ihre Entscheidung jederzeit über „Cookie-Einstellungen“ im Seitenfuß ändern oder widerrufen.",
+      message: "Dürfen wir Google Analytics (Cookies) nutzen, um zu sehen, wie die Seite genutzt wird? Nur mit Ihrer Zustimmung; jederzeit änderbar unter „Cookie-Einstellungen“.",
       privacyLink: "Datenschutzerklärung",
       accept: "Akzeptieren",
       reject: "Ablehnen",
@@ -1032,6 +1098,9 @@ export const TRANSLATIONS = {
       onlyInOther: "Dieser Artikel ist nur auf Englisch verfügbar.",
       readInOther: "Auf Englisch lesen",
       browseBlog: "Deutsche Artikel ansehen",
+      imageCredit: "Bild:",
+      disclaimerTitle: "Bitte beachten Sie",
+      disclaimer: "Dieser Artikel teilt Erfahrungen und allgemeine Informationen zu Yoga, Atemarbeit und ganzheitlichen Methoden. Er ist keine medizinische Beratung und ersetzt keine Diagnose oder Behandlung durch eine Ärztin, einen Arzt, eine Psychotherapeutin, einen Psychotherapeuten oder andere Fachleute. Wenn Sie eine Erkrankung haben, sprechen Sie bitte mit Ihrer Ärztin oder Ihrem Arzt, bevor Sie eine neue Praxis beginnen, und setzen Sie verordnete Behandlungen nie aufgrund dieses Artikels ab.",
     },
     engagement: {
       like: "Gefällt mir",
@@ -1062,7 +1131,10 @@ export const TRANSLATIONS = {
       submit: "Kommentar senden",
       submitting: "Wird gesendet…",
       posted: "Danke — Ihr Kommentar ist online.",
-      pendingNotice: "Danke! Kommentare mit Links werden vor der Veröffentlichung geprüft.",
+      pendingNotice: "Danke! Ihr Kommentar erscheint, sobald wir ihn gelesen haben. Kommentare mit Links oder Gesundheitsversprechen prüfen wir vorab.",
+      report: "Kommentar melden",
+      reportConfirm: "Diesen Kommentar an Richa und Riju melden? Sie prüfen ihn und entfernen ihn, wenn er gegen Gesetze oder die Regeln der Seite verstößt.",
+      reported: "Danke — wir sehen ihn uns an.",
       publicNotice: "Kommentare sind öffentlich. Bitte teilen Sie keine privaten Gesundheitsdaten.",
       anonymous: "Anonym",
       authorBadge: "Autorin/Autor",
@@ -1521,6 +1593,11 @@ export const CATEGORY_LABELS: Record<string, { EN: string; DE: string }> = {
 };
 export const REVIEW_CATEGORIES = ["Physical Wellness", "Mental Clarity", "Spiritual Healing", "Kids Yoga", "Dance Therapy", "Tarot Reading", "Chair Yoga"];
 export const categoryLabel = (category: string, lang: "EN" | "DE") => CATEGORY_LABELS[category]?.[lang] ?? category;
+
+// Shown on their own page (/astrology-tarot) instead of the homepage's
+// services grid, so the homepage leads with yoga and holistic wellbeing.
+export const ASTROLOGY_SERVICE_IDS = ["astrology", "tarot", "intuitive-guidance"];
+export const ASTROLOGY_PAGE_PATH = "/astrology-tarot";
 
 export const SERVICES = [
   {
@@ -2453,6 +2530,7 @@ export const COURSES = [
     id: "bollywood-dance-workshop",
     provider: "VHS Ostfildern",
     kursnr: "262-301115",
+    lastDay: "2026-10-10",
     registrationUrl: "https://vhs-ostfildern.de/programm/kw/bereich/kursdetails/kurs/262-301115/",
     EN: {
       title: "Indian Bollywood Dance",
@@ -2473,6 +2551,7 @@ export const COURSES = [
     id: "surya-namaskar-seminar",
     provider: "VHS Ostfildern",
     kursnr: "262-301116",
+    lastDay: "2026-10-17",
     registrationUrl: "https://vhs-ostfildern.de/programm/kw/bereich/kursdetails/kurs/262-301116/",
     EN: {
       title: "Surya Namaskar Seminar",
@@ -2493,6 +2572,7 @@ export const COURSES = [
     id: "patanjali-seminar",
     provider: "VHS Ostfildern",
     kursnr: "262-301117",
+    lastDay: "2026-11-14",
     registrationUrl: "https://vhs-ostfildern.de/programm/kw/bereich/kursdetails/kurs/262-301117/",
     EN: {
       title: "The 8 Limbs of Yoga (Patanjali)",
@@ -2513,6 +2593,7 @@ export const COURSES = [
     id: "pranayama-seminar",
     provider: "VHS Ostfildern",
     kursnr: "262-301118",
+    lastDay: "2027-01-23",
     registrationUrl: "https://vhs-ostfildern.de/programm/kw/bereich/kursdetails/kurs/262-301118/",
     EN: {
       title: "Pranayama Seminar",

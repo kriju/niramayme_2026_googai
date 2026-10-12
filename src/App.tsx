@@ -57,7 +57,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { NavigationMenu } from "@base-ui/react/navigation-menu";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { SERVICES, TESTIMONIALS, type ClientStory, FAQS, HEALER_CERTIFICATIONS, HEALER_IMAGES, TRANSLATIONS, REVIEW_CATEGORIES, categoryLabel, ONGOING_SESSIONS, COURSES, EVENTS, ANNOUNCEMENTS, GOOGLE_CALENDAR_URL, GOOGLE_REVIEW_URL, BUSINESS_STREET_ADDRESS, BUSINESS_POSTAL_CODE, BUSINESS_CITY, GOOGLE_MAPS_URL, GOOGLE_MAPS_EMBED_URL } from "./constants";
+import { SERVICES, ASTROLOGY_SERVICE_IDS, ASTROLOGY_PAGE_PATH, TESTIMONIALS, type ClientStory, FAQS, HEALER_CERTIFICATIONS, HEALER_IMAGES, TRANSLATIONS, REVIEW_CATEGORIES, categoryLabel, ONGOING_SESSIONS, COURSES, EVENTS, ANNOUNCEMENTS, GOOGLE_CALENDAR_URL, GOOGLE_REVIEW_URL, BUSINESS_STREET_ADDRESS, BUSINESS_POSTAL_CODE, BUSINESS_CITY, GOOGLE_MAPS_URL, GOOGLE_MAPS_EMBED_URL } from "./constants";
 import { LEGAL_DOCS, LEGAL_LINK_LABELS, type LegalDocType, type LegalLink } from "./legal";
 import { BOOKING_LEGAL_TEXT, EMPTY_LEGAL_STATE, WITHDRAW_TEXT, isLegalComplete, toLegalAcks, type BookingLegalState } from "./legal/booking";
 import { LEGAL_CONFIG, vatPriceNote } from "./legal/config";
@@ -180,6 +180,24 @@ const LangSwitch = ({ lang, altPath, className = "" }: { lang: "EN" | "DE", altP
   );
 };
 
+// Google Calendar and Google Maps are only loaded after a click: until then
+// no request goes to Google (the iframe would send the visitor's IP address
+// and let Google set cookies). One click per embed type covers the rest of
+// the visit.
+const loadedEmbeds = new Set<string>();
+const ConsentEmbed = ({ kind, lang, children, className = "" }: { kind: "calendar" | "map", lang: "EN" | "DE", children: React.ReactNode, className?: string }) => {
+  const [loaded, setLoaded] = useState(() => loadedEmbeds.has(kind));
+  const t = TRANSLATIONS[lang].consentEmbed[kind];
+  if (loaded) return <>{children}</>;
+  return (
+    <div className={`flex flex-col items-center justify-center gap-3 text-center p-6 bg-stone-50 ${className}`}>
+      {kind === "calendar" ? <Calendar className="w-8 h-8 text-primary/60" /> : <MapPin className="w-6 h-6 text-primary/60" />}
+      <p className="text-sm text-muted-foreground max-w-sm">{t.notice}</p>
+      <Button size="sm" className="rounded-full" onClick={() => { loadedEmbeds.add(kind); setLoaded(true); }}>{t.load}</Button>
+    </div>
+  );
+};
+
 const BookingDialog = ({ context, lang, open, onOpenChange }: { context: BookingContext | null, lang: "EN" | "DE", open: boolean, onOpenChange: (o: boolean) => void }) => {
   const t = TRANSLATIONS[lang].booking;
   const title = context?.title || t.title;
@@ -207,11 +225,13 @@ const BookingDialog = ({ context, lang, open, onOpenChange }: { context: Booking
           )}
         </DialogHeader>
         <div className="flex-1 w-full h-full min-h-0 relative">
-          <iframe
-            src={GOOGLE_CALENDAR_URL}
-            className="w-full h-full border-0"
-            title="Google Calendar Appointment Scheduling"
-          />
+          <ConsentEmbed kind="calendar" lang={lang} className="h-full">
+            <iframe
+              src={GOOGLE_CALENDAR_URL}
+              className="w-full h-full border-0"
+              title="Google Calendar Appointment Scheduling"
+            />
+          </ConsentEmbed>
           <div className="absolute bottom-4 right-4">
             <a
               href={GOOGLE_CALENDAR_URL.replace('?gv=true', '')}
@@ -821,7 +841,9 @@ const ReikiIntakeModal = ({ lang, pkg, onClose, onOpenPrivacy, onOpenLegal }: { 
               <p className="text-sm text-muted-foreground">{t.calendarDesc}</p>
             </DialogHeader>
             <div className="flex-1 w-full min-h-0 relative">
-              <iframe src={GOOGLE_CALENDAR_URL} className="w-full h-full border-0" title="Google Calendar Appointment Scheduling" />
+              <ConsentEmbed kind="calendar" lang={lang} className="h-full">
+                <iframe src={GOOGLE_CALENDAR_URL} className="w-full h-full border-0" title="Google Calendar Appointment Scheduling" />
+              </ConsentEmbed>
               <div className="absolute bottom-4 right-4">
                 <a
                   href={GOOGLE_CALENDAR_URL.replace('?gv=true', '')}
@@ -912,6 +934,12 @@ const COURSE_CONTACT_EMAIL = "riju.kansal@niramay.me";
 type Course = (typeof COURSES)[number];
 
 // Courses with a `bookingClosesAt` stop taking bookings after that moment.
+// A dated course (`lastDay`, YYYY-MM-DD) disappears the day after it ran,
+// German time.
+const isCoursePast = (course: Course) =>
+  "lastDay" in course && !!course.lastDay
+  && new Date().toLocaleDateString("sv-SE", { timeZone: "Europe/Berlin" }) > course.lastDay;
+
 const isCourseBookingClosed = (course: Course) =>
   Boolean(course.bookingClosesAt && Date.now() > new Date(course.bookingClosesAt).getTime());
 
@@ -1674,6 +1702,7 @@ const Navbar = ({ lang, altPath, onBook, belowAnnouncement = false }: { lang: "E
                   <NavDropdownLink to={`${prefix}/#services`}>{t.services}</NavDropdownLink>
                   <NavDropdownLink to={`${prefix}/#sessions`}>{t.sessions}</NavDropdownLink>
                   <NavDropdownLink to={`${prefix}/#courses`}>{t.courses}</NavDropdownLink>
+                  <NavDropdownLink to={`${prefix}${ASTROLOGY_PAGE_PATH}`}>{t.astrology}</NavDropdownLink>
                 </NavigationMenu.Content>
               </NavigationMenu.Item>
 
@@ -1717,12 +1746,9 @@ const Navbar = ({ lang, altPath, onBook, belowAnnouncement = false }: { lang: "E
                   </span>
                   <Button variant="ghost" size="sm" onClick={() => logOut()}>{ta.navLogOut}</Button>
                 </div>
-              ) : (
-                <div className="flex items-center gap-2">
-                  <Button variant="ghost" size="sm" onClick={() => openAuth("login")}>{ta.navLogIn}</Button>
-                  <Button variant="outline" size="sm" className="rounded-full" onClick={() => openAuth("signup")}>{ta.navSignUp}</Button>
-                </div>
-              )
+              ) : null
+              // Log In / Sign Up are hidden until an account gives visitors
+              // something (e.g. order history); guest booking never needs one.
             )}
             <Button size="sm" className="rounded-full px-6" onClick={() => onBook()}>{t.bookNow}</Button>
           </div>
@@ -1767,6 +1793,7 @@ const Navbar = ({ lang, altPath, onBook, belowAnnouncement = false }: { lang: "E
                     <Link to={`${prefix}/#services`} onClick={closeMobileMenu} className="text-muted-foreground hover:text-primary transition-colors">{t.services}</Link>
                     <Link to={`${prefix}/#sessions`} onClick={closeMobileMenu} className="text-muted-foreground hover:text-primary transition-colors">{t.sessions}</Link>
                     <Link to={`${prefix}/#courses`} onClick={closeMobileMenu} className="text-muted-foreground hover:text-primary transition-colors">{t.courses}</Link>
+                    <Link to={`${prefix}${ASTROLOGY_PAGE_PATH}`} onClick={closeMobileMenu} className="text-muted-foreground hover:text-primary transition-colors">{t.astrology}</Link>
                   </div>
                 </AccordionContent>
               </AccordionItem>
@@ -1791,12 +1818,7 @@ const Navbar = ({ lang, altPath, onBook, belowAnnouncement = false }: { lang: "E
                   </span>
                   <Button variant="ghost" size="sm" onClick={() => { closeMobileMenu(); logOut(); }}>{ta.navLogOut}</Button>
                 </div>
-              ) : (
-                <div className="flex items-center gap-3">
-                  <Button variant="ghost" size="sm" className="flex-1" onClick={() => { closeMobileMenu(); openAuth("login"); }}>{ta.navLogIn}</Button>
-                  <Button variant="outline" size="sm" className="flex-1 rounded-full" onClick={() => { closeMobileMenu(); openAuth("signup"); }}>{ta.navSignUp}</Button>
-                </div>
-              )
+              ) : null
             )}
             <div className="flex justify-end items-center">
               <Button className="rounded-full" onClick={() => { setIsMobileMenuOpen(false); onBook(); }}>{t.bookNow}</Button>
@@ -1915,27 +1937,13 @@ const Hero = ({ lang, onBook }: { lang: "EN" | "DE", onBook: (ctx?: BookingConte
   const t = TRANSLATIONS[lang].hero;
   const tBook = TRANSLATIONS[lang].book;
   const prefix = langPrefix(lang);
+  const tAbout = TRANSLATIONS[lang].about;
   const upcoming = activeAnnouncements();
-  const [latestPosts, setLatestPosts] = useState<any[]>([]);
   const [approvedReviews, setApprovedReviews] = useState<any[]>([]);
   const [reviewIndex, setReviewIndex] = useState(0);
 
-  // One-shot reads (not live listeners) — BlogSection/TestimonialsSection
-  // further down keep their own subscriptions; the hero only needs a peek.
-  useEffect(() => {
-    let cancelled = false;
-    getDocs(query(
-      collection(db, "blogs"),
-      where("lang", "==", lang),
-      where("published", "==", true),
-      orderBy("createdAt", "desc"),
-      limit(3)
-    ))
-      .then(snap => { if (!cancelled) setLatestPosts(snap.docs.map(d => ({ id: d.id, ...d.data() }))); })
-      .catch(() => {});
-    return () => { cancelled = true; };
-  }, [lang]);
-
+  // One-shot read (not a live listener) — TestimonialsSection further down
+  // keeps its own subscription; the hero only needs a peek.
   useEffect(() => {
     let cancelled = false;
     getDocs(query(collection(db, "reviews"), where("approved", "==", true), orderBy("createdAt", "desc"), limit(6)))
@@ -2008,6 +2016,18 @@ const Hero = ({ lang, onBook }: { lang: "EN" | "DE", onBook: (ctx?: BookingConte
           <motion.p {...reveal(0.16)} className="text-base md:text-lg text-muted-foreground mb-7 max-w-lg leading-relaxed">
             {t.description}
           </motion.p>
+          {/* Phones: the founders' faces before the buttons, since the photo
+              card on the right only comes after the text there. */}
+          <motion.a {...reveal(0.2)} href="#about" className="lg:hidden flex items-center gap-3 mb-6 w-fit">
+            <span className="flex -space-x-3 shrink-0">
+              <img src={HEALER_IMAGES.richa} alt="" width={48} height={48} className="w-12 h-12 rounded-full object-cover object-top ring-2 ring-background" />
+              <img src={HEALER_IMAGES.riju} alt="" width={48} height={48} className="w-12 h-12 rounded-full object-cover object-top ring-2 ring-background" />
+            </span>
+            <span className="text-sm leading-snug">
+              <span className="block font-semibold text-stone-800">{t.foundersNames}</span>
+              <span className="block text-stone-500">{t.foundersLine}</span>
+            </span>
+          </motion.a>
           <motion.div {...reveal(0.24)} className="flex flex-wrap gap-3">
             <Button size="lg" className="rounded-full px-6 md:px-8 gap-2 h-12 md:h-14 text-base md:text-lg shadow-lg shadow-stone-900/10" onClick={() => onBook({ title: t.ctaPrimary })}>
               {t.ctaPrimary} <ArrowRight className="w-5 h-5" />
@@ -2046,30 +2066,31 @@ const Hero = ({ lang, onBook }: { lang: "EN" | "DE", onBook: (ctx?: BookingConte
         {/* Right: bento of the site's most valuable content. On phones it
             becomes a swipeable row so it still shows within the first screen. */}
         <div className="-mx-6 px-6 lg:mx-0 lg:px-0 flex lg:grid lg:grid-cols-2 gap-4 overflow-x-auto lg:overflow-visible snap-x snap-mandatory no-scrollbar pb-2 lg:pb-0">
-          {latestPosts.length > 0 && (
-            <motion.div {...reveal(0.3)} className={`${glass} p-5 md:p-6 lg:col-span-2 min-w-[85%] sm:min-w-[60%] lg:min-w-0 snap-start`}>
-              <div className="flex items-center justify-between mb-3">
-                <p className="text-xs font-bold uppercase tracking-[0.18em] text-stone-500 flex items-center gap-2">
-                  <Sparkles className="w-3.5 h-3.5 text-amber-600" />{t.latestReads}
-                </p>
-                <a href="#blog" className="text-xs font-semibold text-primary hover:underline underline-offset-4">{t.seeAll}</a>
+          {/* Richa and Riju first: people book a person, not a service list. */}
+          <motion.a {...reveal(0.3)} href="#about" className={`${glass} p-2 lg:col-span-2 min-w-[85%] sm:min-w-[60%] lg:min-w-0 snap-start group overflow-hidden`}>
+            <div className="relative rounded-[1.25rem] overflow-hidden">
+              <img
+                src="/about/richa-riju-together-800.webp"
+                srcSet="/about/richa-riju-together-800.webp 800w, /about/richa-riju-together.webp 1400w"
+                sizes="(min-width: 1024px) 45vw, 85vw"
+                alt={tAbout.together}
+                width={800}
+                height={600}
+                loading="eager"
+                decoding="async"
+                className="w-full aspect-[4/3] lg:aspect-[16/10] object-cover group-hover:scale-[1.02] transition-transform duration-700"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
+              <div className="absolute inset-x-0 bottom-0 p-4 md:p-5 text-white">
+                <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-white/75 mb-1">{t.foundersLabel}</p>
+                <p className="font-serif text-xl md:text-2xl leading-tight">{t.foundersNames}</p>
+                <p className="text-sm text-white/85 mt-1 max-w-md">{t.foundersLine}</p>
+                <span className="mt-2 text-sm font-semibold inline-flex items-center gap-1">
+                  {t.foundersCta}<ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                </span>
               </div>
-              <ul className="divide-y divide-stone-200/70">
-                {latestPosts.map(post => (
-                  <li key={post.id}>
-                    <Link to={`${prefix}/blog/${post.slug}`} className="group flex items-center gap-3 py-2.5">
-                      <div className="min-w-0 flex-1">
-                        <p className="font-serif text-base md:text-lg leading-snug line-clamp-1 group-hover:text-stone-600 transition-colors">{post.title}</p>
-                        {post.category && <p className="text-xs text-stone-500 mt-0.5">{categoryLabel(post.category, lang)}</p>}
-                      </div>
-                      {post.audioUrl && <Volume2 className="w-4 h-4 text-stone-400 shrink-0" />}
-                      <ArrowRight className="w-4 h-4 shrink-0 text-stone-400 group-hover:text-primary group-hover:translate-x-1 transition-all" />
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </motion.div>
-          )}
+            </div>
+          </motion.a>
 
           {review && (
             <motion.a {...reveal(0.38)} href="#testimonials" className={`${glass} p-5 md:p-6 flex flex-col min-w-[85%] sm:min-w-[60%] lg:min-w-0 snap-start hover:bg-white/70 transition-colors`}>
@@ -2263,7 +2284,8 @@ const ServicePage = () => {
   if (id && MERGED_SERVICE_IDS[id]) return <Navigate to={`${prefix}/services/${MERGED_SERVICE_IDS[id]}`} replace />;
   if (!service || !content) return <Navigate to={prefix || "/"} replace />;
 
-  const otherServices = SERVICES.filter(s => !s.openInModal && s.id !== service.id);
+  // Same side of the site: wellbeing services, or astrology & tarot.
+  const otherServices = SERVICES.filter(s => !s.openInModal && s.id !== service.id && isAstrologyService(s.id) === isAstrologyService(service.id));
   const clientStories = TESTIMONIALS
     .filter(s => s.serviceId === service.id)
     .sort((a, b) => Number(!!b.featured) - Number(!!a.featured))
@@ -2298,7 +2320,9 @@ const ServicePage = () => {
         <nav className="flex items-center gap-2 text-sm text-muted-foreground mb-10" aria-label="Breadcrumb">
           <Link to={prefix || "/"} className="hover:text-primary transition-colors">{sp.home}</Link>
           <ChevronRight className="w-3.5 h-3.5" />
-          <Link to={`${prefix}/#services`} className="hover:text-primary transition-colors">{sp.breadcrumbServices}</Link>
+          {isAstrologyService(service.id)
+            ? <Link to={`${prefix}${ASTROLOGY_PAGE_PATH}`} className="hover:text-primary transition-colors">{TRANSLATIONS[lang].astrologyPage.breadcrumb}</Link>
+            : <Link to={`${prefix}/#services`} className="hover:text-primary transition-colors">{sp.breadcrumbServices}</Link>}
           <ChevronRight className="w-3.5 h-3.5" />
           <span className="text-foreground font-medium">{content.title}</span>
         </nav>
@@ -2966,16 +2990,19 @@ const BlogPostPage = () => {
         )}
 
         {post.image && (
-          <img
-            {...responsiveImage(post.image)}
-            sizes={COVER_SIZES}
-            alt={post.title}
-            width={1600}
-            height={900}
-            fetchPriority="high"
-            className="w-full h-auto aspect-video object-cover rounded-2xl mb-8"
-            referrerPolicy="no-referrer"
-          />
+          <figure className="mb-8">
+            <img
+              {...responsiveImage(post.image)}
+              sizes={COVER_SIZES}
+              alt={post.title}
+              width={1600}
+              height={900}
+              fetchPriority="high"
+              className="w-full h-auto aspect-video object-cover rounded-2xl"
+              referrerPolicy="no-referrer"
+            />
+            {post.imageCredit && <figcaption className="mt-2 text-xs text-stone-400">{bp.imageCredit} {post.imageCredit}</figcaption>}
+          </figure>
         )}
 
         {post.audioUrl && (
@@ -2991,9 +3018,16 @@ const BlogPostPage = () => {
           </div>
         )}
 
-        <div className="mb-16">
+        <div className={post.disclaimer ? "mb-10" : "mb-16"}>
           {renderPostContent(post.content)}
         </div>
+
+        {post.disclaimer && (
+          <aside className="mb-16 rounded-2xl border border-stone-200 bg-stone-50 px-5 py-4 text-sm text-stone-500 leading-relaxed" aria-label={bp.disclaimerTitle}>
+            <p className="font-semibold text-stone-600 mb-1">{bp.disclaimerTitle}</p>
+            <p>{bp.disclaimer}</p>
+          </aside>
+        )}
 
         <div className="flex items-center gap-4 pt-8 border-t border-stone-100 mb-8">
           <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center font-bold text-primary" aria-hidden="true">
@@ -3037,6 +3071,130 @@ const BlogPostPage = () => {
   );
 };
 
+// Astrology, tarot and intuitive guidance live on their own page
+// (AstrologyTarotPage); the homepage grid links there with one card.
+const isAstrologyService = (id: string) => ASTROLOGY_SERVICE_IDS.includes(id);
+const HOME_SERVICES = SERVICES.filter(s => !isAstrologyService(s.id));
+
+const AstrologyTeaserCard = ({ lang, index }: { lang: "EN" | "DE", index: number }) => {
+  const t = TRANSLATIONS[lang].astrologyPage;
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      transition={{ delay: index * 0.1 }}
+    >
+      <Link to={`${langPrefix(lang)}${ASTROLOGY_PAGE_PATH}`} className="block h-full group">
+        <Card className="h-full border border-dashed border-stone-300 shadow-none hover:shadow-md hover:border-primary/30 transition-all bg-stone-50/60">
+          <CardHeader className="pb-4">
+            <div className="w-12 h-12 bg-stone-100 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+              <Star className="w-6 h-6 text-primary" />
+            </div>
+            <CardTitle className="text-2xl font-serif">{t.teaserTitle}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-muted-foreground mb-6 leading-relaxed">{t.teaserDescription}</p>
+            <span className="inline-flex items-center font-bold text-primary group-hover:translate-x-1 transition-transform">
+              {t.teaserCta} <ArrowRight className="w-4 h-4 ml-2" />
+            </span>
+          </CardContent>
+        </Card>
+      </Link>
+    </motion.div>
+  );
+};
+
+// Vedic astrology, tarot and intuitive guidance: their own page, so the
+// homepage leads with yoga and holistic wellbeing and these readings are
+// presented on their own terms (with what they are, and aren't, for).
+const AstrologyTarotPage = () => {
+  const { lang } = useOutletContext<LayoutContext>();
+  const t = TRANSLATIONS[lang].astrologyPage;
+  const sp = TRANSLATIONS[lang].servicePage;
+  const prefix = langPrefix(lang);
+  const canonical = `${SITE_URL}${prefix}${ASTROLOGY_PAGE_PATH}`;
+  const services = SERVICES.filter(s => isAstrologyService(s.id));
+  const stories = useMemo(
+    () => TESTIMONIALS
+      .filter(s => s.category === "Tarot Reading" || (s.serviceId && isAstrologyService(s.serviceId)))
+      .sort((a, b) => Number(!!b.featured) - Number(!!a.featured))
+      .slice(0, 4)
+      .map(s => storyToReview(s, lang)),
+    [lang],
+  );
+
+  useSeo({
+    title: t.seoTitle,
+    description: t.seoDescription,
+    canonical,
+    lang,
+    alternates: { en: `${SITE_URL}${ASTROLOGY_PAGE_PATH}`, de: `${SITE_URL}/de${ASTROLOGY_PAGE_PATH}` },
+  });
+
+  const breadcrumbJsonLd = useMemo(() => ({
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: sp.home, item: `${SITE_URL}${prefix}/` },
+      { "@type": "ListItem", position: 2, name: t.breadcrumb, item: canonical },
+    ],
+  }), [sp.home, prefix, t.breadcrumb, canonical]);
+  useJsonLd("ld-json-breadcrumb", breadcrumbJsonLd);
+
+  return (
+    <main className="pt-32 pb-24">
+      <div className="container mx-auto px-6 max-w-5xl">
+        <nav className="flex items-center gap-2 text-sm text-muted-foreground mb-10" aria-label="Breadcrumb">
+          <Link to={prefix || "/"} className="hover:text-primary transition-colors">{sp.home}</Link>
+          <ChevronRight className="w-3.5 h-3.5" />
+          <span className="text-foreground font-medium">{t.breadcrumb}</span>
+        </nav>
+
+        <div className="max-w-3xl mb-14">
+          <Badge variant="secondary" className="w-fit text-primary mb-4">{t.badge}</Badge>
+          <h1 className="text-4xl md:text-5xl font-serif font-bold mb-6 leading-tight">{t.title}</h1>
+          <p className="text-lg text-muted-foreground leading-relaxed">{t.intro}</p>
+        </div>
+
+        <h2 className="text-2xl md:text-3xl font-serif font-bold mb-6">{t.servicesTitle}</h2>
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+          {services.map((service, idx) => (
+            <ServiceCard key={service.id} service={service} index={idx} lang={lang} />
+          ))}
+        </div>
+        <p className="text-sm text-muted-foreground max-w-3xl mb-16">{t.note}</p>
+
+        {stories.length > 0 && (
+          <div className="max-w-3xl">
+            <h2 className="text-2xl md:text-3xl font-serif font-bold mb-6">{t.storiesTitle}</h2>
+            <div className="grid gap-4">
+              {stories.map(story => {
+                const sourceLine = reviewSourceLine(story, lang);
+                return (
+                  <figure key={story.id} className="bg-stone-50 p-6 rounded-2xl border border-stone-100">
+                    {story.rating && <div className="mb-3"><ReviewStars rating={story.rating} className="text-amber-500 fill-amber-500" /></div>}
+                    <blockquote className="text-stone-800">
+                      <ReviewQuote review={story} lang={lang} clampClass="line-clamp-5" muted="text-muted-foreground" />
+                    </blockquote>
+                    <figcaption className="mt-4 flex flex-wrap items-center justify-between gap-x-4 gap-y-2 text-sm">
+                      <span>
+                        <span className="font-semibold">{story.name}</span>
+                        <span className="text-muted-foreground"> · {[story.role, sourceLine].filter(Boolean).join(" · ")}</span>
+                      </span>
+                      {story.screenshot && <SeeOriginalButton src={story.screenshot} lang={lang} className="text-primary" />}
+                    </figcaption>
+                  </figure>
+                );
+              })}
+            </div>
+          </div>
+        )}
+      </div>
+    </main>
+  );
+};
+
 const ServicesSection = ({ lang, onLearnMore }: { lang: "EN" | "DE", onLearnMore?: (s: any) => void }) => {
   const t = TRANSLATIONS[lang].services;
   return (
@@ -3050,9 +3208,10 @@ const ServicesSection = ({ lang, onLearnMore }: { lang: "EN" | "DE", onLearnMore
         </div>
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {SERVICES.map((service, idx) => (
+          {HOME_SERVICES.map((service, idx) => (
             <ServiceCard key={service.id} service={service} index={idx} lang={lang} onLearnMore={onLearnMore} />
           ))}
+          <AstrologyTeaserCard lang={lang} index={HOME_SERVICES.length} />
         </div>
       </div>
     </section>
@@ -3149,7 +3308,7 @@ const CoursesSection = ({ lang, onBookCourse }: { lang: "EN" | "DE", onBookCours
         </div>
 
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-          {COURSES.map((course, idx) => {
+          {COURSES.filter(course => !isCoursePast(course)).map((course, idx) => {
             const content = course[lang];
             return (
               <motion.div
@@ -3846,6 +4005,7 @@ const Footer = ({ lang, onOpenLegal, onOpenCookieSettings, onOpenWithdraw }: { l
             <h4 className="font-bold mb-6">{t.quickLinks}</h4>
             <ul className="space-y-4">
               <li><Link to={`${prefix}/#services`} className="text-muted-foreground hover:text-primary transition-colors">{nav.services}</Link></li>
+              <li><Link to={`${prefix}${ASTROLOGY_PAGE_PATH}`} className="text-muted-foreground hover:text-primary transition-colors">{nav.astrology}</Link></li>
               <li><Link to={`${prefix}/#about`} className="text-muted-foreground hover:text-primary transition-colors">{nav.about}</Link></li>
               <li><Link to={`${prefix}/#events`} className="text-muted-foreground hover:text-primary transition-colors">{nav.events}</Link></li>
               <li><Link to={`${prefix}/#book`} className="text-muted-foreground hover:text-primary transition-colors">{nav.book}</Link></li>
@@ -3871,22 +4031,22 @@ const Footer = ({ lang, onOpenLegal, onOpenCookieSettings, onOpenWithdraw }: { l
                 </a>
               </li>
             </ul>
-            <a
-              href={GOOGLE_MAPS_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="block rounded-xl overflow-hidden border border-stone-200 hover:opacity-90 transition-opacity"
-              aria-label={t.viewOnGoogleMaps}
-            >
-              <iframe
-                src={GOOGLE_MAPS_EMBED_URL}
-                title={t.viewOnGoogleMaps}
-                width="100%"
-                height="160"
-                loading="lazy"
-                referrerPolicy="no-referrer-when-downgrade"
-                className="pointer-events-none w-full h-40"
-              />
+            <div className="rounded-xl overflow-hidden border border-stone-200">
+              <ConsentEmbed kind="map" lang={lang} className="h-40">
+                <a href={GOOGLE_MAPS_URL} target="_blank" rel="noopener noreferrer" className="block hover:opacity-90 transition-opacity" aria-label={t.viewOnGoogleMaps}>
+                  <iframe
+                    src={GOOGLE_MAPS_EMBED_URL}
+                    title={t.viewOnGoogleMaps}
+                    width="100%"
+                    height="160"
+                    referrerPolicy="no-referrer-when-downgrade"
+                    className="pointer-events-none w-full h-40"
+                  />
+                </a>
+              </ConsentEmbed>
+            </div>
+            <a href={GOOGLE_MAPS_URL} target="_blank" rel="noopener noreferrer" className="inline-block mt-2 text-xs text-muted-foreground hover:text-primary underline underline-offset-2">
+              {t.viewOnGoogleMaps}
             </a>
           </div>
         </div>
@@ -3894,7 +4054,7 @@ const Footer = ({ lang, onOpenLegal, onOpenCookieSettings, onOpenWithdraw }: { l
         <Separator className="mb-8" />
         
         <div className="flex flex-col md:flex-row justify-between items-center gap-6 text-sm text-muted-foreground">
-          <p>© {new Date().getFullYear()} Niramay Wellness. {t.rights}</p>
+          <p>© {new Date().getFullYear()} Niramay Wellbeing. {t.rights}</p>
           <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 md:gap-x-8">
             <button onClick={() => onOpenLegal("impressum")} className="hover:text-primary transition-colors cursor-pointer bg-transparent border-none p-0">{t.impressum}</button>
             <button onClick={() => onOpenLegal("privacy")} className="hover:text-primary transition-colors cursor-pointer bg-transparent border-none p-0">{t.privacy}</button>
@@ -3943,23 +4103,23 @@ const CookieConsent = ({ lang, reopen, onClose, onOpenPrivacy }: { lang: "EN" | 
   };
 
   return (
-    <div className="fixed bottom-0 inset-x-0 z-[100] p-4 sm:p-6" role="region" aria-label={TRANSLATIONS[lang].footer.cookieSettings}>
-      <div className="max-w-3xl mx-auto bg-background border border-stone-200 shadow-xl rounded-2xl p-5 sm:p-6 flex flex-col sm:flex-row sm:items-center gap-4">
-        <div className="flex-1 text-sm text-muted-foreground space-y-2">
+    <div className="fixed bottom-0 inset-x-0 z-[100] p-3 sm:p-4" role="region" aria-label={TRANSLATIONS[lang].footer.cookieSettings}>
+      <div className="max-w-2xl mx-auto bg-background/95 backdrop-blur border border-stone-200 shadow-lg rounded-2xl px-4 py-3 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+        <div className="flex-1 text-xs sm:text-sm text-muted-foreground">
           <p>
             {t.message}{" "}
             <button type="button" onClick={onOpenPrivacy} className="underline underline-offset-2 hover:text-primary">
               {t.privacyLink}
             </button>
           </p>
-          {reopen && <p className="font-medium text-foreground">{getStoredConsent() === "granted" ? t.statusOn : t.statusOff}</p>}
+          {reopen && <p className="font-medium text-foreground mt-1">{getStoredConsent() === "granted" ? t.statusOn : t.statusOff}</p>}
         </div>
         {/* Equal prominence for both choices (no nudging towards Accept). */}
-        <div className="flex flex-wrap gap-3 shrink-0">
-          <Button size="sm" className="rounded-full" onClick={() => decide(false)}>
+        <div className="flex gap-2 shrink-0">
+          <Button size="sm" className="rounded-full flex-1 sm:flex-none" onClick={() => decide(false)}>
             {t.reject}
           </Button>
-          <Button size="sm" className="rounded-full" onClick={() => decide(true)}>
+          <Button size="sm" className="rounded-full flex-1 sm:flex-none" onClick={() => decide(true)}>
             {t.accept}
           </Button>
           {reopen && !firstVisit && (
@@ -4569,13 +4729,14 @@ const HomePage = () => {
     <main>
       <Hero lang={lang} onBook={onBook} />
       <ServicesSection lang={lang} onLearnMore={handleServiceToolPreview} />
+      {/* Reviews straight after the offer: trust before the details. */}
+      <TestimonialsSection lang={lang} />
       <OngoingSessionsSection lang={lang} />
       <CoursesSection lang={lang} onBookCourse={onBookCourse} />
       <AboutSection lang={lang} />
       <EventsSection lang={lang} />
       <BookSection lang={lang} />
       <BlogSection lang={lang} />
-      <TestimonialsSection lang={lang} />
       <FAQSection lang={lang} />
 
       <ToolPreviewModal
@@ -4602,11 +4763,13 @@ const SPEED_INSIGHTS_ROUTES = [
   "/courses/:id",
   "/blog/:slug",
   "/faq",
+  "/astrology-tarot",
   "/de",
   "/de/services/:id",
   "/de/courses/:id",
   "/de/blog/:slug",
   "/de/faq",
+  "/de/astrology-tarot",
   "/write",
 ].map((path) => ({ path }));
 
@@ -4627,11 +4790,13 @@ export default function App() {
             <Route path="courses/:id" element={<CoursePage />} />
             <Route path="blog/:slug" element={<BlogPostPage />} />
             <Route path="faq" element={<FAQPage />} />
+            <Route path="astrology-tarot" element={<AstrologyTarotPage />} />
             <Route path="de" element={<HomePage />} />
             <Route path="de/services/:id" element={<ServicePage />} />
             <Route path="de/courses/:id" element={<CoursePage />} />
             <Route path="de/blog/:slug" element={<BlogPostPage />} />
             <Route path="de/faq" element={<FAQPage />} />
+            <Route path="de/astrology-tarot" element={<AstrologyTarotPage />} />
             {/* An unknown path under /de falls back to the German home page
                 rather than jumping to the English one. */}
             <Route path="de/*" element={<Navigate to="/de" replace />} />

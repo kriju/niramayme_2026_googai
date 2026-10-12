@@ -63,6 +63,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const pairs: LocalizedPair[] = [
     { en: `${SITE_URL}/`, de: `${SITE_URL}/de`, changefreq: "weekly", priority: "1.0" },
     { en: `${SITE_URL}/faq`, de: `${SITE_URL}/de/faq`, changefreq: "monthly", priority: "0.7" },
+    // ASTROLOGY_PAGE_PATH in src/constants.ts.
+    { en: `${SITE_URL}/astrology-tarot`, de: `${SITE_URL}/de/astrology-tarot`, changefreq: "monthly", priority: "0.8" },
     ...SERVICE_IDS.map((id) => ({
       en: `${SITE_URL}/services/${id}`,
       de: `${SITE_URL}/de/services/${id}`,

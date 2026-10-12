@@ -18,13 +18,10 @@ import type { LegalDoc, LegalSection } from "./types";
 //    (src/main.tsx, src/App.tsx). Vercel documents Web Analytics as
 //    cookieless. LEGAL-REVIEW: § 25 TDDDG / Art. 6(1)(f) - decide whether
 //    these should also sit behind the cookie banner.
-//  - Google Fonts (index.html) and the Google Maps iframe (footer) load on
-//    every page view without consent. LEGAL-REVIEW: LG Muenchen I, judgment
-//    of 20.01.2022 (3 O 17493/20), held that loading Google Fonts from
-//    Google's servers without consent violates the GDPR. Recommended
-//    follow-up: self-host the fonts (@fontsource) and load the map only after
-//    a click. The text below describes the CURRENT behaviour accurately; adjust
-//    section "Externe Inhalte" after the fix.
+//  - Fonts are self-hosted (@fontsource, src/index.css); the Google Maps
+//    map (footer) and the Google Calendar booking page load only after a
+//    click (ConsentEmbed in src/App.tsx). Nothing from Google loads before
+//    the visitor asks for it (LG Muenchen I, 20.01.2022, 3 O 17493/20).
 //  - Booking data is stored without automatic deletion (firestore.rules
 //    denies client deletes; no TTL). The retention periods in config.ts are
 //    therefore promises that need a manual (or automated) deletion routine.
@@ -124,11 +121,11 @@ const sectionsDE: LegalSection[] = [
       "Wir setzen Vercel Web Analytics und Vercel Speed Insights der Vercel Inc. (Anschrift siehe Abschnitt 3) ein. Nach Angaben von Vercel arbeitet Web Analytics ohne Cookies: Besucher werden anonym über einen aus der Anfrage erzeugten Hash erkannt, der nach 24 Stunden verworfen wird. Erfasst werden u. a. Zeitpunkt, aufgerufene URL, Referrer, grobe Geolokalisierung (Land/Region/Stadt), Gerätetyp, Betriebssystem und Browser. Speed Insights erfasst technische Leistungskennzahlen (z. B. Ladezeiten) der Seitenaufrufe. Zweck: Reichweitenmessung in aggregierter Form und Verbesserung der Ladegeschwindigkeit. Rechtsgrundlage: Art. 6 Abs. 1 lit. f DSGVO. Diese Dienste werden unabhängig von Ihrer Cookie-Auswahl geladen. Sie können dem widersprechen (Abschnitt 24).",
   },
   {
-    title: "7. Externe Inhalte beim Seitenaufruf (Google Fonts, Google Maps)",
+    title: "7. Schriftarten und Karte (Google Maps nur auf Klick)",
     content:
-      "Schriftarten: Beim Aufruf der Website lädt Ihr Browser Schriftarten von Servern der Google Ireland Limited (fonts.googleapis.com, fonts.gstatic.com). Dabei erhält Google Ihre IP-Adresse und die Information, dass Sie diese Website besuchen.\n\n" +
-      "Karte: Im Seitenfuß ist eine Google-Maps-Karte (maps.google.com) eingebettet, die Ihren Standort nicht abfragt. Beim Aufruf einer Seite überträgt Ihr Browser dafür Daten (insbesondere IP-Adresse) an Google; Google kann dabei eigene Cookies setzen oder auslesen.\n\n" +
-      "Zweck: einheitliche Darstellung der Website und Anzeige unseres Standorts. Rechtsgrundlage: Art. 6 Abs. 1 lit. f DSGVO. Übermittlung in die USA: siehe Abschnitt 22. Sie können dem widersprechen (Abschnitt 24).",
+      "Schriftarten: Die Schriftarten dieser Website liegen auf unserem eigenen Server (Vercel, Abschnitt 3). Beim Seitenaufruf wird keine Verbindung zu Google oder anderen Schriftarten-Anbietern hergestellt.\n\n" +
+      "Karte: Im Seitenfuß können Sie eine Google-Maps-Karte (maps.google.com, Google Ireland Limited) anzeigen lassen. Sie wird erst geladen, wenn Sie auf „Karte anzeigen“ klicken; vorher werden keine Daten an Google übertragen. Nach dem Klick überträgt Ihr Browser Daten (insbesondere Ihre IP-Adresse) an Google, und Google kann eigene Cookies setzen oder auslesen. Ihren Standort fragt die Karte nicht ab.\n\n" +
+      "Zweck: Anzeige unseres Standorts. Rechtsgrundlage: Ihre Einwilligung durch den Klick (Art. 6 Abs. 1 lit. a DSGVO, § 25 Abs. 1 TDDDG). Übermittlung in die USA: siehe Abschnitt 22.",
   },
   {
     title: "8. Kontaktaufnahme per E-Mail, Telefon und WhatsApp",
@@ -139,7 +136,7 @@ const sectionsDE: LegalSection[] = [
   {
     title: "9. Terminbuchung über Google Kalender",
     content:
-      "Wenn Sie über „Jetzt buchen“ oder im Rahmen einer Buchung einen Termin wählen, öffnet sich in einem Fenster die Terminbuchungsseite von Google Kalender (calendar.google.com). Sie wird erst geladen, wenn Sie dieses Fenster öffnen. Die Daten, die Sie dort eingeben (z. B. Name, E-Mail-Adresse, gewählter Termin, Anmerkungen), verarbeitet Google; wir erhalten sie in unserem Google-Konto. Zweck: Terminvereinbarung. Rechtsgrundlage: Art. 6 Abs. 1 lit. b DSGVO. Dabei kann Google Cookies setzen oder auslesen. Übermittlung in die USA: siehe Abschnitt 22. Alternativ können Sie Termine per E-Mail oder WhatsApp vereinbaren.\n" +
+      "Wenn Sie über „Jetzt buchen“ oder im Rahmen einer Buchung einen Termin wählen, öffnet sich in einem Fenster die Terminbuchungsseite von Google Kalender (calendar.google.com). Sie wird erst geladen, wenn Sie in diesem Fenster auf „Google Kalender laden“ klicken; vorher werden keine Daten an Google übertragen. Die Daten, die Sie dort eingeben (z. B. Name, E-Mail-Adresse, gewählter Termin, Anmerkungen), verarbeitet Google; wir erhalten sie in unserem Google-Konto. Zweck: Terminvereinbarung. Rechtsgrundlage: Art. 6 Abs. 1 lit. b DSGVO. Dabei kann Google Cookies setzen oder auslesen. Übermittlung in die USA: siehe Abschnitt 22. Alternativ können Sie Termine per E-Mail oder WhatsApp vereinbaren.\n" +
       "Hinweis: Auch die 15-minütige Kennenlern-Beratung sowie Einzelsitzungen (Yoga, Hypnotherapie, NLP, Heilung des Unterbewusstseins) werden auf diesem Weg oder per E-Mail/WhatsApp vereinbart.",
   },
   {
@@ -314,11 +311,11 @@ const sectionsEN: LegalSection[] = [
       "We use Vercel Web Analytics and Vercel Speed Insights provided by Vercel Inc. (address: see section 3). According to Vercel, Web Analytics works without cookies: visitors are recognised anonymously by a hash generated from the request, which is discarded after 24 hours. Recorded data include, among others, time, requested URL, referrer, approximate geolocation (country/region/city), device type, operating system and browser. Speed Insights records technical performance metrics (e.g. load times) of page views. Purpose: aggregated reach measurement and improving loading speed. Legal basis: Art. 6(1)(f) GDPR. These services are loaded regardless of your cookie choice. You can object (section 24).",
   },
   {
-    title: "7. External content when a page is loaded (Google Fonts, Google Maps)",
+    title: "7. Fonts and map (Google Maps only on click)",
     content:
-      "Fonts: When the website is accessed, your browser loads fonts from servers of Google Ireland Limited (fonts.googleapis.com, fonts.gstatic.com). Google thereby receives your IP address and the information that you are visiting this website.\n\n" +
-      "Map: A Google Maps map (maps.google.com) is embedded in the footer; it does not ask for your location. When a page is loaded, your browser transmits data (in particular your IP address) to Google for this purpose; Google may set or read its own cookies.\n\n" +
-      "Purpose: consistent presentation of the website and showing our location. Legal basis: Art. 6(1)(f) GDPR. Transfer to the USA: see section 22. You can object (section 24).",
+      "Fonts: The fonts used on this website are stored on our own server (Vercel, section 3). Loading a page does not connect to Google or any other font provider.\n\n" +
+      "Map: In the footer you can choose to show a Google Maps map (maps.google.com, Google Ireland Limited). It is loaded only when you click \u201cShow map\u201d; before that, no data is sent to Google. After the click your browser transmits data (in particular your IP address) to Google, and Google may set or read its own cookies. The map does not ask for your location.\n\n" +
+      "Purpose: showing our location. Legal basis: your consent given by the click (Art. 6(1)(a) GDPR, § 25(1) TDDDG). Transfer to the USA: see section 22.",
   },
   {
     title: "8. Contact by email, phone and WhatsApp",
@@ -329,7 +326,7 @@ const sectionsEN: LegalSection[] = [
   {
     title: "9. Appointment booking via Google Calendar",
     content:
-      "If you choose an appointment via “Book now” or as part of a booking, the Google Calendar appointment-scheduling page (calendar.google.com) opens in a window. It is loaded only when you open this window. Google processes the data you enter there (e.g. name, email address, chosen appointment, notes); we receive it in our Google account. Purpose: scheduling appointments. Legal basis: Art. 6(1)(b) GDPR. Google may set or read cookies. Transfer to the USA: see section 22. Alternatively you can arrange appointments by email or WhatsApp.\n" +
+      "If you choose an appointment via “Book now” or as part of a booking, the Google Calendar appointment-scheduling page (calendar.google.com) opens in a window. It is loaded only when you click \u201cLoad Google Calendar\u201d in that window; before that, no data is sent to Google. Google processes the data you enter there (e.g. name, email address, chosen appointment, notes); we receive it in our Google account. Purpose: scheduling appointments. Legal basis: Art. 6(1)(b) GDPR. Google may set or read cookies. Transfer to the USA: see section 22. Alternatively you can arrange appointments by email or WhatsApp.\n" +
       "Note: the 15-minute introductory call and one-to-one sessions (yoga, hypnotherapy, NLP, subconscious healing) are also arranged this way or by email/WhatsApp.",
   },
   {

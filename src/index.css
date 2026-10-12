@@ -2,6 +2,14 @@
 
 @plugin "tailwindcss-animate";
 
+/* Fonts are self-hosted (bundled from @fontsource), never loaded from
+   Google's servers: a page that sends visitors' IP addresses to Google Fonts
+   without consent has been held to breach the GDPR (LG München I, 20 Jan
+   2022, 3 O 17493/20). Only the weights the site uses are imported. */
+@import "@fontsource/playfair-display/400.css";
+@import "@fontsource/playfair-display/700.css";
+@import "@fontsource/playfair-display/400-italic.css";
+
 @custom-variant dark (&:is(.dark *));
 
 @theme {

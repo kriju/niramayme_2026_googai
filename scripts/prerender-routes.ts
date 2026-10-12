@@ -29,7 +29,7 @@
 
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
-import { BUSINESS_CITY, BUSINESS_POSTAL_CODE, BUSINESS_STREET_ADDRESS, COURSES, SERVICES, TRANSLATIONS } from "../src/constants";
+import { ASTROLOGY_PAGE_PATH, BUSINESS_CITY, BUSINESS_POSTAL_CODE, BUSINESS_STREET_ADDRESS, COURSES, SERVICES, TRANSLATIONS } from "../src/constants";
 import { SITE_JSONLD } from "../src/lib/structuredData";
 import { escapeHtml } from "../api/_lib/util";
 
@@ -62,6 +62,11 @@ const routes: Route[] = [
     path: "/faq",
     title: { EN: TRANSLATIONS.EN.faq.seoTitle, DE: TRANSLATIONS.DE.faq.seoTitle },
     description: { EN: TRANSLATIONS.EN.faq.seoDescription, DE: TRANSLATIONS.DE.faq.seoDescription },
+  },
+  {
+    path: ASTROLOGY_PAGE_PATH,
+    title: { EN: TRANSLATIONS.EN.astrologyPage.seoTitle, DE: TRANSLATIONS.DE.astrologyPage.seoTitle },
+    description: { EN: TRANSLATIONS.EN.astrologyPage.seoDescription, DE: TRANSLATIONS.DE.astrologyPage.seoDescription },
   },
   ...SERVICES.filter((s) => !s.openInModal).map((s) => ({
     path: `/services/${s.id}`,

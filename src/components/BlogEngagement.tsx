@@ -17,6 +17,7 @@ import {
   Linkedin,
   Twitter,
   MessageCircle,
+  Flag,
 } from "lucide-react";
 import { collection, doc, getDoc, getDocs, limit, orderBy, query, where } from "firebase/firestore";
 import { Button } from "@/components/ui/button";
@@ -496,6 +497,15 @@ function CommentsSection({ blogId, lang }: { blogId: string; lang: Lang }) {
     return { Authorization: `Bearer ${await user.getIdToken()}` };
   };
 
+  // A reader's notice about a comment (api/blog-comments.ts handleReport).
+  const report = async (comment: BlogComment) => {
+    await callApi("/api/blog-comments?op=report", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ blogId, commentId: comment.id }),
+    });
+  };
+
   const moderate = async (comment: BlogComment, action: "show" | "hide" | "delete") => {
     if (action === "delete" && !window.confirm(t.deleteConfirm)) return;
     const result = await callApi<{ status?: CommentStatus; deleted?: boolean }>("/api/blog-comments", {
@@ -547,6 +557,7 @@ function CommentsSection({ blogId, lang }: { blogId: string; lang: Lang }) {
                   lang={lang}
                   isAdmin={isAdmin}
                   onModerate={moderate}
+                  onReport={report}
                   renderReply={
                     isAdmin && c.status === "visible"
                       ? (close) => <ReplyForm blogId={blogId} parentId={c.id} lang={lang} authHeader={authHeader} onPosted={upsert} onClose={close} />
@@ -557,7 +568,7 @@ function CommentsSection({ blogId, lang }: { blogId: string; lang: Lang }) {
                   <ul className="mt-4 ml-6 sm:ml-12 space-y-4 border-l-2 border-primary/10 pl-4 sm:pl-6">
                     {repliesByParent.get(c.id)!.map((r) => (
                       <li key={r.id}>
-                        <CommentItem comment={r} lang={lang} isAdmin={isAdmin} onModerate={moderate} />
+                        <CommentItem comment={r} lang={lang} isAdmin={isAdmin} onModerate={moderate} onReport={report} />
                       </li>
                     ))}
                   </ul>
@@ -581,12 +592,14 @@ function CommentItem({
   lang,
   isAdmin,
   onModerate,
+  onReport,
   renderReply,
 }: {
   comment: BlogComment;
   lang: Lang;
   isAdmin: boolean;
   onModerate: (c: BlogComment, action: "show" | "hide" | "delete") => Promise<void>;
+  onReport: (c: BlogComment) => Promise<void>;
   // Only top-level, visible comments get one (see api/blog-comments.ts).
   renderReply?: (close: () => void) => React.ReactNode;
 }) {
@@ -594,6 +607,21 @@ function CommentItem({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [replying, setReplying] = useState(false);
+  const [reported, setReported] = useState(false);
+
+  const report = async () => {
+    if (!window.confirm(t.reportConfirm)) return;
+    setBusy(true);
+    setError(null);
+    try {
+      await onReport(comment);
+      setReported(true);
+    } catch (err) {
+      setError(errorMessage(t, err));
+    } finally {
+      setBusy(false);
+    }
+  };
 
   const run = async (action: "show" | "hide" | "delete") => {
     setBusy(true);
@@ -670,6 +698,24 @@ function CommentItem({
           </Button>
           {error && (
             <span role="alert" className="text-sm text-red-600">
+              {error}
+            </span>
+          )}
+        </div>
+      )}
+
+      {!isAdmin && !comment.isAuthor && comment.status === "visible" && (
+        <div className="mt-2 flex flex-wrap items-center gap-2">
+          {reported ? (
+            <span className="text-xs text-stone-500">{t.reported}</span>
+          ) : (
+            <button type="button" className="inline-flex items-center gap-1 text-xs text-stone-400 hover:text-stone-600 disabled:opacity-50" disabled={busy} onClick={report}>
+              <Flag className="w-3 h-3" />
+              {t.report}
+            </button>
+          )}
+          {error && (
+            <span role="alert" className="text-xs text-red-600">
               {error}
             </span>
           )}
