@@ -180,6 +180,24 @@ const LangSwitch = ({ lang, altPath, className = "" }: { lang: "EN" | "DE", altP
   );
 };
 
+// Google Calendar and Google Maps are only loaded after a click: until then
+// no request goes to Google (the iframe would send the visitor's IP address
+// and let Google set cookies). One click per embed type covers the rest of
+// the visit.
+const loadedEmbeds = new Set<string>();
+const ConsentEmbed = ({ kind, lang, children, className = "" }: { kind: "calendar" | "map", lang: "EN" | "DE", children: React.ReactNode, className?: string }) => {
+  const [loaded, setLoaded] = useState(() => loadedEmbeds.has(kind));
+  const t = TRANSLATIONS[lang].consentEmbed[kind];
+  if (loaded) return <>{children}</>;
+  return (
+    <div className={`flex flex-col items-center justify-center gap-3 text-center p-6 bg-stone-50 ${className}`}>
+      {kind === "calendar" ? <Calendar className="w-8 h-8 text-primary/60" /> : <MapPin className="w-6 h-6 text-primary/60" />}
+      <p className="text-sm text-muted-foreground max-w-sm">{t.notice}</p>
+      <Button size="sm" className="rounded-full" onClick={() => { loadedEmbeds.add(kind); setLoaded(true); }}>{t.load}</Button>
+    </div>
+  );
+};
+
 const BookingDialog = ({ context, lang, open, onOpenChange }: { context: BookingContext | null, lang: "EN" | "DE", open: boolean, onOpenChange: (o: boolean) => void }) => {
   const t = TRANSLATIONS[lang].booking;
   const title = context?.title || t.title;
@@ -207,11 +225,13 @@ const BookingDialog = ({ context, lang, open, onOpenChange }: { context: Booking
           )}
         </DialogHeader>
         <div className="flex-1 w-full h-full min-h-0 relative">
-          <iframe
-            src={GOOGLE_CALENDAR_URL}
-            className="w-full h-full border-0"
-            title="Google Calendar Appointment Scheduling"
-          />
+          <ConsentEmbed kind="calendar" lang={lang} className="h-full">
+            <iframe
+              src={GOOGLE_CALENDAR_URL}
+              className="w-full h-full border-0"
+              title="Google Calendar Appointment Scheduling"
+            />
+          </ConsentEmbed>
           <div className="absolute bottom-4 right-4">
             <a
               href={GOOGLE_CALENDAR_URL.replace('?gv=true', '')}
@@ -821,7 +841,9 @@ const ReikiIntakeModal = ({ lang, pkg, onClose, onOpenPrivacy, onOpenLegal }: { 
               <p className="text-sm text-muted-foreground">{t.calendarDesc}</p>
             </DialogHeader>
             <div className="flex-1 w-full min-h-0 relative">
-              <iframe src={GOOGLE_CALENDAR_URL} className="w-full h-full border-0" title="Google Calendar Appointment Scheduling" />
+              <ConsentEmbed kind="calendar" lang={lang} className="h-full">
+                <iframe src={GOOGLE_CALENDAR_URL} className="w-full h-full border-0" title="Google Calendar Appointment Scheduling" />
+              </ConsentEmbed>
               <div className="absolute bottom-4 right-4">
                 <a
                   href={GOOGLE_CALENDAR_URL.replace('?gv=true', '')}
@@ -912,6 +934,12 @@ const COURSE_CONTACT_EMAIL = "riju.kansal@niramay.me";
 type Course = (typeof COURSES)[number];
 
 // Courses with a `bookingClosesAt` stop taking bookings after that moment.
+// A dated course (`lastDay`, YYYY-MM-DD) disappears the day after it ran,
+// German time.
+const isCoursePast = (course: Course) =>
+  "lastDay" in course && !!course.lastDay
+  && new Date().toLocaleDateString("sv-SE", { timeZone: "Europe/Berlin" }) > course.lastDay;
+
 const isCourseBookingClosed = (course: Course) =>
   Boolean(course.bookingClosesAt && Date.now() > new Date(course.bookingClosesAt).getTime());
 
@@ -1718,12 +1746,9 @@ const Navbar = ({ lang, altPath, onBook, belowAnnouncement = false }: { lang: "E
                   </span>
                   <Button variant="ghost" size="sm" onClick={() => logOut()}>{ta.navLogOut}</Button>
                 </div>
-              ) : (
-                <div className="flex items-center gap-2">
-                  <Button variant="ghost" size="sm" onClick={() => openAuth("login")}>{ta.navLogIn}</Button>
-                  <Button variant="outline" size="sm" className="rounded-full" onClick={() => openAuth("signup")}>{ta.navSignUp}</Button>
-                </div>
-              )
+              ) : null
+              // Log In / Sign Up are hidden until an account gives visitors
+              // something (e.g. order history); guest booking never needs one.
             )}
             <Button size="sm" className="rounded-full px-6" onClick={() => onBook()}>{t.bookNow}</Button>
           </div>
@@ -1793,12 +1818,7 @@ const Navbar = ({ lang, altPath, onBook, belowAnnouncement = false }: { lang: "E
                   </span>
                   <Button variant="ghost" size="sm" onClick={() => { closeMobileMenu(); logOut(); }}>{ta.navLogOut}</Button>
                 </div>
-              ) : (
-                <div className="flex items-center gap-3">
-                  <Button variant="ghost" size="sm" className="flex-1" onClick={() => { closeMobileMenu(); openAuth("login"); }}>{ta.navLogIn}</Button>
-                  <Button variant="outline" size="sm" className="flex-1 rounded-full" onClick={() => { closeMobileMenu(); openAuth("signup"); }}>{ta.navSignUp}</Button>
-                </div>
-              )
+              ) : null
             )}
             <div className="flex justify-end items-center">
               <Button className="rounded-full" onClick={() => { setIsMobileMenuOpen(false); onBook(); }}>{t.bookNow}</Button>
@@ -3288,7 +3308,7 @@ const CoursesSection = ({ lang, onBookCourse }: { lang: "EN" | "DE", onBookCours
         </div>
 
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-          {COURSES.map((course, idx) => {
+          {COURSES.filter(course => !isCoursePast(course)).map((course, idx) => {
             const content = course[lang];
             return (
               <motion.div
@@ -4011,22 +4031,22 @@ const Footer = ({ lang, onOpenLegal, onOpenCookieSettings, onOpenWithdraw }: { l
                 </a>
               </li>
             </ul>
-            <a
-              href={GOOGLE_MAPS_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="block rounded-xl overflow-hidden border border-stone-200 hover:opacity-90 transition-opacity"
-              aria-label={t.viewOnGoogleMaps}
-            >
-              <iframe
-                src={GOOGLE_MAPS_EMBED_URL}
-                title={t.viewOnGoogleMaps}
-                width="100%"
-                height="160"
-                loading="lazy"
-                referrerPolicy="no-referrer-when-downgrade"
-                className="pointer-events-none w-full h-40"
-              />
+            <div className="rounded-xl overflow-hidden border border-stone-200">
+              <ConsentEmbed kind="map" lang={lang} className="h-40">
+                <a href={GOOGLE_MAPS_URL} target="_blank" rel="noopener noreferrer" className="block hover:opacity-90 transition-opacity" aria-label={t.viewOnGoogleMaps}>
+                  <iframe
+                    src={GOOGLE_MAPS_EMBED_URL}
+                    title={t.viewOnGoogleMaps}
+                    width="100%"
+                    height="160"
+                    referrerPolicy="no-referrer-when-downgrade"
+                    className="pointer-events-none w-full h-40"
+                  />
+                </a>
+              </ConsentEmbed>
+            </div>
+            <a href={GOOGLE_MAPS_URL} target="_blank" rel="noopener noreferrer" className="inline-block mt-2 text-xs text-muted-foreground hover:text-primary underline underline-offset-2">
+              {t.viewOnGoogleMaps}
             </a>
           </div>
         </div>
@@ -4034,7 +4054,7 @@ const Footer = ({ lang, onOpenLegal, onOpenCookieSettings, onOpenWithdraw }: { l
         <Separator className="mb-8" />
         
         <div className="flex flex-col md:flex-row justify-between items-center gap-6 text-sm text-muted-foreground">
-          <p>© {new Date().getFullYear()} Niramay Wellness. {t.rights}</p>
+          <p>© {new Date().getFullYear()} Niramay Wellbeing. {t.rights}</p>
           <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 md:gap-x-8">
             <button onClick={() => onOpenLegal("impressum")} className="hover:text-primary transition-colors cursor-pointer bg-transparent border-none p-0">{t.impressum}</button>
             <button onClick={() => onOpenLegal("privacy")} className="hover:text-primary transition-colors cursor-pointer bg-transparent border-none p-0">{t.privacy}</button>
@@ -4083,23 +4103,23 @@ const CookieConsent = ({ lang, reopen, onClose, onOpenPrivacy }: { lang: "EN" | 
   };
 
   return (
-    <div className="fixed bottom-0 inset-x-0 z-[100] p-4 sm:p-6" role="region" aria-label={TRANSLATIONS[lang].footer.cookieSettings}>
-      <div className="max-w-3xl mx-auto bg-background border border-stone-200 shadow-xl rounded-2xl p-5 sm:p-6 flex flex-col sm:flex-row sm:items-center gap-4">
-        <div className="flex-1 text-sm text-muted-foreground space-y-2">
+    <div className="fixed bottom-0 inset-x-0 z-[100] p-3 sm:p-4" role="region" aria-label={TRANSLATIONS[lang].footer.cookieSettings}>
+      <div className="max-w-2xl mx-auto bg-background/95 backdrop-blur border border-stone-200 shadow-lg rounded-2xl px-4 py-3 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+        <div className="flex-1 text-xs sm:text-sm text-muted-foreground">
           <p>
             {t.message}{" "}
             <button type="button" onClick={onOpenPrivacy} className="underline underline-offset-2 hover:text-primary">
               {t.privacyLink}
             </button>
           </p>
-          {reopen && <p className="font-medium text-foreground">{getStoredConsent() === "granted" ? t.statusOn : t.statusOff}</p>}
+          {reopen && <p className="font-medium text-foreground mt-1">{getStoredConsent() === "granted" ? t.statusOn : t.statusOff}</p>}
         </div>
         {/* Equal prominence for both choices (no nudging towards Accept). */}
-        <div className="flex flex-wrap gap-3 shrink-0">
-          <Button size="sm" className="rounded-full" onClick={() => decide(false)}>
+        <div className="flex gap-2 shrink-0">
+          <Button size="sm" className="rounded-full flex-1 sm:flex-none" onClick={() => decide(false)}>
             {t.reject}
           </Button>
-          <Button size="sm" className="rounded-full" onClick={() => decide(true)}>
+          <Button size="sm" className="rounded-full flex-1 sm:flex-none" onClick={() => decide(true)}>
             {t.accept}
           </Button>
           {reopen && !firstVisit && (

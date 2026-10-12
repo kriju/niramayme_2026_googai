@@ -46,12 +46,12 @@ export const TRANSLATIONS = {
       courses: "Courses",
       astrology: "Astrology & Tarot",
       bookNow: "Book Now",
-      book: "My Book",
+      book: "The Book",
       // Navbar group labels: the desktop/mobile nav collapses the flat
       // list of links above into three dropdowns (About, Offerings, Read)
       // plus the standalone Reviews/FAQ links — see Navbar in App.tsx.
       aboutGroup: "About",
-      trainers: "Trainers",
+      trainers: "Richa & Riju",
       offerings: "Offerings",
       read: "Read",
       // Language switch (Navbar's LangSwitch): the group's label, and each
@@ -137,7 +137,7 @@ export const TRANSLATIONS = {
       title: "Real Stories of Transformation",
       description: "In their own words: messages clients sent Richa after their sessions, shared here with their permission.",
       via: "via",
-      client: "Client",
+      client: "A Niramay client",
       originalIn: { EN: "Original in English", HI: "Original in Hindi" },
       translationLabel: "Translation",
       seeOriginal: "See original message",
@@ -228,8 +228,19 @@ export const TRANSLATIONS = {
       cookieSettings: "Cookie settings",
       legal: LEGAL_DOCS.EN,
     },
+    // Click-to-load notices for Google embeds (ConsentEmbed in App.tsx).
+    consentEmbed: {
+      calendar: {
+        notice: "The booking calendar is provided by Google. Loading it sends your IP address to Google (see the privacy policy). You can also book by WhatsApp or email.",
+        load: "Load Google Calendar",
+      },
+      map: {
+        notice: "Showing the map loads Google Maps, which sends your IP address to Google.",
+        load: "Show map",
+      },
+    },
     cookieConsent: {
-      message: "We would like to use Google Analytics (Google Ireland Limited, with cookies) to understand how this site is used. This only happens with your consent. You can change or withdraw your choice at any time via \"Cookie settings\" in the footer.",
+      message: "May we use Google Analytics (cookies) to see how the site is used? Only with your OK; change it any time under \"Cookie settings\".",
       privacyLink: "Privacy Policy",
       accept: "Accept",
       reject: "Decline",
@@ -803,7 +814,7 @@ export const TRANSLATIONS = {
   },
   DE: {
     nav: {
-      services: "Dienstleistungen",
+      services: "Leistungen",
       about: "Über uns",
       events: "Veranstaltungen",
       reviews: "Bewertungen",
@@ -813,9 +824,9 @@ export const TRANSLATIONS = {
       courses: "Kurse",
       astrology: "Astrologie & Tarot",
       bookNow: "Jetzt buchen",
-      book: "Mein Buch",
+      book: "Das Buch",
       aboutGroup: "Über uns",
-      trainers: "Trainer",
+      trainers: "Richa & Riju",
       offerings: "Angebote",
       read: "Lesen",
       languageLabel: "Sprache",
@@ -830,7 +841,7 @@ export const TRANSLATIONS = {
       titleItalic: "Heilungs",
       description: "Die Verbindung von altem Wissen und moderner Psychologie, um Ihnen zu helfen, Balance, Klarheit und dauerhafte Transformation zu finden.",
       ctaPrimary: "Kostenloses 15-Min-Gespräch buchen",
-      ctaSecondary: "Dienstleistungen erkunden",
+      ctaSecondary: "Leistungen entdecken",
       foundersLabel: "Ihre Lehrenden",
       foundersNames: "Richa & Riju Kansal",
       foundersLine: "Zertifizierte Yogatherapeutin und Yogatherapeut, gemeinsam in Ostfildern seit 2018.",
@@ -896,7 +907,7 @@ export const TRANSLATIONS = {
       title: "Echte Geschichten der Transformation",
       description: "In ihren eigenen Worten: Nachrichten, die Klientinnen und Klienten Richa nach ihren Sitzungen geschickt haben, hier mit ihrer Erlaubnis geteilt.",
       via: "über",
-      client: "Klient:in",
+      client: "Klient:in von Niramay",
       originalIn: { EN: "Originalzitat auf Englisch", HI: "Originalzitat auf Hindi" },
       translationLabel: "Übersetzung",
       seeOriginal: "Originalnachricht ansehen",
@@ -987,8 +998,18 @@ export const TRANSLATIONS = {
       cookieSettings: "Cookie-Einstellungen",
       legal: LEGAL_DOCS.DE,
     },
+    consentEmbed: {
+      calendar: {
+        notice: "Der Buchungskalender wird von Google bereitgestellt. Beim Laden wird Ihre IP-Adresse an Google übertragen (siehe Datenschutzerklärung). Sie können auch per WhatsApp oder E-Mail buchen.",
+        load: "Google Kalender laden",
+      },
+      map: {
+        notice: "Beim Anzeigen der Karte wird Google Maps geladen und Ihre IP-Adresse an Google übertragen.",
+        load: "Karte anzeigen",
+      },
+    },
     cookieConsent: {
-      message: "Wir möchten Google Analytics (Google Ireland Limited, mit Cookies) nutzen, um zu verstehen, wie diese Website genutzt wird. Das geschieht nur mit Ihrer Einwilligung. Sie können Ihre Entscheidung jederzeit über „Cookie-Einstellungen“ im Seitenfuß ändern oder widerrufen.",
+      message: "Dürfen wir Google Analytics (Cookies) nutzen, um zu sehen, wie die Seite genutzt wird? Nur mit Ihrer Zustimmung; jederzeit änderbar unter „Cookie-Einstellungen“.",
       privacyLink: "Datenschutzerklärung",
       accept: "Akzeptieren",
       reject: "Ablehnen",
@@ -2509,6 +2530,7 @@ export const COURSES = [
     id: "bollywood-dance-workshop",
     provider: "VHS Ostfildern",
     kursnr: "262-301115",
+    lastDay: "2026-10-10",
     registrationUrl: "https://vhs-ostfildern.de/programm/kw/bereich/kursdetails/kurs/262-301115/",
     EN: {
       title: "Indian Bollywood Dance",
@@ -2529,6 +2551,7 @@ export const COURSES = [
     id: "surya-namaskar-seminar",
     provider: "VHS Ostfildern",
     kursnr: "262-301116",
+    lastDay: "2026-10-17",
     registrationUrl: "https://vhs-ostfildern.de/programm/kw/bereich/kursdetails/kurs/262-301116/",
     EN: {
       title: "Surya Namaskar Seminar",
@@ -2549,6 +2572,7 @@ export const COURSES = [
     id: "patanjali-seminar",
     provider: "VHS Ostfildern",
     kursnr: "262-301117",
+    lastDay: "2026-11-14",
     registrationUrl: "https://vhs-ostfildern.de/programm/kw/bereich/kursdetails/kurs/262-301117/",
     EN: {
       title: "The 8 Limbs of Yoga (Patanjali)",
@@ -2569,6 +2593,7 @@ export const COURSES = [
     id: "pranayama-seminar",
     provider: "VHS Ostfildern",
     kursnr: "262-301118",
+    lastDay: "2027-01-23",
     registrationUrl: "https://vhs-ostfildern.de/programm/kw/bereich/kursdetails/kurs/262-301118/",
     EN: {
       title: "Pranayama Seminar",
