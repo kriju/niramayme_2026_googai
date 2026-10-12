@@ -21,10 +21,14 @@ import type { LegalDoc } from "./types";
 //  - VAT ID / Kleinunternehmer line added, driven by src/legal/config.ts.
 //  - Owner names / legal form come from src/legal/config.ts.
 //  - § 36 VSBG statement kept.
-//
-// LEGAL-REVIEW: the blog contains editorial content. Check whether a
-// "Verantwortlich für den Inhalt nach § 18 Abs. 2 MStV" line (name + address)
-// is needed; not added because it requires a statement the owners must make.
+//  - "Verantwortlich für den Inhalt nach § 18 Abs. 2 MStV" added: the blog
+//    publishes journalistic-editorial articles (personal essays and case
+//    stories), so a responsible person with address is named. Richa Kansal
+//    writes the blog and is the sole provider (see config.ts owners).
+
+// Person responsible for the editorial (blog) content, § 18 Abs. 2 MStV.
+const editorialBlock = () =>
+  [LEGAL_CONFIG.owners[0], ADDRESS.street, `${ADDRESS.postalCode} ${ADDRESS.city}`].join("\n");
 
 const providerBlock = (lang: "DE" | "EN") =>
   [
@@ -52,6 +56,10 @@ export const impressum: { DE: LegalDoc; EN: LegalDoc } = {
         content: vatImpressumLine("DE"),
       },
       {
+        title: "Verantwortlich für den Inhalt nach § 18 Abs. 2 MStV",
+        content: editorialBlock(),
+      },
+      {
         title: "Verbraucherstreitbeilegung",
         content:
           "Wir sind nicht bereit und nicht verpflichtet, an Streitbeilegungsverfahren vor einer Verbraucherschlichtungsstelle teilzunehmen (§ 36 VSBG).",
@@ -73,6 +81,10 @@ export const impressum: { DE: LegalDoc; EN: LegalDoc } = {
       {
         title: "Value-added tax",
         content: vatImpressumLine("EN"),
+      },
+      {
+        title: "Responsible for the content pursuant to § 18 (2) MStV (German Interstate Media Treaty)",
+        content: editorialBlock(),
       },
       {
         title: "Consumer dispute resolution",
