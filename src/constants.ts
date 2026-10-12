@@ -44,6 +44,7 @@ export const TRANSLATIONS = {
       faq: "FAQ",
       sessions: "Sessions",
       courses: "Courses",
+      astrology: "Astrology & Tarot",
       bookNow: "Book Now",
       book: "My Book",
       // Navbar group labels: the desktop/mobile nav collapses the flat
@@ -68,8 +69,11 @@ export const TRANSLATIONS = {
       description: "Bridging ancient wisdom and modern psychology to help you find balance, clarity, and lasting transformation.",
       ctaPrimary: "Book a Free 15-Min Call",
       ctaSecondary: "Explore Services",
-      latestReads: "Latest reads",
-      seeAll: "All articles",
+      // The first screen introduces the two people behind Niramay.
+      foundersLabel: "Your teachers",
+      foundersNames: "Richa & Riju Kansal",
+      foundersLine: "Certified yoga therapists, teaching side by side in Ostfildern since 2018.",
+      foundersCta: "Meet us",
       reviewsLabel: "Client stories",
       bookLabel: "The book",
       bookCta: "Discover the book",
@@ -80,6 +84,22 @@ export const TRANSLATIONS = {
       outcomeLabel: "The Outcome",
       learnMore: "Learn more & Book",
       priceLabel: "Investment",
+    },
+    // /astrology-tarot: Vedic astrology, tarot and intuitive guidance have
+    // their own page, apart from the yoga and wellbeing services.
+    astrologyPage: {
+      seoTitle: "Vedic Astrology & Tarot Readings — Niramay Wellbeing",
+      seoDescription: "Vedic astrology (Kundali) readings, tarot guidance and intuitive soul counselling with Richa Kansal, online or in Ostfildern near Stuttgart.",
+      badge: "Astrology & Tarot",
+      title: "Vedic Astrology & Tarot",
+      intro: "Alongside yoga and holistic wellbeing, Richa offers readings rooted in Vedic astrology (Jyotish) and tarot: a quiet hour to reflect on where you stand, the patterns that keep returning and the choices ahead. Most sessions take place online, so they work from anywhere, including India.",
+      servicesTitle: "Readings and guidance",
+      storiesTitle: "What clients say",
+      note: "Astrology and tarot readings are for reflection and personal guidance. They are not a forecast you can rely on, and they don't replace medical, psychological, legal or financial advice.",
+      breadcrumb: "Astrology & Tarot",
+      teaserTitle: "Vedic Astrology & Tarot",
+      teaserDescription: "Kundali readings, tarot guidance and intuitive soul counselling with Richa, online from anywhere.",
+      teaserCta: "Explore astrology & tarot",
     },
     servicePage: {
       home: "Home",
@@ -300,6 +320,11 @@ export const TRANSLATIONS = {
       onlyInOther: "This article is only available in German.",
       readInOther: "Read it in German",
       browseBlog: "Browse English articles",
+      imageCredit: "Image:",
+      // Under posts with "Show the standard health disclaimer" ticked in
+      // /write (api/_lib/claimsCheck.ts warns when it's missing).
+      disclaimerTitle: "Please note",
+      disclaimer: "This article shares experiences and general information about yoga, breathwork and holistic practices. It is not medical advice and does not replace diagnosis or treatment by a doctor, psychotherapist or other health professional. If you have a health condition, please speak to your doctor before starting a new practice, and never stop a prescribed treatment on the basis of this article.",
     },
     engagement: {
       like: "Like",
@@ -330,7 +355,10 @@ export const TRANSLATIONS = {
       submit: "Post Comment",
       submitting: "Posting…",
       posted: "Thank you — your comment is live.",
-      pendingNotice: "Thank you! Comments containing links are reviewed before they appear.",
+      pendingNotice: "Thank you! Your comment will appear once we've read it. Comments with links or health claims are checked first.",
+      report: "Report comment",
+      reportConfirm: "Report this comment to Richa and Riju? They'll check it and remove it if it breaks the law or the site's rules.",
+      reported: "Thank you — we'll take a look.",
       publicNotice: "Comments are public. Please don't share private health details.",
       anonymous: "Anonymous",
       authorBadge: "Author",
@@ -783,6 +811,7 @@ export const TRANSLATIONS = {
       faq: "FAQ",
       sessions: "Sitzungen",
       courses: "Kurse",
+      astrology: "Astrologie & Tarot",
       bookNow: "Jetzt buchen",
       book: "Mein Buch",
       aboutGroup: "Über uns",
@@ -802,8 +831,10 @@ export const TRANSLATIONS = {
       description: "Die Verbindung von altem Wissen und moderner Psychologie, um Ihnen zu helfen, Balance, Klarheit und dauerhafte Transformation zu finden.",
       ctaPrimary: "Kostenloses 15-Min-Gespräch buchen",
       ctaSecondary: "Dienstleistungen erkunden",
-      latestReads: "Neu zu lesen",
-      seeAll: "Alle Artikel",
+      foundersLabel: "Ihre Lehrenden",
+      foundersNames: "Richa & Riju Kansal",
+      foundersLine: "Zertifizierte Yogatherapeutin und Yogatherapeut, gemeinsam in Ostfildern seit 2018.",
+      foundersCta: "Lernen Sie uns kennen",
       reviewsLabel: "Stimmen unserer Klienten",
       bookLabel: "Das Buch",
       bookCta: "Buch entdecken",
@@ -814,6 +845,20 @@ export const TRANSLATIONS = {
       outcomeLabel: "Das Ergebnis",
       learnMore: "Mehr erfahren & buchen",
       priceLabel: "Investition",
+    },
+    astrologyPage: {
+      seoTitle: "Vedische Astrologie & Tarot — Niramay Wellbeing",
+      seoDescription: "Vedische Astrologie (Kundali-Lesungen), Tarot-Beratung und intuitive Seelenberatung mit Richa Kansal, online oder in Ostfildern bei Stuttgart.",
+      badge: "Astrologie & Tarot",
+      title: "Vedische Astrologie & Tarot",
+      intro: "Neben Yoga und ganzheitlichem Wohlbefinden bietet Richa Lesungen auf Grundlage der vedischen Astrologie (Jyotish) und des Tarot an: eine ruhige Stunde, um zu betrachten, wo Sie stehen, welche Muster wiederkehren und welche Entscheidungen vor Ihnen liegen. Die meisten Sitzungen finden online statt, also von überall aus, auch aus Indien.",
+      servicesTitle: "Lesungen und Begleitung",
+      storiesTitle: "Das sagen Klientinnen und Klienten",
+      note: "Astrologische und Tarot-Lesungen dienen der Reflexion und persönlichen Orientierung. Sie sind keine verlässliche Vorhersage und ersetzen keine medizinische, psychologische, rechtliche oder finanzielle Beratung.",
+      breadcrumb: "Astrologie & Tarot",
+      teaserTitle: "Vedische Astrologie & Tarot",
+      teaserDescription: "Kundali-Lesungen, Tarot-Beratung und intuitive Seelenberatung mit Richa, online von überall.",
+      teaserCta: "Astrologie & Tarot entdecken",
     },
     servicePage: {
       home: "Startseite",
@@ -1032,6 +1077,9 @@ export const TRANSLATIONS = {
       onlyInOther: "Dieser Artikel ist nur auf Englisch verfügbar.",
       readInOther: "Auf Englisch lesen",
       browseBlog: "Deutsche Artikel ansehen",
+      imageCredit: "Bild:",
+      disclaimerTitle: "Bitte beachten Sie",
+      disclaimer: "Dieser Artikel teilt Erfahrungen und allgemeine Informationen zu Yoga, Atemarbeit und ganzheitlichen Methoden. Er ist keine medizinische Beratung und ersetzt keine Diagnose oder Behandlung durch eine Ärztin, einen Arzt, eine Psychotherapeutin, einen Psychotherapeuten oder andere Fachleute. Wenn Sie eine Erkrankung haben, sprechen Sie bitte mit Ihrer Ärztin oder Ihrem Arzt, bevor Sie eine neue Praxis beginnen, und setzen Sie verordnete Behandlungen nie aufgrund dieses Artikels ab.",
     },
     engagement: {
       like: "Gefällt mir",
@@ -1062,7 +1110,10 @@ export const TRANSLATIONS = {
       submit: "Kommentar senden",
       submitting: "Wird gesendet…",
       posted: "Danke — Ihr Kommentar ist online.",
-      pendingNotice: "Danke! Kommentare mit Links werden vor der Veröffentlichung geprüft.",
+      pendingNotice: "Danke! Ihr Kommentar erscheint, sobald wir ihn gelesen haben. Kommentare mit Links oder Gesundheitsversprechen prüfen wir vorab.",
+      report: "Kommentar melden",
+      reportConfirm: "Diesen Kommentar an Richa und Riju melden? Sie prüfen ihn und entfernen ihn, wenn er gegen Gesetze oder die Regeln der Seite verstößt.",
+      reported: "Danke — wir sehen ihn uns an.",
       publicNotice: "Kommentare sind öffentlich. Bitte teilen Sie keine privaten Gesundheitsdaten.",
       anonymous: "Anonym",
       authorBadge: "Autorin/Autor",
@@ -1521,6 +1572,11 @@ export const CATEGORY_LABELS: Record<string, { EN: string; DE: string }> = {
 };
 export const REVIEW_CATEGORIES = ["Physical Wellness", "Mental Clarity", "Spiritual Healing", "Kids Yoga", "Dance Therapy", "Tarot Reading", "Chair Yoga"];
 export const categoryLabel = (category: string, lang: "EN" | "DE") => CATEGORY_LABELS[category]?.[lang] ?? category;
+
+// Shown on their own page (/astrology-tarot) instead of the homepage's
+// services grid, so the homepage leads with yoga and holistic wellbeing.
+export const ASTROLOGY_SERVICE_IDS = ["astrology", "tarot", "intuitive-guidance"];
+export const ASTROLOGY_PAGE_PATH = "/astrology-tarot";
 
 export const SERVICES = [
   {

@@ -27,9 +27,12 @@ service cloud.firestore {
     // email allowlist (rather than "any signed-in user") is enough — see
     // api/_lib/blogAuth.ts for the matching allowlist that gates uploading
     // blog media to Vercel Blob.
+    function blogAdminEmails() {
+      return ['rijuk@niramay.me', 'richak@niramay.me'];
+    }
     function isBlogAdmin() {
       return request.auth != null
-          && request.auth.token.email in ['rijuk@niramay.me', 'richak@niramay.me'];
+          && request.auth.token.email in blogAdminEmails();
     }
 
     // Blog helper
@@ -38,21 +41,54 @@ service cloud.firestore {
     // usually run 20-35% longer than the English original.
     function isValidBlog(data) {
       return data.keys().hasAll(['slug', 'title', 'content', 'createdAt', 'lang', 'published'])
-          && data.keys().hasOnly(['slug', 'title', 'excerpt', 'content', 'image', 'audioUrl', 'category', 'author', 'lang', 'createdAt', 'updatedAt', 'published', 'translationOf'])
+          && data.keys().hasOnly(['slug', 'title', 'excerpt', 'content', 'image', 'imageCredit', 'audioUrl', 'category', 'author', 'lang', 'createdAt', 'updatedAt', 'published', 'translationOf', 'disclaimer', 'revision'])
           && data.slug is string && data.slug.size() > 0 && data.slug.size() <= 200 && data.slug.matches('^[a-z0-9-]+$')
           && data.title is string && data.title.size() > 0 && data.title.size() <= 300
           && (!('excerpt' in data) || (data.excerpt is string && data.excerpt.size() <= 1500))
           && data.content is string && data.content.size() > 0 && data.content.size() <= 100000
           && (!('image' in data) || (data.image is string && data.image.size() <= 2000))
+          // Source / licence of the cover image, shown under it.
+          && (!('imageCredit' in data) || (data.imageCredit is string && data.imageCredit.size() <= 300))
           && (!('audioUrl' in data) || (data.audioUrl is string && data.audioUrl.size() <= 2000))
           && (!('category' in data) || data.category is string)
           && (!('author' in data) || data.author is string)
           // Id of the other-language post this one translates (WritePage).
           && (!('translationOf' in data) || (data.translationOf is string && data.translationOf.size() > 0 && data.translationOf.size() <= 100))
+          // Show the standard health disclaimer under the post.
+          && (!('disclaimer' in data) || data.disclaimer is bool)
+          // Bumped on every change to what readers see (BLOG_CONTENT_KEYS),
+          // so an approval names exactly the version it approved.
+          && (!('revision' in data) || (data.revision is int && data.revision >= 0))
           && data.lang in ['EN', 'DE']
           && data.createdAt is timestamp
           && (!('updatedAt' in data) || data.updatedAt is timestamp)
           && data.published is bool;
+    }
+
+    // What readers see of a post. Changing any of these bumps `revision`
+    // and, on a live post, needs a fresh approval or a logged typo fix.
+    function blogContentKeys() {
+      return ['title', 'excerpt', 'content', 'category', 'image', 'imageCredit', 'audioUrl', 'disclaimer', 'lang'];
+    }
+
+    // Review state of a post (blogReviews/{blogId}, admin-only). Kept out of
+    // the public blogs doc so internal notes and login emails never reach
+    // visitors. `pending` holds edits to a live post until they're approved.
+    function isValidBlogReview(data) {
+      return data.keys().hasAll(['authorEmail', 'status'])
+          && data.keys().hasOnly(['authorEmail', 'status', 'submittedBy', 'submittedAt', 'note', 'noteBy', 'noteAt',
+                                  'approvedBy', 'approvedAt', 'approvedRevision', 'approvalId',
+                                  'typoFixId', 'typoFixRevision', 'machineTranslated', 'pending', 'updatedAt'])
+          && data.authorEmail in blogAdminEmails()
+          && data.status in ['draft', 'in_review', 'changes_requested', 'approved']
+          && (!('submittedBy' in data) || data.submittedBy in blogAdminEmails())
+          && (!('submittedAt' in data) || data.submittedAt is timestamp)
+          && (!('note' in data) || (data.note is string && data.note.size() <= 2000))
+          && (!('noteBy' in data) || data.noteBy in blogAdminEmails())
+          && (!('noteAt' in data) || data.noteAt is timestamp)
+          && (!('machineTranslated' in data) || data.machineTranslated is bool)
+          && (!('pending' in data) || data.pending == null || data.pending is map)
+          && (!('updatedAt' in data) || data.updatedAt is timestamp);
     }
 
     // Legal acknowledgements stored with every booking (AGB accepted,
@@ -208,8 +244,163 @@ service cloud.firestore {
       // for every document once they're signed in, letting their admin
       // dashboard list everything regardless of published state.
       allow get, list: if resource.data.published == true || isBlogAdmin();
-      allow create, update: if isBlogAdmin() && isValidBlog(incoming());
+      // Blog legal review (src/pages/WritePage.tsx): a post is created as a
+      // draft, together with its blogReviews doc, and only goes live once
+      // the other founder has approved its current revision.
+      allow create: if isBlogAdmin() && isValidBlog(incoming())
+                    && incoming().published == false
+                    && incoming().revision == 1;
+      allow update: if isBlogAdmin() && isValidBlog(incoming()) && blogUpdateAllowed();
       allow delete: if isBlogAdmin();
+
+      function reviewPath() { return /databases/$(database)/documents/blogReviews/$(blogId); }
+      function reviewAfter() { return getAfter(reviewPath()).data; }
+
+      // The post's review records an approval of exactly `rev`, by someone
+      // other than its author.
+      function approvedAt(rev) {
+        return existsAfter(reviewPath())
+            && reviewAfter().status == 'approved'
+            && reviewAfter().get('approvedRevision', -1) == rev
+            && reviewAfter().get('approvedBy', '') != reviewAfter().authorEmail;
+      }
+
+      // This same write (batch) records a new approval of `rev`.
+      function approvalAddedNow(rev) {
+        return approvedAt(rev)
+            && (!exists(reviewPath())
+                || get(reviewPath()).data.get('approvalId', '') != reviewAfter().get('approvalId', ''));
+      }
+
+      // This same write logs a typo fix producing `rev` (live posts only).
+      function typoFixAddedNow(rev) {
+        return existsAfter(reviewPath())
+            && reviewAfter().get('typoFixRevision', -1) == rev
+            && (!exists(reviewPath())
+                || get(reviewPath()).data.get('typoFixId', '') != reviewAfter().get('typoFixId', ''));
+      }
+
+      function blogUpdateAllowed() {
+        let contentChanged = incoming().diff(existing()).affectedKeys().hasAny(blogContentKeys());
+        let rev0 = existing().get('revision', 0);
+        let rev1 = incoming().get('revision', 0);
+        return ((contentChanged && rev1 == rev0 + 1) || (!contentChanged && rev1 == rev0))
+            && (
+              // Unpublishing, or editing a draft, is always fine.
+              incoming().published == false
+              // Publishing: only the approved revision, unchanged.
+              || (existing().published == false && !contentChanged && approvedAt(rev1))
+              // A live post stays live; what readers see changes only with a
+              // fresh approval of the new text or a logged typo fix.
+              || (existing().published == true
+                  && (!contentChanged || approvalAddedNow(rev1) || typoFixAddedNow(rev1)))
+            );
+      }
+
+      // Approval log: who approved which revision, when, with which checklist
+      // and which automatic warnings, plus a copy of the approved text. Also
+      // logs typo fixes made to live posts. Append-only, admin-only, and
+      // kept when a post is deleted (it's the record of what was checked).
+      match /approvals/{logId} {
+        allow get, list: if isBlogAdmin();
+        allow create: if isBlogAdmin() && isValidApprovalLog(incoming(), logId);
+        allow update, delete: if false;
+
+        function isValidApprovalLog(data, id) {
+          let blogAfter = getAfter(/databases/$(database)/documents/blogs/$(blogId)).data;
+          let review = getAfter(reviewPath()).data;
+          return isValidId(id)
+              && data.keys().hasAll(['kind', 'by', 'at', 'revision'])
+              && data.keys().hasOnly(['kind', 'by', 'at', 'revision', 'checklist', 'warnings', 'note', 'title', 'excerpt', 'content', 'lang'])
+              && data.by == request.auth.token.email
+              && data.at == request.time
+              && data.revision == blogAfter.get('revision', 0)
+              && (!('checklist' in data) || data.checklist is map)
+              && (!('warnings' in data) || (data.warnings is list && data.warnings.size() <= 200))
+              && (!('note' in data) || (data.note is string && data.note.size() <= 2000))
+              && (!('title' in data) || (data.title is string && data.title.size() <= 300))
+              && (!('excerpt' in data) || (data.excerpt is string && data.excerpt.size() <= 1500))
+              && (!('content' in data) || (data.content is string && data.content.size() <= 100000))
+              && (!('lang' in data) || data.lang in ['EN', 'DE'])
+              && ((data.kind == 'approval'
+                   && review.get('approvalId', '') == id
+                   && data.by != review.authorEmail)
+                  || (data.kind == 'typo-fix'
+                      && review.get('typoFixId', '') == id
+                      && blogAfter.published == true));
+        }
+      }
+    }
+
+    match /blogReviews/{blogId} {
+      allow get, list: if isBlogAdmin();
+      allow create: if isBlogAdmin() && isValidBlogReview(incoming()) && reviewCreateAllowed();
+      allow update: if isBlogAdmin() && isValidBlogReview(incoming()) && reviewUpdateAllowed();
+      // Only together with (or after) deleting the post itself.
+      allow delete: if isBlogAdmin() && !existsAfter(blogPath());
+
+      function blogPath() { return /databases/$(database)/documents/blogs/$(blogId); }
+      function logPath(id) { return /databases/$(database)/documents/blogs/$(blogId)/approvals/$(id); }
+
+      // Who wrote a post is recorded once. A new post's author is whoever
+      // creates it; for a post written before reviews existed, it follows the
+      // post's byline, so nobody can name the other founder as author of
+      // their own post and then approve it themselves.
+      function authorOk(r) {
+        let displayNames = {'rijuk@niramay.me': 'Riju', 'richak@niramay.me': 'Richa'};
+        return (!exists(blogPath()) && r.authorEmail == request.auth.token.email)
+            || (exists(blogPath())
+                && (get(blogPath()).data.get('author', '') == displayNames[r.authorEmail]
+                    || !(get(blogPath()).data.get('author', '') in ['Riju', 'Richa'])));
+      }
+
+      // A new approval: by the signed-in founder who isn't the author, now,
+      // of the post's revision after this write, with its log entry.
+      function approvalOk(r) {
+        return r.status == 'approved'
+            && r.approvedBy == request.auth.token.email
+            && r.approvedBy != r.authorEmail
+            && r.approvedAt == request.time
+            && r.approvedRevision == getAfter(blogPath()).data.get('revision', 0)
+            && existsAfter(logPath(r.approvalId))
+            && getAfter(logPath(r.approvalId)).data.kind == 'approval';
+      }
+
+      function typoFixOk(r) {
+        return r.typoFixRevision == getAfter(blogPath()).data.get('revision', 0)
+            && existsAfter(logPath(r.typoFixId))
+            && getAfter(logPath(r.typoFixId)).data.kind == 'typo-fix';
+      }
+
+      function reviewCreateAllowed() {
+        let r = incoming();
+        return authorOk(r)
+            && (('approvalId' in r && approvalOk(r))
+                || (!r.keys().hasAny(['approvalId', 'approvedBy', 'approvedAt', 'approvedRevision']) && r.status != 'approved'))
+            && (!('typoFixId' in r) || typoFixOk(r));
+      }
+
+      function reviewUpdateAllowed() {
+        let r = incoming();
+        let changed = r.diff(existing()).affectedKeys();
+        let newApproval = changed.hasAny(['approvalId']);
+        let newTypoFix = changed.hasAny(['typoFixId', 'typoFixRevision']);
+        return r.authorEmail == existing().authorEmail
+            && (!newApproval || approvalOk(r))
+            && (!newTypoFix || typoFixOk(r))
+            // Approval fields only ever change with a new approval — except
+            // that a typo fix carries an approval of the previous revision
+            // over to the fixed one.
+            && (newApproval
+                || !changed.hasAny(['approvedBy', 'approvedAt', 'approvedRevision'])
+                || (newTypoFix && !changed.hasAny(['approvedBy', 'approvedAt'])
+                    && existing().get('approvedRevision', -1) == r.typoFixRevision - 1
+                    && r.approvedRevision == r.typoFixRevision))
+            // "approved" needs a new approval, unless the recorded one still
+            // covers the post as it stands (e.g. pending edits discarded).
+            && (newApproval || r.status != 'approved' || existing().status == 'approved'
+                || r.get('approvedRevision', -1) == getAfter(blogPath()).data.get('revision', 0));
+      }
     }
 
     // Comments on a blog post. Every write goes through api/blog-comments.ts

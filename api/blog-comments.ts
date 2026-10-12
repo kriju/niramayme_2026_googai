@@ -16,6 +16,7 @@ import {
   sendAdminEmail,
 } from "./_lib/engagement.js";
 import { escapeHtml, getSiteUrl } from "./_lib/util.js";
+import { commentNeedsReview } from "./_lib/claimsCheck.js";
 
 // Blog comments live at blogs/{blogId}/comments/{commentId}. Visitors read
 // them straight from Firestore (only status == "visible", see
@@ -23,6 +24,8 @@ import { escapeHtml, getSiteUrl } from "./_lib/util.js";
 //
 //   POST   (JSON)                 visitor comment, or an author's reply when
 //                                 an admin Firebase ID token is attached
+//   POST   ?op=report (JSON)      a reader reports a comment (Digital
+//                                 Services Act notice): admins are emailed
 //   PATCH  (JSON, admin)          show / hide / delete a comment
 //   DELETE (JSON, admin)          purge all comments + votes of a deleted post
 //   GET    ?token=…               confirmation page for an emailed
@@ -39,6 +42,9 @@ const MAX_NAME = 60;
 // reader and makes bulk spam from one source impractical.
 const COMMENT_LIMIT = 5;
 const COMMENT_WINDOW_SECONDS = 600;
+// Reports per visitor IP in the same window — enough for a reader flagging a
+// few comments, not for flooding the inbox.
+const REPORT_LIMIT = 10;
 
 type Status = "visible" | "pending" | "hidden";
 
@@ -49,7 +55,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
     switch (req.method) {
       case "POST":
-        return await handleCreate(req, res);
+        return req.query.op === "report" ? await handleReport(req, res) : await handleCreate(req, res);
       case "PATCH":
         return await handleModerate(req, res);
       case "DELETE":
@@ -147,7 +153,10 @@ async function handleCreate(req: VercelRequest, res: VercelResponse) {
     }
   }
 
-  const status: Status = adminEmail ? "visible" : looksLikeSpam(content, name ?? "") ? "pending" : "visible";
+  // Held for approval: anything with a link (spam), and healing promises or
+  // recovery stories (German health-advertising law; src/lib/claimsCheck.ts).
+  const holdReason = adminEmail ? null : looksLikeSpam(content, name ?? "") ? "link" : commentNeedsReview(content) ? "claims" : null;
+  const status: Status = holdReason ? "pending" : "visible";
   const ref = commentsRef.doc(commentId);
   const doc = {
     content,
@@ -176,7 +185,7 @@ async function handleCreate(req: VercelRequest, res: VercelResponse) {
     // A mail outage must never turn into a failed comment for the visitor —
     // the comment is already saved and moderatable from the site itself.
     try {
-      await notifyAdmins(req, blogSnap.data()!, blogId, commentId, doc);
+      await notifyAdmins(req, blogSnap.data()!, blogId, commentId, doc, holdReason);
     } catch (error) {
       console.error("blog-comments notification failed:", error);
     }
@@ -237,6 +246,48 @@ async function handlePurge(req: VercelRequest, res: VercelResponse) {
     db.recursiveDelete(blogRef.collection("votes")),
     db.collection("blogStats").doc(blogId).delete(),
   ]);
+  return res.status(200).json({ ok: true });
+}
+
+// "Report comment" under each visible comment. Anyone can report; the
+// comment stays up until Richa or Riju decide (a report alone can't hide
+// another reader's comment), but they're emailed straight away with a
+// one-click hide link, so a notice can be acted on quickly (DSA Art. 16).
+async function handleReport(req: VercelRequest, res: VercelResponse) {
+  const body = requireJson(req);
+  const blogId = requireId(body.blogId, "blogId");
+  const commentId = requireId(body.commentId, "commentId");
+  const reason = cleanText(body.reason, { multiline: true }).slice(0, 500);
+
+  const db = getAdminDb();
+  await enforceRateLimit(db, "report", clientKey(req), REPORT_LIMIT, COMMENT_WINDOW_SECONDS);
+  const blogSnap = await getPublishedBlog(db, blogId);
+  const ref = blogSnap.ref.collection("comments").doc(commentId);
+  const snap = await ref.get();
+  if (!snap.exists || snap.get("status") !== "visible") throw new HttpError(404, "not_found");
+
+  await ref.update({ reportCount: FieldValue.increment(1), reportedAt: FieldValue.serverTimestamp() });
+
+  try {
+    const blog = blogSnap.data()!;
+    const siteUrl = getSiteUrl(req);
+    const postUrl = `${siteUrl}${blog.lang === "DE" ? "/de" : ""}/blog/${encodeURIComponent(blog.slug)}#comments`;
+    const html = `
+  <div style="font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;max-width:560px;margin:0 auto;color:#292524;">
+    <h2 style="font-size:20px;margin-bottom:4px;">A reader reported a comment</h2>
+    <p style="color:#78716c;margin-top:0;">On <strong>${escapeHtml(blog.title)}</strong> &middot; by ${snap.get("name") ? escapeHtml(snap.get("name")) : "<em>Anonymous</em>"}</p>
+    <div style="background:#f5f5f4;border-radius:12px;padding:16px;line-height:1.5;white-space:pre-line;margin-bottom:16px;">${escapeHtml(snap.get("content"))}</div>
+    ${reason ? `<p><strong>Reason given:</strong> ${escapeHtml(reason)}</p>` : ""}
+    <p style="color:#57534e;">Please look at it soon. Under the Digital Services Act, a reported comment must be checked promptly; hide it if it's unlawful or breaks the site's rules (e.g. a healing promise).</p>
+    <table style="width:100%;border-collapse:collapse;"><tr>
+      <td style="padding-right:8px;"><a href="${escapeHtml(postUrl)}" style="display:block;text-align:center;background:#583861;color:#fff;text-decoration:none;padding:12px 0;border-radius:8px;font-weight:600;">Open post</a></td>
+      <td style="padding-left:8px;"><a href="${escapeHtml(actionUrl(siteUrl, blogId, commentId, "hide"))}" style="display:block;text-align:center;background:#dc2626;color:#fff;text-decoration:none;padding:12px 0;border-radius:8px;font-weight:600;">Review &amp; hide</a></td>
+    </tr></table>
+  </div>`;
+    await sendAdminEmail(`[Reported] Comment on "${String(blog.title).slice(0, 80)}"`, html);
+  } catch (error) {
+    console.error("blog-comments report notification failed:", error);
+  }
   return res.status(200).json({ ok: true });
 }
 
@@ -326,6 +377,7 @@ async function notifyAdmins(
   blogId: string,
   commentId: string,
   comment: { content: string; name: string | null; status: Status },
+  holdReason: "link" | "claims" | null,
 ) {
   const siteUrl = getSiteUrl(req);
   const postUrl = `${siteUrl}${blog.lang === "DE" ? "/de" : ""}/blog/${encodeURIComponent(blog.slug)}#comments`;
@@ -338,7 +390,7 @@ async function notifyAdmins(
   <div style="font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;max-width:560px;margin:0 auto;color:#292524;">
     <h2 style="font-size:20px;margin-bottom:4px;">${held ? "New comment held for approval" : "New comment on your blog"}</h2>
     <p style="color:#78716c;margin-top:0;">On <strong>${escapeHtml(blog.title)}</strong> &middot; by ${comment.name ? escapeHtml(comment.name) : "<em>Anonymous</em>"}</p>
-    ${held ? `<p style="color:#b45309;">It contains a link, so it stays hidden until you publish it.</p>` : ""}
+    ${held ? `<p style="color:#b45309;">${holdReason === "claims" ? "It reads like a healing promise or recovery story (health-advertising law)" : "It contains a link"}, so it stays hidden until you publish it.</p>` : ""}
     <div style="background:#f5f5f4;border-radius:12px;padding:16px;line-height:1.5;white-space:pre-line;margin-bottom:24px;">${escapeHtml(comment.content)}</div>
     <table style="width:100%;border-collapse:collapse;"><tr>
       <td style="padding-right:8px;"><a href="${escapeHtml(postUrl)}" style="display:block;text-align:center;background:#583861;color:#fff;text-decoration:none;padding:12px 0;border-radius:8px;font-weight:600;">Open post to reply</a></td>
