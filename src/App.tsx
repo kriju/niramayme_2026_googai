@@ -921,11 +921,14 @@ const ReikiIntakeModal = ({ lang, pkg, onClose, onOpenPrivacy, onOpenLegal }: { 
 };
 
 // Booking flow for Niramay's own online courses (COURSES entries with
-// `bookable: true`). Pay-first like the in-person Reiki booking, minus the
-// calendar step since the dates are fixed: details, then payment
-// instructions keyed to a reference code, then an "I've paid" claim that
-// triggers the confirmation email (api/notify-course-booking.ts). See
-// firestore.rules for what's enforced server-side.
+// `bookable: true`): details (+ optional discount code), then payment via
+// Stripe Checkout. The booking doc is created here (see firestore.rules);
+// the server prices it, creates the Checkout Session and, once Stripe
+// reports the payment, sends the confirmation with invoice and .ics
+// (api/_lib/coursePayments.ts). Courses with `acceptsINR` also keep the
+// manual UPI option: payment instructions keyed to a reference code, then an
+// "I've paid" claim that triggers the confirmation email
+// (api/notify-course-booking.ts).
 type CourseStep = "details" | "payment" | "done";
 type CourseForm = { name: string; email: string; whatsapp: string; notes: string; session: string; consent: boolean };
 const EMPTY_COURSE_FORM: CourseForm = { name: "", email: "", whatsapp: "", notes: "", session: "", consent: false };
@@ -943,6 +946,24 @@ const isCoursePast = (course: Course) =>
 const isCourseBookingClosed = (course: Course) =>
   Boolean(course.bookingClosesAt && Date.now() > new Date(course.bookingClosesAt).getTime());
 
+// Price from api/_lib/discounts.ts (POST /api/course-quote).
+type CourseQuote = {
+  baseCents: number;
+  discountCents: number;
+  totalCents: number;
+  discount: { kind: "early_bird" | "alumni" | "newsletter"; percent: number; code?: string } | null;
+};
+const fetchCourseQuote = async (course: string, email: string, code: string): Promise<{ quote: CourseQuote; codeProblem: string | null } | null> => {
+  const response = await fetch("/api/course-quote", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ course, email: email.trim(), code }),
+  });
+  return response.ok ? response.json() : null;
+};
+const formatEuro = (cents: number, lang: "EN" | "DE") =>
+  new Intl.NumberFormat(lang === "DE" ? "de-DE" : "en-IE", { style: "currency", currency: "EUR" }).format(cents / 100);
+
 const CourseIntakeModal = ({ lang, courseId, onClose, onOpenPrivacy, onOpenLegal }: { lang: "EN" | "DE", courseId: string | null, onClose: () => void, onOpenPrivacy: () => void, onOpenLegal: (type: LegalDocType) => void }) => {
   const t = TRANSLATIONS[lang].courseIntake;
   const { profile } = useAuth();
@@ -955,7 +976,24 @@ const CourseIntakeModal = ({ lang, courseId, onClose, onOpenPrivacy, onOpenLegal
   const [submitting, setSubmitting] = useState(false);
   const [paying, setPaying] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [code, setCode] = useState("");
+  const [appliedCode, setAppliedCode] = useState("");
+  const [codeError, setCodeError] = useState<string | null>(null);
+  const [checkingCode, setCheckingCode] = useState(false);
+  const [price, setPrice] = useState<CourseQuote | null>(null);
+  const [redirecting, setRedirecting] = useState(false);
   const open = courseId !== null;
+
+  // Server-side price incl. any early-bird discount, shown before booking.
+  useEffect(() => {
+    if (!open || !shownCourseId) return;
+    let cancelled = false;
+    setPrice(null);
+    fetchCourseQuote(shownCourseId, "", "")
+      .then(r => { if (!cancelled && r) setPrice(r.quote); })
+      .catch(() => { /* falls back to the listed price */ });
+    return () => { cancelled = true; };
+  }, [open, shownCourseId]);
 
   useEffect(() => {
     if (courseId) setShownCourseId(courseId);
@@ -989,7 +1027,72 @@ const CourseIntakeModal = ({ lang, courseId, onClose, onOpenPrivacy, onOpenLegal
       setLegal(EMPTY_LEGAL_STATE);
       setRequestId(null);
       setError(null);
+      setCode("");
+      setAppliedCode("");
+      setCodeError(null);
+      setRedirecting(false);
     }, 300);
+  };
+
+  const discountErrors = t.discountErrors as Record<string, string>;
+  // Checks the typed code; returns false (and shows why) if it can't be used.
+  const applyCode = async (): Promise<boolean> => {
+    const typed = code.trim().toUpperCase();
+    setCodeError(null);
+    if (!typed) {
+      setAppliedCode("");
+      const r = await fetchCourseQuote(course!.id, form.email, "").catch(() => null);
+      if (r) setPrice(r.quote);
+      return true;
+    }
+    setCheckingCode(true);
+    try {
+      const r = await fetchCourseQuote(course!.id, form.email, typed);
+      if (!r) throw new Error("quote failed");
+      setPrice(r.quote);
+      if (r.codeProblem) {
+        setAppliedCode("");
+        setCodeError(discountErrors[r.codeProblem] ?? discountErrors.generic);
+        return false;
+      }
+      setAppliedCode(typed);
+      return true;
+    } catch {
+      setCodeError(discountErrors.generic);
+      return false;
+    } finally {
+      setCheckingCode(false);
+    }
+  };
+
+  const startCheckout = async (id: string) => {
+    setRedirecting(true);
+    setError(null);
+    try {
+      const response = await fetch("/api/course-checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ requestId: id, code: appliedCode }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || typeof data.url !== "string") {
+        // A code that stopped applying (e.g. the email was changed after
+        // applying an alumni code): back to the form, with a fresh booking.
+        if (typeof data.error === "string" && data.error in discountErrors) {
+          setCodeError(discountErrors[data.error]);
+          setRequestId(null);
+          setStep("details");
+          setRedirecting(false);
+          return;
+        }
+        throw new Error(data.error || `HTTP ${response.status}`);
+      }
+      window.location.assign(data.url);
+    } catch (err) {
+      console.error("Error starting course checkout:", err);
+      setError(t.checkoutError.replace("{email}", contactEmail));
+      setRedirecting(false);
+    }
   };
 
   const notify = (id: string, kind: "submitted" | "payment_claimed") =>
@@ -1004,6 +1107,11 @@ const CourseIntakeModal = ({ lang, courseId, onClose, onOpenPrivacy, onOpenLegal
     if (!isValid || submitting || !course) return;
     setSubmitting(true);
     setError(null);
+    // A code typed but not yet applied (or the email changed since): check it first.
+    if ((code.trim() || appliedCode) && !(await applyCode())) {
+      setSubmitting(false);
+      return;
+    }
     try {
       const docRef = await addDoc(collection(db, "courseBookings"), {
         course: course.id,
@@ -1019,9 +1127,9 @@ const CourseIntakeModal = ({ lang, courseId, onClose, onOpenPrivacy, onOpenLegal
         legalAcks: toLegalAcks(legal),
       });
       setRequestId(docRef.id);
-      setStep("payment");
-      // Best-effort — the booking is already saved above regardless.
-      notify(docRef.id, "submitted");
+      // EUR-only courses go straight to Stripe; INR courses offer UPI too.
+      if (course.acceptsINR) setStep("payment");
+      else await startCheckout(docRef.id);
     } catch (err) {
       console.error("Error submitting course booking:", err);
       setError(t.submitError);
@@ -1057,6 +1165,13 @@ const CourseIntakeModal = ({ lang, courseId, onClose, onOpenPrivacy, onOpenLegal
       <p className="text-sm text-muted-foreground">{chosenSession ? chosenSession[lang] : content.time} · <span className="font-semibold text-foreground">{content.price}</span></p>
     </div>
   );
+
+  // What Stripe will charge, incl. the discount; INR stays the listed price.
+  const inrPrice = "inrPrice" in course ? course.inrPrice : "";
+  const eurPrice = price ? formatEuro(price.totalCents, lang) : null;
+  const priceText = price
+    ? `${eurPrice}${price.discount ? ` (${lang === "DE" ? "statt" : "instead of"} ${formatEuro(price.baseCents, lang)}, ${t.discountKinds[price.discount.kind]} ${price.discount.percent}%)` : ""}${inrPrice ? ` / ${inrPrice}` : ""}`
+    : content.price;
 
   const questions = (
     <p className="text-xs text-muted-foreground">
@@ -1118,10 +1233,33 @@ const CourseIntakeModal = ({ lang, courseId, onClose, onOpenPrivacy, onOpenLegal
                   </button>.
                 </span>
               </label>
-              <BookingLegalBlock lang={lang} binding price={content.price} value={legal} onChange={setLegal} onOpenLegal={onOpenLegal} />
+              <div className="grid gap-2">
+                <label className="text-sm font-medium" htmlFor="course-discount-code">{t.discountLabel}</label>
+                <div className="flex gap-2">
+                  <input
+                    id="course-discount-code"
+                    maxLength={40}
+                    autoComplete="off"
+                    placeholder={t.discountPlaceholder}
+                    className={`${inputClass} uppercase placeholder:normal-case`}
+                    value={code}
+                    onChange={e => { setCode(e.target.value); setCodeError(null); }}
+                  />
+                  <Button type="button" variant="outline" className="shrink-0" onClick={() => void applyCode()} disabled={checkingCode || !code.trim()}>
+                    {t.discountApply}
+                  </Button>
+                </div>
+                {codeError
+                  ? <p className="text-xs text-red-600">{codeError}</p>
+                  : appliedCode && price?.discount?.code === appliedCode
+                    ? <p className="text-xs text-primary">{t.discountKinds[price.discount.kind]} {price.discount.percent}% ✓</p>
+                    : <p className="text-xs text-muted-foreground">{t.discountNote}</p>}
+              </div>
+              <BookingLegalBlock lang={lang} binding price={priceText} value={legal} onChange={setLegal} onOpenLegal={onOpenLegal} />
+              <p className="text-xs text-muted-foreground">{t.alumniNotice}</p>
               {error && <p className="text-sm text-red-600">{error}</p>}
-              <Button type="submit" size="lg" className="rounded-full w-full" disabled={!isValid || submitting}>
-                {submitting ? t.submitting : BOOKING_LEGAL_TEXT[lang].bindingButton}
+              <Button type="submit" size="lg" className="rounded-full w-full" disabled={!isValid || submitting || redirecting}>
+                {redirecting ? t.redirecting : submitting ? t.submitting : BOOKING_LEGAL_TEXT[lang].bindingButton}
               </Button>
             </form>
           </>
@@ -1133,38 +1271,26 @@ const CourseIntakeModal = ({ lang, courseId, onClose, onOpenPrivacy, onOpenLegal
               <DialogTitle className="text-2xl font-serif">{t.paymentTitle}</DialogTitle>
             </DialogHeader>
             <div className="space-y-5 py-2">
-              <div className="bg-stone-50 p-4 rounded-xl border border-stone-100 text-center">
-                <p className="text-xs uppercase tracking-wider text-muted-foreground mb-1">{t.refCodeLabel}</p>
-                <p className="text-2xl font-bold font-mono tracking-wide">{refCode}</p>
-                <p className="text-xs text-muted-foreground mt-1">{t.refCodeNote}</p>
+              {summary}
+              <div className="p-4 rounded-xl border border-stone-100 space-y-3">
+                <p className="font-bold text-sm">{t.paymentEURTitle}</p>
+                <p className="text-xs text-muted-foreground">{t.payStripeBody}</p>
+                <Button size="lg" className="rounded-full w-full" onClick={() => requestId && void startCheckout(requestId)} disabled={redirecting || !requestId}>
+                  {redirecting ? t.redirecting : t.payStripeBtn.replace("{price}", eurPrice ?? content.price)}
+                </Button>
               </div>
-              <div>
-                <p className="text-xs font-bold uppercase tracking-wider text-primary/50 mb-1">{t.priceLabel}</p>
-                <p className="text-lg font-semibold">{content.price}</p>
-              </div>
-              <div className={course.acceptsINR ? "grid sm:grid-cols-2 gap-4" : undefined}>
+              {course.acceptsINR && (
                 <div className="p-4 rounded-xl border border-stone-100 space-y-2">
-                  <p className="font-bold text-sm">{t.paymentEURTitle}</p>
-                  <p className="text-sm">{t.paypalLabel}: <span className="font-mono">richa@niramay.me</span></p>
-                  <p className="text-xs text-muted-foreground">{t.paypalNote}</p>
-                  <Separator className="my-2" />
-                  <p className="text-sm">{t.bankLabel}</p>
-                  <p className="text-xs font-mono">IBAN: DE08 1001 1001 2721 9373 31</p>
-                  <p className="text-xs font-mono">BIC: NTSBDEB1XXX</p>
-                  <p className="text-xs text-muted-foreground">{t.bankNote}</p>
+                  <p className="font-bold text-sm">{t.paymentINRTitle}</p>
+                  <p className="text-sm">{t.upiLabel}: <span className="font-mono">richa944@icici</span> · <span className="font-semibold">{inrPrice}</span></p>
+                  <p className="text-xs text-muted-foreground">{t.refCodeNote} <span className="font-mono font-semibold text-foreground">{refCode}</span></p>
+                  <p className="text-xs text-muted-foreground">{t.upiNote}</p>
+                  <Button variant="outline" className="rounded-full w-full" onClick={handlePaid} disabled={paying}>
+                    {paying ? t.paidSubmitting : t.paidBtn}
+                  </Button>
                 </div>
-                {course.acceptsINR && (
-                  <div className="p-4 rounded-xl border border-stone-100 space-y-2">
-                    <p className="font-bold text-sm">{t.paymentINRTitle}</p>
-                    <p className="text-sm">{t.upiLabel}: <span className="font-mono">richa944@icici</span></p>
-                    <p className="text-xs text-muted-foreground">{t.upiNote}</p>
-                  </div>
-                )}
-              </div>
+              )}
               {error && <p className="text-sm text-red-600">{error}</p>}
-              <Button size="lg" className="rounded-full w-full" onClick={handlePaid} disabled={paying}>
-                {paying ? t.paidSubmitting : t.paidBtn}
-              </Button>
               {questions}
             </div>
           </>
@@ -4584,6 +4710,14 @@ const AppLayout = () => {
       <Navbar lang={lang} altPath={altPath} onBook={openBooking} belowAnnouncement={announcements.length > 0} />
       <LangSuggestion lang={lang} altPath={altPath} belowAnnouncement={announcements.length > 0} />
       <Outlet context={{ lang, setAltPath, onBook: openBooking, onBookAstrology: () => setAstrologyIntakeOpen(true), onBookReiki: setReikiPackage, onBookGuidance: (pkg = "individual") => { setGuidancePackage(pkg); setGuidanceIntakeOpen(true); }, onBookTarot: () => setTarotIntakeOpen(true), onBookCourse: setCourseBookingId, onOpenLegal: setLegalModal } satisfies LayoutContext} />
+      {/* Newsletter sign-up on every page; blog posts have their own box under the article. */}
+      {!/^\/(de\/)?blog\/[^/]+/.test(location.pathname) && (
+        <Suspense fallback={null}>
+          <div className="container mx-auto px-6 max-w-3xl">
+            <NewsletterSignup lang={lang} variant="site" onOpenPrivacy={() => setLegalModal("privacy")} />
+          </div>
+        </Suspense>
+      )}
       <Footer lang={lang} onOpenLegal={setLegalModal} onOpenCookieSettings={openCookieSettings} onOpenWithdraw={openWithdraw} />
 
       <LegalModal
@@ -4665,6 +4799,11 @@ const CoursePage = () => {
   const sp = TRANSLATIONS[lang].servicePage;
   const prefix = langPrefix(lang);
   const canonical = `${SITE_URL}${prefix}/courses/${id}`;
+  // Stripe Checkout sends the visitor back here with ?booking=paid|cancelled.
+  const location = useLocation();
+  const navigate = useNavigate();
+  const checkoutResult = new URLSearchParams(location.search).get("booking");
+  const closeCheckoutResult = () => navigate(location.pathname, { replace: true });
 
   useSeo({
     title: ys.seoTitle,
@@ -4724,6 +4863,23 @@ const CoursePage = () => {
             </div>
           ))}
         </div>
+
+        <Dialog open={checkoutResult === "paid" || checkoutResult === "cancelled"} onOpenChange={(o) => !o && closeCheckoutResult()}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle className="text-2xl font-serif">
+                {checkoutResult === "paid" ? TRANSLATIONS[lang].courseIntake.paidTitle : TRANSLATIONS[lang].courseIntake.cancelledTitle}
+              </DialogTitle>
+            </DialogHeader>
+            <div className="flex items-start gap-3 py-2">
+              {checkoutResult === "paid" && <CheckCircle2 className="w-6 h-6 text-primary shrink-0 mt-0.5" />}
+              <p className="text-muted-foreground">
+                {checkoutResult === "paid" ? TRANSLATIONS[lang].courseIntake.paidBody : TRANSLATIONS[lang].courseIntake.cancelledBody}
+              </p>
+            </div>
+            <Button className="rounded-full w-full" onClick={closeCheckoutResult}>{TRANSLATIONS[lang].courseIntake.closeBtn}</Button>
+          </DialogContent>
+        </Dialog>
 
         <Button size="lg" className="rounded-full gap-2 mb-16" onClick={() => onBookCourse(course.id)} disabled={closed}>
           {closed ? closedLabel : ys.bookCta}

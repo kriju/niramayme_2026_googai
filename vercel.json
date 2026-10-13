@@ -1,6 +1,9 @@
 {
   "cleanUrls": true,
   "trailingSlash": false,
+  "crons": [
+    { "path": "/api/course-cron", "schedule": "0 17 * * *" }
+  ],
   "functions": {
     "api/blog-share.ts": { "includeFiles": "dist/index.html" }
   },
@@ -24,6 +27,10 @@
     { "source": "/api/review-action", "destination": "/api/notify-review?op=action" },
     { "source": "/api/withdraw", "destination": "/api/notify-reiki-request?op=withdraw" },
     { "source": "/api/newsletter-announce", "destination": "/api/newsletter?op=announce" },
+    { "source": "/api/course-quote", "destination": "/api/notify-course-booking?op=quote" },
+    { "source": "/api/course-checkout", "destination": "/api/notify-course-booking?op=checkout" },
+    { "source": "/api/stripe-webhook", "destination": "/api/notify-course-booking?op=webhook" },
+    { "source": "/api/course-cron", "destination": "/api/notify-course-booking?op=cron" },
     { "source": "/sitemap.xml", "destination": "/api/sitemap" },
     { "source": "/blog/:slug", "destination": "/api/blog-share?slug=:slug" },
     { "source": "/de/blog/:slug", "destination": "/api/blog-share?slug=:slug&lang=de" }

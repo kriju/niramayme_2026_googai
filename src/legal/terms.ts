@@ -10,6 +10,11 @@ import type { LegalDoc } from "./types";
 //    automatic email is only an acknowledgement of receipt (§ 312i Abs. 1
 //    Nr. 3 BGB), the contract is concluded by our confirmation (the
 //    "Anmeldung bestätigt"/"Zahlung erhalten" emails) or by performance.
+//  - Payment (section 4, Phase 2): online courses in EUR are paid via Stripe
+//    Checkout; the contract is concluded with the payment confirmation
+//    email. Discounts, electronic invoices and refunds via the original
+//    payment method are stated in section 4; refunds when WE cancel a course
+//    or a session in section 5.
 //  - Cancellation: the only existing rule is the FAQ sentence "Please give at
 //    least 24 hours' notice to reschedule or cancel". No fee or forfeiture is
 //    invented. TODO(owner): if a no-show / late-cancellation fee is wanted it
@@ -86,13 +91,16 @@ export const agb: { DE: LegalDoc; EN: LegalDoc } = {
         title: "4. Preise und Zahlung",
         content:
           "Es gelten die Preise, die zum Zeitpunkt Ihrer Buchung auf der Website angezeigt werden. Preise werden in Euro und für Zahlungen aus Indien zusätzlich in indischen Rupien (INR) angegeben; bei Zahlung per UPI gilt der INR-Preis. " + vatPriceNote("DE") + "\n\n" +
-          "Zahlungsarten: PayPal, SEPA-Überweisung (EUR) und – für Zahlungen in INR – UPI. Die Zahlung erfolgt im Voraus unter Angabe des Referenzcodes, den Sie bei der Buchung erhalten, sofern wir im Einzelfall nichts anderes bestätigen. Die Meldung „Ich habe bezahlt“ in der Buchung ersetzt die Zahlung nicht. Wir bestätigen Ihren Termin bzw. Platz nach Eingang der Zahlung.",
+          "Online-Kurse in Euro: Die Zahlung ist mit der Buchung fällig und erfolgt über unseren Zahlungsdienstleister Stripe. Nach dem Klick auf „Zahlungspflichtig buchen“ werden Sie auf die Zahlungsseite von Stripe weitergeleitet; dort stehen die angezeigten Zahlungsarten zur Wahl (z. B. Kreditkarte, Apple Pay/Google Pay, PayPal, SEPA-Lastschrift). Ihr Platz ist bestätigt, sobald die Zahlung bei uns eingegangen ist; Sie erhalten dann die Buchungsbestätigung und die Rechnung per E-Mail. Brechen Sie die Zahlung ab, kommt kein Vertrag zustande. Scheitert eine nachträglich ausgeführte Zahlung (z. B. eine SEPA-Lastschrift), informieren wir Sie und bitten um Zahlung auf anderem Weg.\n\n" +
+          "Alle anderen Leistungen sowie Kurse in INR: PayPal, SEPA-Überweisung (EUR) und – für Zahlungen in INR – UPI. Die Zahlung erfolgt im Voraus unter Angabe des Referenzcodes, den Sie bei der Buchung erhalten, sofern wir im Einzelfall nichts anderes bestätigen. Die Meldung „Ich habe bezahlt“ in der Buchung ersetzt die Zahlung nicht. Wir bestätigen Ihren Termin bzw. Platz nach Eingang der Zahlung.\n\n" +
+          "Rabatte: Bei Online-Kursen gewähren wir bis zu dem auf der Kursseite genannten Datum einen Frühbucherrabatt. Rabattcodes (z. B. Alumni- oder Willkommenscodes) lösen Sie im Buchungsformular ein; es gelten die mit dem Code mitgeteilten Bedingungen (z. B. Gültigkeit, einmalige Einlösung, Bindung an Ihre E-Mail-Adresse). Rabatte sind nicht miteinander kombinierbar – es gilt jeweils der höhere Rabatt –, werden nicht nachträglich auf bereits bezahlte Buchungen angerechnet und nicht bar ausgezahlt.\n\n" +
+          "Rechnungen: Sie erhalten Ihre Rechnung elektronisch als PDF per E-Mail. Erstattungen erfolgen über das ursprünglich verwendete Zahlungsmittel.",
       },
       {
         title: "5. Durchführung, Termine und Online-Sitzungen",
         content:
-          "Termine und Kurszeiten ergeben sich aus der Buchung bzw. der Terminbestätigung. Online-Sitzungen finden über Google Meet oder Zoom statt; den Link senden wir Ihnen in der Regel einen Tag vorher per E-Mail. Sie sorgen für ein geeignetes Gerät, eine ausreichende Internetverbindung und einen ungestörten Ort. Aufzeichnungen und die Weitergabe von Kursinhalten oder Zugangslinks an Dritte sind ohne unsere vorherige Zustimmung nicht gestattet.\n\n" +
-          "Müssen wir einen Termin aus wichtigem Grund (z. B. Krankheit) absagen oder verschieben, informieren wir Sie unverzüglich und bieten einen Ersatztermin an. Ist Ihnen der Ersatztermin nicht zumutbar, erstatten wir bereits gezahlte Beträge für die ausgefallene Leistung unverzüglich.",
+          "Termine und Kurszeiten ergeben sich aus der Buchung bzw. der Terminbestätigung. Online-Sitzungen finden über Google Meet oder Zoom statt; den Link senden wir Ihnen in der Regel einen Tag vorher per E-Mail (bei Online-Kursen mit der automatischen Erinnerung 24 Stunden vor jeder Einheit). Sie sorgen für ein geeignetes Gerät, eine ausreichende Internetverbindung und einen ungestörten Ort. Aufzeichnungen und die Weitergabe von Kursinhalten oder Zugangslinks an Dritte sind ohne unsere vorherige Zustimmung nicht gestattet.\n\n" +
+          "Müssen wir einen Termin aus wichtigem Grund (z. B. Krankheit) absagen oder verschieben, informieren wir Sie unverzüglich und bieten einen Ersatztermin an. Ist Ihnen der Ersatztermin nicht zumutbar, erstatten wir bereits gezahlte Beträge für die ausgefallene Leistung unverzüglich. Fällt bei einem mehrteiligen Kurs eine einzelne Einheit aus und können wir keinen zumutbaren Ersatztermin anbieten, erstatten wir den anteiligen Preis dieser Einheit. Sagen wir einen Kurs ganz ab (z. B. mangels Teilnehmenden), erstatten wir den vollen Preis.",
       },
       {
         title: "6. Terminänderung und Absage durch Sie",
@@ -167,13 +175,16 @@ export const agb: { DE: LegalDoc; EN: LegalDoc } = {
         title: "4. Prices and payment",
         content:
           "The prices shown on the website at the time of your booking apply. Prices are stated in euros and, for payments from India, also in Indian rupees (INR); for payments via UPI the INR price applies. " + vatPriceNote("EN") + "\n\n" +
-          "Payment methods: PayPal, SEPA bank transfer (EUR) and – for payments in INR – UPI. Payment is made in advance, quoting the reference code you receive when booking, unless we confirm otherwise in an individual case. The notice “I've paid” in the booking does not replace payment. We confirm your appointment or place after receipt of payment.",
+          "Online courses in euros: payment is due on booking and is made through our payment service provider Stripe. After clicking “Book with obligation to pay” you are redirected to Stripe's payment page, where you can choose from the payment methods shown (e.g. credit card, Apple Pay/Google Pay, PayPal, SEPA Direct Debit). Your place is confirmed as soon as we have received the payment; you then receive the booking confirmation and the invoice by email. If you cancel the payment, no contract is concluded. If a payment that is executed later (e.g. a SEPA Direct Debit) fails, we will let you know and ask you to pay another way.\n\n" +
+          "All other services and courses paid in INR: PayPal, SEPA bank transfer (EUR) and – for payments in INR – UPI. Payment is made in advance, quoting the reference code you receive when booking, unless we confirm otherwise in an individual case. The notice “I've paid” in the booking does not replace payment. We confirm your appointment or place after receipt of payment.\n\n" +
+          "Discounts: for online courses we grant an early-bird discount until the date stated on the course page. You redeem discount codes (e.g. alumni or welcome codes) in the booking form; the conditions communicated with the code apply (e.g. validity, single use, tied to your email address). Discounts cannot be combined – the higher discount applies –, are not applied retroactively to bookings already paid and are not paid out in cash.\n\n" +
+          "Invoices: you receive your invoice electronically as a PDF by email. Refunds are made using the original means of payment.",
       },
       {
         title: "5. Delivery, appointments and online sessions",
         content:
-          "Appointments and course times are set out in the booking or the appointment confirmation. Online sessions take place via Google Meet or Zoom; we usually email you the link one day before. You provide a suitable device, a sufficient internet connection and an undisturbed place. Recordings and passing on course content or access links to third parties are not permitted without our prior consent.\n\n" +
-          "If we have to cancel or postpone an appointment for good cause (e.g. illness), we will inform you without delay and offer a replacement appointment. If the replacement appointment is not reasonable for you, we will refund amounts already paid for the cancelled service without delay.",
+          "Appointments and course times are set out in the booking or the appointment confirmation. Online sessions take place via Google Meet or Zoom; we usually email you the link one day before (for online courses with the automatic reminder 24 hours before each session). You provide a suitable device, a sufficient internet connection and an undisturbed place. Recordings and passing on course content or access links to third parties are not permitted without our prior consent.\n\n" +
+          "If we have to cancel or postpone an appointment for good cause (e.g. illness), we will inform you without delay and offer a replacement appointment. If the replacement appointment is not reasonable for you, we will refund amounts already paid for the cancelled service without delay. If a single session of a multi-session course is cancelled and we cannot offer a reasonable replacement, we refund the pro-rata price of that session. If we cancel a course altogether (e.g. for lack of participants), we refund the full price.",
       },
       {
         title: "6. Rescheduling and cancellation by you",

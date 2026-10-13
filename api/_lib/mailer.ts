@@ -19,6 +19,7 @@ export type Email = {
   replyTo?: string;
   // Shown in Brevo's transactional logs, to filter by kind of email.
   tag?: string;
+  attachments?: { filename: string; content: Buffer; contentType: string }[];
 };
 
 const BREVO_API = "https://api.brevo.com/v3";
@@ -74,6 +75,9 @@ async function sendViaBrevo(email: Email): Promise<void> {
     htmlContent: email.html,
     ...(email.text ? { textContent: email.text } : {}),
     ...(email.tag ? { tags: [email.tag] } : {}),
+    ...(email.attachments?.length
+      ? { attachment: email.attachments.map((a) => ({ name: a.filename, content: a.content.toString("base64") })) }
+      : {}),
   });
 }
 
@@ -92,6 +96,7 @@ async function sendViaGmail(email: Email): Promise<void> {
     subject: email.subject,
     text: email.text,
     html: email.html,
+    attachments: email.attachments,
   });
 }
 

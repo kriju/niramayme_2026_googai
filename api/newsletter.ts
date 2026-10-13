@@ -15,6 +15,7 @@ import {
   subscriberId,
 } from "./_lib/newsletter.js";
 import { escapeHtml, getSiteUrl } from "./_lib/util.js";
+import { NEWSLETTER_PERCENT, createWelcomeCode } from "./_lib/discounts.js";
 
 // Blog newsletter sign-up with double opt-in:
 //
@@ -222,10 +223,60 @@ async function handleConfirm(req: VercelRequest, res: VercelResponse, token: str
       { email: parsed.email, lang: parsed.lang, confirmedAt: FieldValue.serverTimestamp(), expiresAt: FieldValue.delete() },
       { merge: true },
     );
+    await sendWelcomeCode(parsed.email, parsed.lang);
     return sendPage(res, 200, langHint, copy.doneTitle, `<p>${copy.doneBody}</p>`, blogUrl);
   } catch (error) {
     console.error("newsletter confirm failed:", error);
     return sendPage(res, 500, langHint, copy.errorTitle, `<p>${copy.errorBody}</p>`);
+  }
+}
+
+// Newsletter welcome discount: one single-use course code per address, sent
+// the first time it confirms (see api/_lib/discounts.ts). Best effort — a
+// failure here must not undo the subscription.
+async function sendWelcomeCode(email: string, lang: Lang): Promise<void> {
+  try {
+    const db = getAdminDb();
+    const ref = db.collection("newsletterSubscribers").doc(subscriberId(email));
+    // Claim the slot first, so a double click can't send two codes.
+    const claimed = await db.runTransaction(async (tx) => {
+      if ((await tx.get(ref)).get("welcomeCodeAt")) return false;
+      tx.update(ref, { welcomeCodeAt: FieldValue.serverTimestamp() });
+      return true;
+    });
+    if (!claimed) return;
+    const { code, expiresAt } = await createWelcomeCode(db);
+    await ref.update({ welcomeCode: code });
+    const de = lang === "DE";
+    const until = new Intl.DateTimeFormat(de ? "de-DE" : "en-GB", { dateStyle: "long", timeZone: "Europe/Berlin" }).format(expiresAt);
+    const paragraphs = de
+      ? [
+          "Willkommen bei Niramay!",
+          `Danke, dass Sie unseren Newsletter abonniert haben. Als kleines Willkommensgeschenk erhalten Sie ${NEWSLETTER_PERCENT}% Rabatt auf einen Online-Kurs Ihrer Wahl. Ihr Code:`,
+          code,
+          `Geben Sie ihn bei der Buchung auf www.niramay.me ein. Gültig bis ${until}, einmal einlösbar, nicht mit anderen Rabatten kombinierbar.`,
+          "Herzliche Grüße,\nRiju & Richa",
+        ]
+      : [
+          "Welcome to Niramay!",
+          `Thank you for subscribing to our newsletter. As a small welcome gift, here is ${NEWSLETTER_PERCENT}% off an online course of your choice. Your code:`,
+          code,
+          `Enter it when you book on www.niramay.me. Valid until ${until}, single use, not combinable with other discounts.`,
+          "Warmly,\nRiju & Richa",
+        ];
+    await sendEmail({
+      to: email,
+      subject: de ? `Ihr Willkommensgeschenk: ${NEWSLETTER_PERCENT}% auf einen Kurs` : `Your welcome gift: ${NEWSLETTER_PERCENT}% off a course`,
+      text: paragraphs.join("\n\n"),
+      html: `<div style="font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;max-width:560px;margin:0 auto;color:#292524;line-height:1.5;">${paragraphs
+        .map((p) => (p === code
+          ? `<p style="font-size:22px;font-weight:700;letter-spacing:1px;">${escapeHtml(p)}</p>`
+          : `<p>${escapeHtml(p).replace(/\n/g, "<br/>")}</p>`))
+        .join("")}</div>`,
+      tag: "newsletter-welcome",
+    });
+  } catch (error) {
+    console.error("newsletter welcome code failed:", error);
   }
 }
 
