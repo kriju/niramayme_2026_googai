@@ -119,13 +119,20 @@ function siteJsonLdTags(lang: Lang): string {
 
 // Marked so api/blog-share.ts, which reuses dist/index.html as its shell,
 // can strip the homepage's body from blog post pages.
+//
+// Visually hidden (but still in the HTML for crawlers) so visitors don't see
+// it flash, unstyled, on load before React replaces it; shown again only
+// when JS is off, via the <noscript> style FALLBACK_STYLE adds to <head>.
+const FALLBACK_STYLE = `<style>#prerender-fallback{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}</style>
+    <noscript><style>#prerender-fallback{position:static;width:auto;height:auto;margin:0;overflow:visible;clip:auto;white-space:normal}</style></noscript>`;
+
 function fallbackBody(route: Route, lang: Lang): string {
   const prefix = lang === "DE" ? "/de" : "";
   const links = routes
     .map((r) => `<li><a href="${prefix}${r.path || (prefix ? "" : "/")}">${escapeHtml(linkLabel(r, lang))}</a></li>`)
     .join("");
   const other: Lang = lang === "EN" ? "DE" : "EN";
-  return `<!--prerender-body--><main>
+  return `<!--prerender-body--><main id="prerender-fallback">
         <h1>${escapeHtml(route.title[lang])}</h1>
         <p>${escapeHtml(route.description[lang])}</p>
         <nav><ul>${links}</ul></nav>
@@ -157,7 +164,7 @@ function renderRoute(shell: string, route: Route, lang: Lang): string {
   html = setMeta(html, "property", "og:locale:alternate", lang === "EN" ? "de_DE" : "en_US");
   html = setMeta(html, "name", "twitter:title", title);
   html = setMeta(html, "name", "twitter:description", description);
-  html = html.replace("</head>", () => `    ${siteJsonLdTags(lang)}\n  </head>`);
+  html = html.replace("</head>", () => `    ${siteJsonLdTags(lang)}\n    ${FALLBACK_STYLE}\n  </head>`);
   html = replaceTag(html, /<div id="root"><\/div>/, `<div id="root">${fallbackBody(route, lang)}</div>`);
   return html;
 }
