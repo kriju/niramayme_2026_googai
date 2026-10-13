@@ -1,4 +1,5 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
+import { LOGO_EMAIL_URL } from "./logo.js";
 import { FieldValue } from "firebase-admin/firestore";
 import { getAdminDb } from "./firebaseAdmin.js";
 import { requireBlogAdmin } from "./blogAuth.js";
@@ -129,6 +130,7 @@ function renderCampaignHtml({ post, lang, postUrl }: { post: Record<string, any>
 <head><meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" /><title>${escapeHtml(post.title)}</title></head>
 <body style="margin:0;padding:24px 16px;background:#fafaf9;">
   <div style="font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;max-width:560px;margin:0 auto;background:#ffffff;border-radius:16px;padding:28px;color:#292524;line-height:1.55;">
+    <p style="text-align:center;margin:0 0 16px;"><img src="${LOGO_EMAIL_URL}" alt="Niramay" width="72" height="72" style="display:inline-block;width:72px;height:72px;border:0;" /></p>
     <p style="color:#78716c;margin:0 0 16px;">${escapeHtml(c.intro)}</p>
     ${image}
     <h1 style="font-family:Georgia,serif;font-size:26px;line-height:1.25;margin:0 0 12px;"><a href="${url}" style="color:#292524;text-decoration:none;">${escapeHtml(post.title)}</a></h1>

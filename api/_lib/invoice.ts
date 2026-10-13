@@ -1,6 +1,7 @@
 import { FieldValue, type DocumentReference, type Firestore, type Transaction } from "firebase-admin/firestore";
 import { PDFDocument, StandardFonts, rgb, type PDFFont, type PDFPage } from "pdf-lib";
 import { formatEuro, type Lang } from "./courses.js";
+import { LOGO_PNG_BASE64 } from "./logo.js";
 
 // Our own invoices for online course payments: numbered NM-<year>-<0001>
 // without gaps (a counter per year, advanced in the same transaction that
@@ -138,7 +139,7 @@ export async function renderInvoicePdf(data: InvoiceData): Promise<Buffer> {
   const bold = await pdf.embedFont(StandardFonts.HelveticaBold);
   const ink = rgb(0.16, 0.14, 0.13);
   const muted = rgb(0.47, 0.44, 0.42);
-  const accent = rgb(0.345, 0.22, 0.38);
+  const accent = rgb(0, 0.24, 0.42); // logo navy
   const left = 56;
   const right = 595.28 - 56;
   let y = 841.89 - 64;
@@ -150,10 +151,14 @@ export async function renderInvoicePdf(data: InvoiceData): Promise<Buffer> {
     page.drawText(safe, { x: right - f.widthOfTextAtSize(safe, size), y, size, font: f, color });
   };
 
-  // Header: issuer
-  text("Niramay", left, 22, bold, accent);
+  // Header: logo + issuer
+  const logo = await pdf.embedPng(Buffer.from(LOGO_PNG_BASE64, "base64"));
+  const logoSize = 54;
+  page.drawImage(logo, { x: left, y: y - logoSize + 20, width: logoSize, height: logoSize });
+  const textLeft = left + logoSize + 12;
+  text("Niramay", textLeft, 22, bold, accent);
   y -= 16;
-  text(ISSUER.business, left, 9, font, muted);
+  text(ISSUER.business, textLeft, 9, font, muted);
   const dateFmt = (iso: string) =>
     new Intl.DateTimeFormat(data.lang === "DE" ? "de-DE" : "en-GB", { dateStyle: "long", timeZone: "Europe/Berlin" }).format(new Date(iso));
 
