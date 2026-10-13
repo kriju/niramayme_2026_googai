@@ -1257,6 +1257,8 @@ const LeaveReviewModal = ({ lang }: { lang: "EN" | "DE" }) => {
             <label className="text-sm font-medium">{t.form.name}</label>
             <input 
               required
+              pattern="^(?!.*\S@\S+\.\S).*$"
+              title={t.form.nameNoEmail}
               className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
               value={formData.name}
               onChange={e => setFormData({ ...formData, name: e.target.value })}
@@ -1871,11 +1873,15 @@ const storyToReview = (s: ClientStory, lang: "EN" | "DE"): DisplayReview => ({
   sortTime: monthToTime(s.date),
 });
 
+// A reviewer who typed their email address into the name field must not
+// have it published; Instagram-style "@handle" names are fine.
+const looksLikeEmail = (s?: string) => !!s && /\S@\S+\.\S/.test(s);
+
 const firestoreToReview = (r: any): DisplayReview => {
   const created: Date | undefined = r.createdAt?.toDate?.();
   return {
     id: r.id,
-    name: r.name,
+    name: looksLikeEmail(r.name) ? TRANSLATIONS[r.lang === "DE" ? "DE" : "EN"].testimonials.client : r.name,
     category: r.category,
     rating: r.rating || 5,
     content: r.content,
@@ -1887,6 +1893,17 @@ const firestoreToReview = (r: any): DisplayReview => {
 };
 
 const byNewest = (a: DisplayReview, b: DisplayReview) => (b.sortTime ?? 0) - (a.sortTime ?? 0);
+
+// The same text submitted twice shows once: the first submission is kept.
+const withoutDuplicates = (list: DisplayReview[]) => {
+  const seen = new Set<string>();
+  return [...list].sort((a, b) => byNewest(b, a)).filter(r => {
+    const key = r.content.trim().toLowerCase().replace(/\s+/g, " ");
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+};
 
 // "via Instagram · Aug 2025" — where and when a client story was sent.
 const reviewSourceLine = (r: DisplayReview, lang: "EN" | "DE") => {
@@ -1957,35 +1974,48 @@ const Hero = ({ lang, onBook }: { lang: "EN" | "DE", onBook: (ctx?: BookingConte
   const upcoming = activeAnnouncements();
   const [approvedReviews, setApprovedReviews] = useState<any[]>([]);
   const [reviewIndex, setReviewIndex] = useState(0);
+  const [reviewsPaused, setReviewsPaused] = useState(false);
 
   // One-shot read (not a live listener) — TestimonialsSection further down
-  // keeps its own subscription; the hero only needs a peek.
+  // keeps its own subscription. All approved reviews, not just the latest few,
+  // so the card can show the overall rating; there are only a few dozen.
   useEffect(() => {
     let cancelled = false;
-    getDocs(query(collection(db, "reviews"), where("approved", "==", true), orderBy("createdAt", "desc"), limit(6)))
+    getDocs(query(collection(db, "reviews"), where("approved", "==", true), orderBy("createdAt", "desc")))
       .then(snap => { if (!cancelled) setApprovedReviews(snap.docs.map(d => ({ id: d.id, ...d.data() }))); })
       .catch(() => {});
     return () => { cancelled = true; };
   }, []);
 
-  // Featured client stories (one or two per service) alternate with the
-  // latest reviews submitted on the site.
+  // Newest first, so the first thing a visitor reads is recent proof the
+  // practice is active, but at most two per offering so six slides cover
+  // more than one service. Site reviews only qualify with a few sentences —
+  // a one-liner says little in the one spot most visitors see; the featured
+  // client stories fill in behind them.
   const reviews = useMemo(() => {
-    const stories = TESTIMONIALS.filter(s => s.featured).map(s => storyToReview(s, lang));
-    const submitted = approvedReviews.map(firestoreToReview);
-    const mixed: DisplayReview[] = [];
-    for (let i = 0; i < Math.max(stories.length, submitted.length); i++) {
-      if (stories[i]) mixed.push(stories[i]);
-      if (submitted[i]) mixed.push(submitted[i]);
-    }
-    return mixed.slice(0, 6);
+    const pool = withoutDuplicates([
+      ...approvedReviews.map(firestoreToReview).filter(r => r.content.length >= 80),
+      ...TESTIMONIALS.filter(s => s.featured).map(s => storyToReview(s, lang)),
+    ]).sort(byNewest);
+    const perGroup: Record<string, number> = {};
+    const picked = pool.filter(r => {
+      const g = reviewGroupOf(r.category) ?? "other";
+      perGroup[g] = (perGroup[g] ?? 0) + 1;
+      return perGroup[g] <= 2;
+    });
+    return picked.slice(0, 6);
   }, [approvedReviews, lang]);
+  const heroAvgRating = approvedReviews.length
+    ? (approvedReviews.reduce((sum, r) => sum + (r.rating || 5), 0) / approvedReviews.length).toFixed(1)
+    : undefined;
 
+  // Paused while the pointer or keyboard focus is on the card, so nobody
+  // loses the quote they're halfway through.
   useEffect(() => {
-    if (reviews.length < 2) return;
+    if (reviews.length < 2 || reviewsPaused) return;
     const id = setInterval(() => setReviewIndex(i => (i + 1) % reviews.length), 6000);
     return () => clearInterval(id);
-  }, [reviews.length]);
+  }, [reviews.length, reviewsPaused]);
 
   const review = reviews[reviewIndex % reviews.length];
 
@@ -2109,10 +2139,19 @@ const Hero = ({ lang, onBook }: { lang: "EN" | "DE", onBook: (ctx?: BookingConte
           </motion.a>
 
           {review && (
-            <motion.a {...reveal(0.38)} href="#testimonials" className={`${glass} p-5 md:p-6 flex flex-col min-w-[85%] sm:min-w-[60%] lg:min-w-0 snap-start hover:bg-white/70 transition-colors`}>
+            <motion.a
+              {...reveal(0.38)}
+              href="#testimonials"
+              onMouseEnter={() => setReviewsPaused(true)}
+              onMouseLeave={() => setReviewsPaused(false)}
+              onFocus={() => setReviewsPaused(true)}
+              onBlur={() => setReviewsPaused(false)}
+              className={`${glass} p-5 md:p-6 flex flex-col min-w-[85%] sm:min-w-[60%] lg:min-w-0 snap-start hover:bg-white/70 transition-colors`}>
               <div className="flex items-center justify-between mb-3">
                 {review.rating ? <ReviewStars rating={review.rating} className="text-amber-500 fill-amber-500" /> : <span />}
-                <span className="text-xs font-bold uppercase tracking-[0.18em] text-stone-500">{t.reviewsLabel}</span>
+                <span className={`text-xs font-bold uppercase text-stone-500 whitespace-nowrap ${heroAvgRating ? "tracking-[0.08em]" : "tracking-[0.18em]"}`}>
+                  {heroAvgRating ? t.reviewsRating(heroAvgRating, approvedReviews.length) : t.reviewsLabel}
+                </span>
               </div>
               <div className="relative flex-1 min-h-[6.5rem]">
                 <AnimatePresence mode="wait">
@@ -2125,7 +2164,7 @@ const Hero = ({ lang, onBook }: { lang: "EN" | "DE", onBook: (ctx?: BookingConte
                   >
                     <p className="font-serif italic text-[15px] md:text-base leading-relaxed text-stone-800 line-clamp-4">"{review.content}"</p>
                     <p className="mt-3 text-sm font-semibold text-stone-700">{review.name}{review.role && <span className="font-normal text-stone-500"> · {review.role}</span>}</p>
-                    {review.source && <p className="mt-0.5 text-xs text-stone-500">{reviewSourceLine(review, lang)}</p>}
+                    {reviewSourceLine(review, lang) && <p className="mt-0.5 text-xs text-stone-500">{reviewSourceLine(review, lang)}</p>}
                   </motion.div>
                 </AnimatePresence>
               </div>
@@ -3683,7 +3722,7 @@ const TestimonialsSection = ({ lang }: { lang: "EN" | "DE" }) => {
   // Both sources in one list, newest first, so a review approved today is
   // the first card rather than the last one after all the curated stories.
   const allReviews = useMemo(
-    () => [...TESTIMONIALS.map(s => storyToReview(s, lang)), ...dynamicReviews.map(firestoreToReview)].sort(byNewest),
+    () => withoutDuplicates([...TESTIMONIALS.map(s => storyToReview(s, lang)), ...dynamicReviews.map(firestoreToReview)]).sort(byNewest),
     [dynamicReviews, lang]
   );
   // Only offerings that actually have reviews get a filter button.
