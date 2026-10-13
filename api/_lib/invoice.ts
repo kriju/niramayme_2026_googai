@@ -11,9 +11,9 @@ import { formatEuro, type Lang } from "./courses.js";
 // Contents follow § 14 Abs. 4 UStG / § 33 UStDV (Kleinbetragsrechnung up to
 // €250): issuer's full name and address, date, number, the service and when
 // it is performed, the amount, and the § 19 UStG note in place of VAT.
-// LEGAL-REVIEW: the tax adviser should confirm the layout. Set
-// INVOICE_TAX_NUMBER (Steuernummer) in Vercel to print it; it is required on
-// invoices over €250.
+// LEGAL-REVIEW: the tax adviser should confirm the layout. The Steuernummer
+// is printed on every invoice (required over €250); INVOICE_TAX_NUMBER in
+// Vercel overrides it.
 //
 // Kept in sync by hand with src/legal/config.ts (the api/ folder does not
 // import from src/).
@@ -26,6 +26,7 @@ const ISSUER = {
   email: "richa@niramay.me",
   phone: "+49-15175315761",
   web: "www.niramay.me",
+  taxNumber: "59201/25040",
 };
 
 export type InvoiceData = {
@@ -164,7 +165,7 @@ export async function renderInvoicePdf(data: InvoiceData): Promise<Buffer> {
     ISSUER.email,
     ISSUER.phone,
     ISSUER.web,
-    ...(process.env.INVOICE_TAX_NUMBER ? [`${l.taxNumber}: ${process.env.INVOICE_TAX_NUMBER.trim()}`] : []),
+    `${l.taxNumber}: ${process.env.INVOICE_TAX_NUMBER?.trim() || ISSUER.taxNumber}`,
   ];
   for (const line of issuerLines) {
     textRight(line, 9, font, muted);
