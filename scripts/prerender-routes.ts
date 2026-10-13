@@ -51,11 +51,11 @@ const routes: Route[] = [
     path: "",
     title: {
       EN: "Niramay Wellbeing — Yoga, Reiki & Holistic Therapy in Ostfildern",
-      DE: "Niramay Wellbeing — Yoga, Reiki & Ganzheitliche Therapie in Ostfildern",
+      DE: "Niramay Wohlbefinden — Yoga, Reiki & ganzheitliches Wohlbefinden in Ostfildern",
     },
     description: {
       EN: "Niramay Wellbeing: yoga, Reiki, NLP coaching, hypnotherapy and Vedic astrology guidance with Richa Kansal in Ostfildern, Germany. Book a free 15-minute call.",
-      DE: "Niramay Wellbeing: Yoga, Reiki, NLP-Coaching, Hypnotherapie und vedische Astrologie mit Richa Kansal in Ostfildern. Vereinbaren Sie ein kostenloses 15-minütiges Gespräch.",
+      DE: "Niramay Wohlbefinden: Yoga, Reiki, NLP-Coaching, Hypnotherapie und vedische Astrologie mit Richa Kansal in Ostfildern – für Ihr ganzheitliches Wohlbefinden. Kostenloses 15-Minuten-Gespräch vereinbaren.",
     },
   },
   {
@@ -70,7 +70,7 @@ const routes: Route[] = [
   },
   ...SERVICES.filter((s) => !s.openInModal).map((s) => ({
     path: `/services/${s.id}`,
-    title: { EN: `${s.EN.title} — Niramay Wellbeing, Ostfildern`, DE: `${s.DE.title} — Niramay Wellbeing, Ostfildern` },
+    title: { EN: `${s.EN.title} — Niramay Wellbeing, Ostfildern`, DE: `${s.DE.title} — ${TRANSLATIONS.DE.brand.name}, Ostfildern` },
     description: { EN: s.EN.description, DE: s.DE.description },
   })),
   ...COURSES.filter((c) => c.bookable && c.pageKey).map((c) => {
@@ -149,7 +149,7 @@ function fallbackBody(route: Route, lang: Lang): string {
         <p>${escapeHtml(route.description[lang])}</p>
         <nav><ul>${links}</ul></nav>
         <p><a href="${urlOf(other, route.path).replace(SITE_URL, "")}" hreflang="${other.toLowerCase()}">${other === "DE" ? "Deutsch" : "English"}</a></p>
-        <address>Niramay Wellbeing · Richa Kansal · ${escapeHtml(BUSINESS_STREET_ADDRESS)}, ${BUSINESS_POSTAL_CODE} ${BUSINESS_CITY}, Germany · <a href="tel:+4915175315761">+49 151 75315761</a> · <a href="mailto:richa@niramay.me">richa@niramay.me</a></address>
+        <address>${escapeHtml(TRANSLATIONS[lang].brand.name)} · Richa Kansal · ${escapeHtml(BUSINESS_STREET_ADDRESS)}, ${BUSINESS_POSTAL_CODE} ${BUSINESS_CITY}, Germany · <a href="tel:+4915175315761">+49 151 75315761</a> · <a href="mailto:richa@niramay.me">richa@niramay.me</a></address>
       </main><!--/prerender-body-->`;
 }
 
@@ -174,6 +174,7 @@ function renderRoute(shell: string, route: Route, lang: Lang): string {
   html = setMeta(html, "property", "og:url", canonical);
   html = setMeta(html, "property", "og:locale", lang === "EN" ? "en_US" : "de_DE");
   html = setMeta(html, "property", "og:locale:alternate", lang === "EN" ? "de_DE" : "en_US");
+  html = setMeta(html, "property", "og:site_name", TRANSLATIONS[lang].brand.name);
   html = setMeta(html, "name", "twitter:title", title);
   html = setMeta(html, "name", "twitter:description", description);
   html = html.replace("</head>", () => `    ${siteJsonLdTags(lang)}\n    ${FALLBACK_HEAD}\n  </head>`);

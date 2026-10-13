@@ -2322,7 +2322,7 @@ const ServicePage = () => {
   const deUrl = `${SITE_URL}/de/services/${id}`;
 
   useSeo({
-    title: content ? `${content.title} — Niramay Wellbeing, Ostfildern` : "Niramay Wellbeing",
+    title: content ? `${content.title} — ${TRANSLATIONS[lang].brand.name}, Ostfildern` : TRANSLATIONS[lang].brand.name,
     description: content?.description ?? "",
     canonical,
     lang,
@@ -2996,7 +2996,7 @@ const BlogPostPage = () => {
   const translationUrl = translation ? `${SITE_URL}${langPrefix(otherLang(lang))}/blog/${translation.slug}` : null;
   const seoPost = post ?? otherLangOnly;
   useSeo({
-    title: seoPost ? `${seoPost.title} — Niramay Wellbeing Blog` : "Niramay Wellbeing Blog",
+    title: seoPost ? `${seoPost.title} — ${TRANSLATIONS[lang].brand.name} Blog` : `${TRANSLATIONS[lang].brand.name} Blog`,
     description: seoPost?.excerpt || "",
     // The "only available in German/English" notice just points at the
     // real article, so that's its canonical — and it's kept out of the index.
@@ -4847,10 +4847,10 @@ const HomePage = () => {
   useSeo({
     title: lang === "EN"
       ? "Niramay Wellbeing — Yoga, Reiki & Holistic Therapy in Ostfildern"
-      : "Niramay Wellbeing — Yoga, Reiki & Ganzheitliche Therapie in Ostfildern",
+      : "Niramay Wohlbefinden — Yoga, Reiki & ganzheitliches Wohlbefinden in Ostfildern",
     description: lang === "EN"
       ? "Niramay Wellbeing: yoga, Reiki, NLP coaching, hypnotherapy and Vedic astrology guidance with Richa Kansal in Ostfildern, Germany. Book a free 15-minute call."
-      : "Niramay Wellbeing: Yoga, Reiki, NLP-Coaching, Hypnotherapie und vedische Astrologie mit Richa Kansal in Ostfildern. Vereinbaren Sie ein kostenloses 15-minütiges Gespräch.",
+      : "Niramay Wohlbefinden: Yoga, Reiki, NLP-Coaching, Hypnotherapie und vedische Astrologie mit Richa Kansal in Ostfildern – für Ihr ganzheitliches Wohlbefinden. Kostenloses 15-Minuten-Gespräch vereinbaren.",
     canonical: lang === "EN" ? `${SITE_URL}/` : `${SITE_URL}/de`,
     lang,
     alternates: { en: `${SITE_URL}/`, de: `${SITE_URL}/de` },

@@ -34,15 +34,22 @@ import type { LegalDoc } from "./types";
 const nameNote = (lang: "DE" | "EN") => {
   if (LEGAL_CONFIG.legalForm) return [];
   const owner = LEGAL_CONFIG.owners[0];
+  const { verein } = LEGAL_CONFIG;
+  const vereinDE = verein.registered
+    ? `Gemeinschaftsveranstaltungen richtet der ${verein.name} aus, ein im Vereinsregister eingetragener Verein.`
+    : `Davon zu unterscheiden ist der ${verein.name}: ein Verein mit eigener Satzung, der noch nicht im Vereinsregister eingetragen ist (Verein ohne Rechtspersönlichkeit, § 54 BGB). Er richtet Gemeinschaftsveranstaltungen aus und ist nicht Anbieter der auf dieser Website angebotenen Leistungen.`;
+  const vereinEN = verein.registered
+    ? `Community events are hosted by the ${verein.name}, an association entered in the register of associations.`
+    : `This is separate from the ${verein.name}: an association with its own statutes that is not yet entered in the register of associations (association without legal personality, § 54 BGB). It hosts community events and is not the provider of the services offered on this website.`;
   return [
     lang === "DE"
       ? {
           title: "Hinweis zur Bezeichnung",
-          content: `„Niramay Wohlbefinden“ (englisch „Niramay Wellbeing“) ist die Geschäftsbezeichnung, unter der ${owner} freiberuflich tätig ist. Es handelt sich nicht um eine im Handelsregister eingetragene Firma oder um eine Gesellschaft. Website und Social-Media-Kanäle: niramay.me`,
+          content: `„Niramay Wohlbefinden“ (englisch „Niramay Wellbeing“) ist die Geschäftsbezeichnung, unter der ${owner} freiberuflich tätig ist. Es handelt sich nicht um eine im Handelsregister eingetragene Firma. ${vereinDE}\n\nWebsite und Social-Media-Kanäle: niramay.me`,
         }
       : {
           title: "About the name",
-          content: `“Niramay Wellbeing” (German: “Niramay Wohlbefinden”) is the business name under which ${owner} works as a freelancer. It is not a company entered in the commercial register, nor a partnership or corporation. Website and social media channels: niramay.me`,
+          content: `“Niramay Wellbeing” (German: “Niramay Wohlbefinden”) is the business name under which ${owner} works as a freelancer. It is not a company entered in the commercial register. ${vereinEN}\n\nWebsite and social media channels: niramay.me`,
         },
   ];
 };
