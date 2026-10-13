@@ -25,6 +25,27 @@ import type { LegalDoc } from "./types";
 //    publishes journalistic-editorial articles (personal essays and case
 //    stories), so a responsible person with address is named. Richa Kansal
 //    writes the blog and is the sole provider (see config.ts owners).
+//  - "Hinweis zur Bezeichnung" added (2026-10-13): explains that "Niramay
+//    Wohlbefinden" / "Niramay Wellbeing" is a business name, not a company,
+//    so the brand used across the site cannot be mistaken for a legal entity.
+//    Only shown while config.ts has no legalForm.
+
+// Note on the business name, see config.ts businessName.
+const nameNote = (lang: "DE" | "EN") => {
+  if (LEGAL_CONFIG.legalForm) return [];
+  const owner = LEGAL_CONFIG.owners[0];
+  return [
+    lang === "DE"
+      ? {
+          title: "Hinweis zur Bezeichnung",
+          content: `„Niramay Wohlbefinden“ (englisch „Niramay Wellbeing“) ist die Geschäftsbezeichnung, unter der ${owner} freiberuflich tätig ist. Es handelt sich nicht um eine im Handelsregister eingetragene Firma oder um eine Gesellschaft. Website und Social-Media-Kanäle: niramay.me`,
+        }
+      : {
+          title: "About the name",
+          content: `“Niramay Wellbeing” (German: “Niramay Wohlbefinden”) is the business name under which ${owner} works as a freelancer. It is not a company entered in the commercial register, nor a partnership or corporation. Website and social media channels: niramay.me`,
+        },
+  ];
+};
 
 // Person responsible for the editorial (blog) content, § 18 Abs. 2 MStV.
 const editorialBlock = () =>
@@ -47,6 +68,7 @@ export const impressum: { DE: LegalDoc; EN: LegalDoc } = {
         title: "Angaben gemäß § 5 DDG",
         content: providerBlock("DE"),
       },
+      ...nameNote("DE"),
       {
         title: "Kontakt",
         content: `Telefon: ${LEGAL_CONFIG.phone}\nE-Mail: ${LEGAL_CONFIG.email}`,
@@ -74,6 +96,7 @@ export const impressum: { DE: LegalDoc; EN: LegalDoc } = {
         title: "Information pursuant to § 5 DDG (Digitale-Dienste-Gesetz, German Digital Services Act)",
         content: providerBlock("EN"),
       },
+      ...nameNote("EN"),
       {
         title: "Contact",
         content: `Phone: ${LEGAL_CONFIG.phone}\nEmail: ${LEGAL_CONFIG.email}`,

@@ -62,6 +62,21 @@ export const TRANSLATIONS = {
       openMenu: "Open menu",
       closeMenu: "Close menu",
     },
+    // Brand name and the story behind it (header/footer lockup, "Our name"
+    // block in the About section). "Niramay Wellbeing" is the English and
+    // "Niramay Wohlbefinden" the German form of the same name.
+    brand: {
+      name: "Niramay Wellbeing",
+      wordmark: "Niramay",
+      descriptor: "Wellbeing",
+      homeLabel: "Niramay Wellbeing — home",
+      storyEyebrow: "Our name",
+      storyTitle: "Why Niramay",
+      storyMeaning: "Niramay (Sanskrit निरामय, nirāmaya) means “free from ailment”. We understand it in its fullest sense: free from illness, negativity and toxins — in body, mind and spirit.",
+      storyPurpose: "Our purpose is that every person can become niramay. That is why our website and social media channels carry the name niramay.me.",
+      storyOrganisation: "Niramay Wellbeing (in German: Niramay Wohlbefinden) is the name under which Richa and Riju Kansal pursue this purpose. It is the foundation of their shared commitment to accompany people on their path to wellbeing and, through them, to help heal the world we live in.",
+      storyLegal: "“Niramay Wellbeing” is the business name of this initiative. Unless stated otherwise, the services offered on this website are provided by Richa Kansal (see Legal Notice).",
+    },
     hero: {
       badge: "Holistic Wellbeing in Ostfildern, Germany",
       title: "Start Your Healing Journey Today.",
@@ -835,6 +850,18 @@ export const TRANSLATIONS = {
       langNameDE: "Deutsch",
       openMenu: "Menü öffnen",
       closeMenu: "Menü schließen",
+    },
+    brand: {
+      name: "Niramay Wohlbefinden",
+      wordmark: "Niramay",
+      descriptor: "Wohlbefinden",
+      homeLabel: "Niramay Wohlbefinden – Startseite",
+      storyEyebrow: "Unser Name",
+      storyTitle: "Warum Niramay",
+      storyMeaning: "Niramay (Sanskrit निरामय, nirāmaya) bedeutet „frei von Leiden“. Wir verstehen das Wort in seinem vollen Sinn: frei von Krankheit, Negativität und Giftstoffen – in Körper, Geist und Seele.",
+      storyPurpose: "Unser Ziel ist, dass jeder Mensch niramay werden kann. Deshalb tragen unsere Website und unsere Social-Media-Kanäle den Namen niramay.me.",
+      storyOrganisation: "Niramay Wohlbefinden (englisch: Niramay Wellbeing) ist der Name, unter dem Richa und Riju Kansal dieses Ziel verfolgen. Er steht für ihr gemeinsames Anliegen, Menschen auf ihrem Weg zu mehr Wohlbefinden zu begleiten und so zu einer heilsameren Welt beizutragen.",
+      storyLegal: "„Niramay Wohlbefinden“ ist die Geschäftsbezeichnung dieser Initiative. Anbieterin der auf dieser Website angebotenen Leistungen ist, soweit nicht anders angegeben, Richa Kansal (siehe Impressum).",
     },
     hero: {
       badge: "Ganzheitliches Wohlbefinden in Ostfildern, Deutschland",
