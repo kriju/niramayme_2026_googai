@@ -57,7 +57,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { NavigationMenu } from "@base-ui/react/navigation-menu";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { SERVICES, ASTROLOGY_SERVICE_IDS, ASTROLOGY_PAGE_PATH, TESTIMONIALS, type ClientStory, FAQS, HEALER_CERTIFICATIONS, HEALER_IMAGES, TRANSLATIONS, REVIEW_CATEGORIES, categoryLabel, ONGOING_SESSIONS, COURSES, EVENTS, ANNOUNCEMENTS, GOOGLE_CALENDAR_URL, GOOGLE_REVIEW_URL, BUSINESS_STREET_ADDRESS, BUSINESS_POSTAL_CODE, BUSINESS_CITY, GOOGLE_MAPS_URL, GOOGLE_MAPS_EMBED_URL } from "./constants";
+import { SERVICES, ASTROLOGY_SERVICE_IDS, ASTROLOGY_PAGE_PATH, TESTIMONIALS, type ClientStory, FAQS, HEALER_CERTIFICATIONS, HEALER_IMAGES, TRANSLATIONS, REVIEW_GROUPS, reviewGroupOf, categoryLabel, ONGOING_SESSIONS, COURSES, EVENTS, ANNOUNCEMENTS, GOOGLE_CALENDAR_URL, GOOGLE_REVIEW_URL, BUSINESS_STREET_ADDRESS, BUSINESS_POSTAL_CODE, BUSINESS_CITY, GOOGLE_MAPS_URL, GOOGLE_MAPS_EMBED_URL } from "./constants";
 import { LEGAL_DOCS, LEGAL_LINK_LABELS, type LegalDocType, type LegalLink } from "./legal";
 import { BOOKING_LEGAL_TEXT, EMPTY_LEGAL_STATE, WITHDRAW_TEXT, isLegalComplete, toLegalAcks, type BookingLegalState } from "./legal/booking";
 import { LEGAL_CONFIG, vatPriceNote } from "./legal/config";
@@ -1203,7 +1203,7 @@ const LeaveReviewModal = ({ lang }: { lang: "EN" | "DE" }) => {
     name: "",
     rating: 5,
     content: "",
-    category: "Mental Clarity",
+    category: "",
     role: "",
   });
 
@@ -1232,7 +1232,7 @@ const LeaveReviewModal = ({ lang }: { lang: "EN" | "DE" }) => {
         body: JSON.stringify({ reviewId: docRef.id }),
       }).catch((err) => console.error("Failed to notify admin of new review:", err));
       setOpen(false);
-      setFormData({ name: "", rating: 5, content: "", category: "Mental Clarity", role: "" });
+      setFormData({ name: "", rating: 5, content: "", category: "", role: "" });
     } catch (error) {
       console.error("Error adding review:", error);
     } finally {
@@ -1277,11 +1277,13 @@ const LeaveReviewModal = ({ lang }: { lang: "EN" | "DE" }) => {
           <div className="grid gap-2">
             <label className="text-sm font-medium">{t.form.category}</label>
             <select 
+              required
               className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
               value={formData.category}
               onChange={e => setFormData({ ...formData, category: e.target.value })}
             >
-              {REVIEW_CATEGORIES.map(c => <option key={c} value={c}>{categoryLabel(c, lang)}</option>)}
+              <option value="" disabled>{t.chooseCategory}</option>
+              {REVIEW_GROUPS.map(g => <option key={g.key} value={g.categories[0]}>{g[lang]}</option>)}
             </select>
           </div>
           <div className="grid gap-2">
@@ -1847,7 +1849,12 @@ type DisplayReview = {
   quoteLang?: "EN" | "DE" | "HI";
   translation?: string;
   screenshot?: string;
+  // When it was written, in ms, for newest-first sorting. Client stories only
+  // carry a month, so they sort as the 1st of it; undated ones sort last.
+  sortTime?: number;
 };
+
+const monthToTime = (yyyyMm?: string) => (yyyyMm ? new Date(`${yyyyMm}-01T12:00:00`).getTime() : undefined);
 
 const storyToReview = (s: ClientStory, lang: "EN" | "DE"): DisplayReview => ({
   id: s.id,
@@ -1861,16 +1868,25 @@ const storyToReview = (s: ClientStory, lang: "EN" | "DE"): DisplayReview => ({
   quoteLang: s.quoteLang,
   translation: s.translation?.[lang],
   screenshot: s.screenshot,
+  sortTime: monthToTime(s.date),
 });
 
-const firestoreToReview = (r: any): DisplayReview => ({
-  id: r.id,
-  name: r.name,
-  category: r.category,
-  rating: r.rating || 5,
-  content: r.content,
-  role: r.role,
-});
+const firestoreToReview = (r: any): DisplayReview => {
+  const created: Date | undefined = r.createdAt?.toDate?.();
+  return {
+    id: r.id,
+    name: r.name,
+    category: r.category,
+    rating: r.rating || 5,
+    content: r.content,
+    role: r.role,
+    date: created ? `${created.getFullYear()}-${String(created.getMonth() + 1).padStart(2, "0")}` : undefined,
+    quoteLang: r.lang === "EN" || r.lang === "DE" ? r.lang : undefined,
+    sortTime: created?.getTime(),
+  };
+};
+
+const byNewest = (a: DisplayReview, b: DisplayReview) => (b.sortTime ?? 0) - (a.sortTime ?? 0);
 
 // "via Instagram · Aug 2025" — where and when a client story was sent.
 const reviewSourceLine = (r: DisplayReview, lang: "EN" | "DE") => {
@@ -3629,8 +3645,14 @@ const AboutSection = ({ lang }: { lang: "EN" | "DE" }) => {
   );
 };
 
+// Cards shown before "Show more", and how recent a review is to get a "New" badge.
+const REVIEWS_PAGE_SIZE = 6;
+const NEW_REVIEW_MS = 60 * 24 * 60 * 60 * 1000;
+
 const TestimonialsSection = ({ lang }: { lang: "EN" | "DE" }) => {
   const [filter, setFilter] = useState("all");
+  const [sort, setSort] = useState<"newest" | "topRated">("newest");
+  const [visibleCount, setVisibleCount] = useState(REVIEWS_PAGE_SIZE);
   const [dynamicReviews, setDynamicReviews] = useState<any[]>([]);
   const t = TRANSLATIONS[lang].testimonials;
   
@@ -3658,11 +3680,34 @@ const TestimonialsSection = ({ lang }: { lang: "EN" | "DE" }) => {
     return () => unsubscribe();
   }, []); // Remove lang from dependency to avoid unnecessary re-triggers, though it works either way
 
+  // Both sources in one list, newest first, so a review approved today is
+  // the first card rather than the last one after all the curated stories.
   const allReviews = useMemo(
-    () => [...TESTIMONIALS.map(s => storyToReview(s, lang)), ...dynamicReviews.map(firestoreToReview)],
+    () => [...TESTIMONIALS.map(s => storyToReview(s, lang)), ...dynamicReviews.map(firestoreToReview)].sort(byNewest),
     [dynamicReviews, lang]
   );
-  const filtered = filter === "all" ? allReviews : allReviews.filter(t => t.category === filter);
+  // Only offerings that actually have reviews get a filter button.
+  const groups = useMemo(
+    () => REVIEW_GROUPS
+      .map(g => ({ ...g, count: allReviews.filter(r => reviewGroupOf(r.category) === g.key).length }))
+      .filter(g => g.count > 0),
+    [allReviews]
+  );
+  const sorted = useMemo(() => {
+    const filtered = filter === "all" ? allReviews : allReviews.filter(r => reviewGroupOf(r.category) === filter);
+    // Unrated client stories go after every rated review; ties stay newest first.
+    return sort === "topRated" ? [...filtered].sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0)) : filtered;
+  }, [allReviews, filter, sort]);
+  const shown = sorted.slice(0, visibleCount);
+
+  const chooseFilter = (key: string) => { setFilter(key); setVisibleCount(REVIEWS_PAGE_SIZE); };
+  const chooseSort = (key: "newest" | "topRated") => { setSort(key); setVisibleCount(REVIEWS_PAGE_SIZE); };
+
+  // Same set of reviews the JSON-LD below counts: the moderated, rated ones.
+  const avgRating = dynamicReviews.length
+    ? (dynamicReviews.reduce((sum, r) => sum + (r.rating || 5), 0) / dynamicReviews.length).toFixed(1)
+    : undefined;
+  const now = Date.now();
 
   const reviewsJsonLd = useMemo(() => {
     // Only the Firestore-backed reviews go through the site's own moderation
@@ -3696,131 +3741,135 @@ const TestimonialsSection = ({ lang }: { lang: "EN" | "DE" }) => {
   }, [dynamicReviews, lang]);
   useJsonLd("ld-json-reviews", reviewsJsonLd);
 
+  const chipClass = (active: boolean) =>
+    `rounded-full border-primary-foreground/20 hover:bg-primary-foreground hover:text-primary transition-all duration-300 ${active ? "" : "bg-transparent text-primary-foreground"}`;
+
   return (
     <section id="testimonials" className="py-24 bg-primary text-primary-foreground">
       <div className="container mx-auto px-6">
-        <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-8">
-          <div className="max-w-2xl">
-            <h2 className="text-4xl md:text-5xl font-serif font-bold mb-6">{t.title}</h2>
-            <p className="text-primary-foreground/70 text-lg mb-8">
-              {t.description}
-            </p>
-            <div className="flex flex-wrap gap-4">
-              <a href={GOOGLE_REVIEW_URL} target="_blank" rel="noopener noreferrer">
-                <Button className="rounded-full bg-white text-primary hover:bg-stone-100 gap-2">
-                  <Globe className="w-4 h-4" /> {t.googleReview}
-                </Button>
-              </a>
-              <LeaveReviewModal lang={lang} />
-            </div>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {["all", "Physical Wellness", "Mental Clarity", "Spiritual Healing", "Kids Yoga", "Dance Therapy", "Tarot Reading", "Chair Yoga"].map(cat => {
-              const key = cat === "all" ? "all" : 
-                cat === "Physical Wellness" ? "physical" :
-                cat === "Mental Clarity" ? "mental" :
-                cat === "Spiritual Healing" ? "spiritual" :
-                cat === "Kids Yoga" ? "kids" :
-                cat === "Dance Therapy" ? "dance" :
-                cat === "Tarot Reading" ? "tarot" :
-                cat === "Chair Yoga" ? "chair" : "all";
-              
-              return (
-                <Button 
-                  key={cat} 
-                  variant={filter === cat ? "secondary" : "outline"} 
-                  size="sm" 
-                  onClick={() => setFilter(cat)}
-                  className={`rounded-full border-primary-foreground/20 hover:bg-primary-foreground hover:text-primary transition-all duration-300 ${filter === cat ? "" : "bg-transparent text-primary-foreground"}`}
-                >
-                  {t.filters[key as keyof typeof t.filters]}
-                </Button>
-              );
-            })}
+        <div className="max-w-2xl mb-10">
+          <h2 className="text-4xl md:text-5xl font-serif font-bold mb-6">{t.title}</h2>
+          <p className="text-primary-foreground/70 text-lg mb-4">
+            {t.description}
+          </p>
+          <p className="flex items-center gap-2 text-sm text-primary-foreground/80 mb-8">
+            {avgRating && (
+              <>
+                <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
+                <span className="font-semibold">{t.ratedSummary(avgRating, dynamicReviews.length)}</span>
+                <span aria-hidden>·</span>
+              </>
+            )}
+            <span>{t.storiesSummary(allReviews.length)}</span>
+          </p>
+          <div className="flex flex-wrap gap-4">
+            <a href={GOOGLE_REVIEW_URL} target="_blank" rel="noopener noreferrer">
+              <Button className="rounded-full bg-white text-primary hover:bg-stone-100 gap-2">
+                <Globe className="w-4 h-4" /> {t.googleReview}
+              </Button>
+            </a>
+            <LeaveReviewModal lang={lang} />
           </div>
         </div>
 
-        <div className="relative group">
-          <div 
-            id="reviews-container"
-            className="flex overflow-x-auto gap-8 pb-12 snap-x no-scrollbar scroll-smooth"
-          >
-            <AnimatePresence mode="popLayout">
-              {filtered.map((test, idx) => {
-                const sourceLine = reviewSourceLine(test, lang);
-                return (
-                  <motion.div
-                    key={test.id || idx}
-                    layout
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -20 }}
-                    transition={{ duration: 0.4 }}
-                    className="min-w-[280px] md:min-w-[380px] flex-shrink-0 snap-start"
-                  >
-                    <Card className="bg-white/10 border-white/10 backdrop-blur-sm text-white min-h-[400px] h-full hover:bg-white/15 transition-colors flex flex-col">
-                      <CardHeader className="flex-grow flex flex-col">
-                        {test.rating ? (
-                          <div className="mb-4"><ReviewStars rating={test.rating} className="text-yellow-400 fill-yellow-400" /></div>
-                        ) : (
-                          <p className="text-xs uppercase tracking-[0.18em] text-white/50 mb-4">{test.role}</p>
-                        )}
-                        <div className="flex-grow mb-6 text-lg">
-                          <ReviewQuote review={test} lang={lang} clampClass="line-clamp-6" muted="text-white/60" />
-                        </div>
-                        <Separator className="bg-white/10 mb-6" />
-                        <div className="flex items-center gap-4">
-                          <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center font-bold text-sm flex-shrink-0">
-                            {test.name ? test.name.replace(/^@/, "")[0].toUpperCase() : "N"}
-                          </div>
-                          <div className="min-w-0">
-                            <p className="font-bold text-lg leading-none mb-1 truncate">{test.name}</p>
-                            <p className="text-sm text-white/60 truncate">{test.rating ? [test.role, sourceLine].filter(Boolean).join(" · ") : sourceLine}</p>
-                          </div>
-                        </div>
-                        {test.screenshot && (
-                          <div className="mt-4">
-                            <SeeOriginalButton src={test.screenshot} lang={lang} className="text-white/70 hover:text-white" />
-                          </div>
-                        )}
-                      </CardHeader>
-                    </Card>
-                  </motion.div>
-                );
-              })}
-            </AnimatePresence>
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-10">
+          <div className="flex flex-wrap gap-2">
+            {[{ key: "all", label: t.allReviews, count: allReviews.length }, ...groups.map(g => ({ key: g.key, label: g[lang], count: g.count }))].map(c => (
+              <Button
+                key={c.key}
+                variant={filter === c.key ? "secondary" : "outline"}
+                size="sm"
+                aria-pressed={filter === c.key}
+                onClick={() => chooseFilter(c.key)}
+                className={chipClass(filter === c.key)}
+              >
+                {c.label} <span className="opacity-60">({c.count})</span>
+              </Button>
+            ))}
           </div>
-          
-          {/* Scroll indicators/fade */}
-          <div className="absolute top-0 right-0 h-full w-24 bg-gradient-to-l from-primary to-transparent pointer-events-none hidden md:block" />
-          
-          {/* Navigation Buttons for better UX */}
-          <div className="absolute -left-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity hidden md:block">
-            <Button 
-              variant="outline" 
-              size="icon" 
-              className="rounded-full bg-white/10 border-white/20 text-white backdrop-blur-md"
-              onClick={() => document.getElementById('reviews-container')?.scrollBy({ left: -400, behavior: 'smooth' })}
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </Button>
-          </div>
-          <div className="absolute -right-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity hidden md:block">
-            <Button 
-              variant="outline" 
-              size="icon" 
-              className="rounded-full bg-white/10 border-white/20 text-white backdrop-blur-md"
-              onClick={() => document.getElementById('reviews-container')?.scrollBy({ left: 400, behavior: 'smooth' })}
-            >
-              <ChevronRight className="w-4 h-4" />
-            </Button>
+          <div role="group" aria-label={t.sortLabel} className="flex gap-2 shrink-0">
+            {(["newest", "topRated"] as const).map(key => (
+              <Button
+                key={key}
+                variant={sort === key ? "secondary" : "outline"}
+                size="sm"
+                aria-pressed={sort === key}
+                onClick={() => chooseSort(key)}
+                className={chipClass(sort === key)}
+              >
+                {key === "newest" ? t.sortNewest : t.sortTopRated}
+              </Button>
+            ))}
           </div>
         </div>
-        
-        <div className="mt-16 text-center">
-          <Button variant="outline" className="rounded-full border-white/20 bg-transparent text-white hover:bg-white hover:text-primary gap-2">
-            {t.googleReview} <Globe className="w-4 h-4" />
-          </Button>
+
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <AnimatePresence mode="popLayout">
+            {shown.map((test, idx) => {
+              const sourceLine = reviewSourceLine(test, lang);
+              const isNew = test.sortTime !== undefined && now - test.sortTime < NEW_REVIEW_MS;
+              return (
+                <motion.div
+                  key={test.id || idx}
+                  layout
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <Card className="bg-white/10 border-white/10 backdrop-blur-sm text-white h-full hover:bg-white/15 transition-colors flex flex-col">
+                    <CardHeader className="flex-grow flex flex-col">
+                      <div className="flex items-center justify-between gap-3 mb-4">
+                        {test.rating ? (
+                          <ReviewStars rating={test.rating} className="text-yellow-400 fill-yellow-400" />
+                        ) : (
+                          <p className="text-xs uppercase tracking-[0.18em] text-white/50">{test.role}</p>
+                        )}
+                        {isNew && (
+                          <Badge className="bg-yellow-400 text-stone-900 hover:bg-yellow-400 shrink-0">{t.newBadge}</Badge>
+                        )}
+                      </div>
+                      <div className="flex-grow mb-6 text-lg">
+                        <ReviewQuote review={test} lang={lang} clampClass="line-clamp-6" muted="text-white/60" />
+                      </div>
+                      <Separator className="bg-white/10 mb-6" />
+                      <div className="flex items-center gap-4">
+                        <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center font-bold text-sm flex-shrink-0">
+                          {test.name ? test.name.replace(/^@/, "")[0].toUpperCase() : "N"}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="font-bold text-lg leading-none mb-1 truncate">{test.name}</p>
+                          <p className="text-sm text-white/60 truncate">{test.rating ? [test.role, sourceLine].filter(Boolean).join(" · ") : sourceLine}</p>
+                        </div>
+                      </div>
+                      {test.screenshot && (
+                        <div className="mt-4">
+                          <SeeOriginalButton src={test.screenshot} lang={lang} className="text-white/70 hover:text-white" />
+                        </div>
+                      )}
+                    </CardHeader>
+                  </Card>
+                </motion.div>
+              );
+            })}
+          </AnimatePresence>
+        </div>
+
+        <div className="mt-12 flex flex-col sm:flex-row items-center justify-center gap-4">
+          {sorted.length > visibleCount && (
+            <Button
+              variant="secondary"
+              className="rounded-full gap-2"
+              onClick={() => setVisibleCount(c => c + REVIEWS_PAGE_SIZE)}
+            >
+              {t.showMore} <span className="opacity-60">({sorted.length - visibleCount})</span> <ChevronDown className="w-4 h-4" />
+            </Button>
+          )}
+          <a href={GOOGLE_REVIEW_URL} target="_blank" rel="noopener noreferrer">
+            <Button variant="outline" className="rounded-full border-white/20 bg-transparent text-white hover:bg-white hover:text-primary gap-2">
+              {t.googleReview} <Globe className="w-4 h-4" />
+            </Button>
+          </a>
         </div>
       </div>
     </section>
