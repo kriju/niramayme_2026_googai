@@ -75,6 +75,7 @@ export const TRANSLATIONS = {
       foundersLine: "Certified yoga therapists, teaching side by side in Ostfildern since 2018.",
       foundersCta: "Meet us",
       reviewsLabel: "Client stories",
+      reviewsRating: (avg: string, n: number) => `${avg}/5 · ${n} reviews`,
       bookLabel: "The book",
       bookCta: "Discover the book",
     },
@@ -138,7 +139,7 @@ export const TRANSLATIONS = {
       description: "In their own words: messages clients sent Richa after their sessions, shared here with their permission.",
       via: "via",
       client: "A Niramay client",
-      originalIn: { EN: "Original in English", HI: "Original in Hindi" },
+      originalIn: { EN: "Original in English", DE: "Original in German", HI: "Original in Hindi" },
       translationLabel: "Translation",
       seeOriginal: "See original message",
       originalAlt: "Screenshot of the original message, cropped and with personal details removed",
@@ -154,19 +155,19 @@ export const TRANSLATIONS = {
         content: "Your Review",
         category: "Service Category",
         role: "Outcome/Benefit",
+        nameNoEmail: "Please enter your name, not your email address. It is shown publicly with your review.",
         submit: "Post Review",
         cancel: "Cancel",
       },
-      filters: {
-        all: "All Reviews",
-        physical: "Physical",
-        mental: "Mental",
-        spiritual: "Spiritual",
-        kids: "Kids Yoga",
-        dance: "Dance Therapy",
-        tarot: "Tarot Reading",
-        chair: "Chair Yoga",
-      }
+      allReviews: "All",
+      sortNewest: "Newest",
+      sortTopRated: "Highest rated",
+      sortLabel: "Sort reviews",
+      newBadge: "New",
+      showMore: "Show more reviews",
+      ratedSummary: (avg: string, n: number) => `${avg} average from ${n} rated review${n === 1 ? "" : "s"}`,
+      storiesSummary: (n: number) => `${n} reviews in total`,
+      chooseCategory: "Choose a service",
     },
     faq: {
       title: "Common Questions",
@@ -847,6 +848,7 @@ export const TRANSLATIONS = {
       foundersLine: "Zertifizierte Yogatherapeutin und Yogatherapeut, gemeinsam in Ostfildern seit 2018.",
       foundersCta: "Lernen Sie uns kennen",
       reviewsLabel: "Stimmen unserer Klienten",
+      reviewsRating: (avg: string, n: number) => `${avg.replace(".", ",")}/5 · ${n} Bewertungen`,
       bookLabel: "Das Buch",
       bookCta: "Buch entdecken",
     },
@@ -908,7 +910,7 @@ export const TRANSLATIONS = {
       description: "In ihren eigenen Worten: Nachrichten, die Klientinnen und Klienten Richa nach ihren Sitzungen geschickt haben, hier mit ihrer Erlaubnis geteilt.",
       via: "über",
       client: "Klient:in von Niramay",
-      originalIn: { EN: "Originalzitat auf Englisch", HI: "Originalzitat auf Hindi" },
+      originalIn: { EN: "Originalzitat auf Englisch", DE: "Originalzitat auf Deutsch", HI: "Originalzitat auf Hindi" },
       translationLabel: "Übersetzung",
       seeOriginal: "Originalnachricht ansehen",
       originalAlt: "Screenshot der Originalnachricht, zugeschnitten und ohne persönliche Daten",
@@ -924,19 +926,19 @@ export const TRANSLATIONS = {
         content: "Ihre Bewertung",
         category: "Dienstleistungskategorie",
         role: "Ergebnis/Nutzen",
+        nameNoEmail: "Bitte geben Sie Ihren Namen ein, nicht Ihre E-Mail-Adresse. Er wird öffentlich mit Ihrer Bewertung angezeigt.",
         submit: "Bewertung senden",
         cancel: "Abbrechen",
       },
-      filters: {
-        all: "Alle Bewertungen",
-        physical: "Körperlich",
-        mental: "Geistig",
-        spiritual: "Spirituell",
-        kids: "Kinder Yoga",
-        dance: "Tanztherapie",
-        tarot: "Tarot-Lesung",
-        chair: "Stuhl-Yoga",
-      }
+      allReviews: "Alle",
+      sortNewest: "Neueste",
+      sortTopRated: "Beste Bewertung",
+      sortLabel: "Bewertungen sortieren",
+      newBadge: "Neu",
+      showMore: "Weitere Bewertungen anzeigen",
+      ratedSummary: (avg: string, n: number) => `Durchschnitt ${avg.replace(".", ",")} aus ${n} ${n === 1 ? "Bewertung" : "Bewertungen"} mit Sternen`,
+      storiesSummary: (n: number) => `${n} Bewertungen insgesamt`,
+      chooseCategory: "Angebot auswählen",
     },
     faq: {
       title: "Häufige Fragen",
@@ -1593,6 +1595,19 @@ export const CATEGORY_LABELS: Record<string, { EN: string; DE: string }> = {
 };
 export const REVIEW_CATEGORIES = ["Physical Wellness", "Mental Clarity", "Spiritual Healing", "Kids Yoga", "Dance Therapy", "Tarot Reading", "Chair Yoga"];
 export const categoryLabel = (category: string, lang: "EN" | "DE") => CATEGORY_LABELS[category]?.[lang] ?? category;
+
+// What visitors filter reviews by and pick in the review form: one entry per
+// offering as the menu names it. Each stored category (above) belongs to
+// exactly one group; a new review is saved with its group's first category,
+// so firestore.rules and the stored data keep using the existing names.
+export const REVIEW_GROUPS: { key: string; categories: string[]; EN: string; DE: string }[] = [
+  { key: "yoga", categories: ["Physical Wellness", "Chair Yoga"], EN: "Yoga", DE: "Yoga" },
+  { key: "kids", categories: ["Kids Yoga"], EN: "Kids Yoga", DE: "Kinderyoga" },
+  { key: "dance", categories: ["Dance Therapy"], EN: "Dance Therapy", DE: "Tanztherapie" },
+  { key: "healing", categories: ["Spiritual Healing", "Mental Clarity"], EN: "Reiki & Healing", DE: "Reiki & Heilung" },
+  { key: "tarot", categories: ["Tarot Reading", "Vedic Astrology"], EN: "Tarot & Astrology", DE: "Tarot & Astrologie" },
+];
+export const reviewGroupOf = (category?: string) => REVIEW_GROUPS.find(g => category && g.categories.includes(category))?.key;
 
 // Shown on their own page (/astrology-tarot) instead of the homepage's
 // services grid, so the homepage leads with yoga and holistic wellbeing.

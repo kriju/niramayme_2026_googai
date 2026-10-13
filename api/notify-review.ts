@@ -91,6 +91,10 @@ export function renderEmailHtml(params: {
     <h2 style="font-size: 20px; margin-bottom: 4px;">New review awaiting approval</h2>
     <p style="color: #78716c; margin-top: 0;">Submitted ${escapeHtml(formattedDate)} (Europe/Berlin) &middot; language: ${escapeHtml(lang)}</p>
 
+    ${/\S@\S+\.\S/.test(name) ? `<p style="background: #fef3c7; border-radius: 8px; padding: 10px 12px; margin: 16px 0 0;">
+      The name looks like an email address. The site hides it and shows "A Niramay client" instead, but you may want to reject this and ask for a name.
+    </p>` : ""}
+
     <table style="width: 100%; border-collapse: collapse; margin: 16px 0;">
       <tr>
         <td style="padding: 6px 0; color: #78716c; width: 110px;">Name</td>
