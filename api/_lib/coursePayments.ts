@@ -217,6 +217,7 @@ export async function handleStripeWebhook(req: VercelRequest, res: VercelRespons
     return res.status(400).json({ error: "invalid_signature" });
   }
 
+  console.log(`stripe webhook: ${event.type} ${event.id}`);
   try {
     if (event.type === "checkout.session.completed" || event.type === "checkout.session.async_payment_succeeded") {
       const session = event.data.object as CheckoutSession;
@@ -321,6 +322,7 @@ async function fulfil(session: CheckoutSession): Promise<void> {
   }
   await sendPaidEmails(bookingId, booking, course, invoice);
   await ref.update({ confirmationSentAt: FieldValue.serverTimestamp() });
+  console.log(`course booking paid: ${refCodeFor(bookingId)} ${booking.course} invoice ${invoice.number} (${invoice.totalCents} cents), confirmation sent`);
 }
 
 function sessionListText(course: CourseInfo, sessions: CourseSession[], lang: Lang): string[] {
