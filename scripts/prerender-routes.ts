@@ -120,11 +120,23 @@ function siteJsonLdTags(lang: Lang): string {
 // Marked so api/blog-share.ts, which reuses dist/index.html as its shell,
 // can strip the homepage's body from blog post pages.
 //
-// Visually hidden (but still in the HTML for crawlers) so visitors don't see
-// it flash, unstyled, on load before React replaces it; shown again only
-// when JS is off, via the <noscript> style FALLBACK_STYLE adds to <head>.
-const FALLBACK_STYLE = `<style>#prerender-fallback{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}</style>
-    <noscript><style>#prerender-fallback{position:static;width:auto;height:auto;margin:0;overflow:visible;clip:auto;white-space:normal}</style></noscript>`;
+// While the app loads, the fallback is visually hidden (but still in the
+// HTML for crawlers) so visitors don't see it flash before React replaces
+// it. The class doing the hiding is only ever set by JS, so with JS off the
+// fallback simply shows; and if the app still hasn't mounted after
+// FALLBACK_REVEAL_MS (bundle failed to load, blocked, very slow network)
+// the class is removed again so the visitor gets content, not a blank page.
+// It gets a little styling of its own, as none of the site's CSS applies.
+const FALLBACK_REVEAL_MS = 4000;
+const FALLBACK_HEAD = `<style>
+      #prerender-fallback{max-width:40rem;margin:0 auto;padding:2.5rem 1.25rem;font:16px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:#2d2a2e}
+      #prerender-fallback h1{font:600 1.75rem/1.25 Georgia,"Times New Roman",serif;color:#583861;margin:0 0 .75rem}
+      #prerender-fallback ul{padding-left:1.25rem;list-style:disc}
+      #prerender-fallback a{color:#583861;text-decoration:underline}
+      #prerender-fallback address{font-style:normal;margin-top:1.5rem;padding-top:1rem;border-top:1px solid #e5dfe7;font-size:.9rem}
+      .prerender-pending #prerender-fallback{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+    </style>
+    <script>(function(d){d.classList.add("prerender-pending");setTimeout(function(){d.classList.remove("prerender-pending")},${FALLBACK_REVEAL_MS})})(document.documentElement)</script>`;
 
 function fallbackBody(route: Route, lang: Lang): string {
   const prefix = lang === "DE" ? "/de" : "";
@@ -164,7 +176,7 @@ function renderRoute(shell: string, route: Route, lang: Lang): string {
   html = setMeta(html, "property", "og:locale:alternate", lang === "EN" ? "de_DE" : "en_US");
   html = setMeta(html, "name", "twitter:title", title);
   html = setMeta(html, "name", "twitter:description", description);
-  html = html.replace("</head>", () => `    ${siteJsonLdTags(lang)}\n    ${FALLBACK_STYLE}\n  </head>`);
+  html = html.replace("</head>", () => `    ${siteJsonLdTags(lang)}\n    ${FALLBACK_HEAD}\n  </head>`);
   html = replaceTag(html, /<div id="root"><\/div>/, `<div id="root">${fallbackBody(route, lang)}</div>`);
   return html;
 }
