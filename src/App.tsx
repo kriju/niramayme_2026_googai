@@ -1641,6 +1641,28 @@ const AnnouncementBar = ({ lang, items, onDismiss }: { lang: "EN" | "DE", items:
   );
 };
 
+// Logo + two-line wordmark: "Niramay" over "Wellbeing" / "Wohlbefinden".
+// Stacking keeps the full brand name readable without crowding the header
+// on narrow phones. The logo is a transparent SVG, so it sits on any
+// background without a white box around it.
+const BrandLockup = ({ lang, size = "md" }: { lang: "EN" | "DE", size?: "md" | "lg" }) => {
+  const b = TRANSLATIONS[lang].brand;
+  return (
+    <span className="flex items-center gap-2.5">
+      <img
+        src="/logo.svg"
+        alt=""
+        aria-hidden="true"
+        className={`${size === "lg" ? "w-14 h-14" : "w-11 h-11 min-[380px]:w-12 min-[380px]:h-12"} shrink-0`}
+      />
+      <span className="flex flex-col leading-none">
+        <span className={`font-serif font-bold tracking-tight text-[#0B3A6B] ${size === "lg" ? "text-3xl" : "text-xl min-[380px]:text-2xl"}`}>{b.wordmark}</span>
+        <span className={`mt-1 font-semibold uppercase text-[#2F9A0A] ${size === "lg" ? "text-xs tracking-[0.32em]" : "text-[0.6rem] min-[380px]:text-[0.65rem] tracking-[0.24em]"}`}>{b.descriptor}</span>
+      </span>
+    </span>
+  );
+};
+
 const Navbar = ({ lang, altPath, onBook, belowAnnouncement = false }: { lang: "EN" | "DE", altPath: string, onBook: (ctx?: BookingContext) => void, belowAnnouncement?: boolean }) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -1669,9 +1691,8 @@ const Navbar = ({ lang, altPath, onBook, belowAnnouncement = false }: { lang: "E
       style={belowAnnouncement && !isScrolled ? { top: ANNOUNCEMENT_BAR_HEIGHT } : undefined}
     >
       <div className="container mx-auto px-4 sm:px-6 flex justify-between items-center gap-3">
-        <Link to={prefix || "/"} className="flex items-center gap-2 shrink-0">
-          <img src="/logo.svg" alt="Niramay Logo" className="w-10 h-10 object-contain shrink-0" referrerPolicy="no-referrer" />
-          <span className="font-serif text-xl min-[380px]:text-2xl font-bold tracking-tight whitespace-nowrap">Niramay</span>
+        <Link to={prefix || "/"} aria-label={TRANSLATIONS[lang].brand.homeLabel} className="shrink-0">
+          <BrandLockup lang={lang} />
         </Link>
 
         {/* Nine individual links used to need ~1250px to lay out without
@@ -2301,7 +2322,7 @@ const ServicePage = () => {
   const deUrl = `${SITE_URL}/de/services/${id}`;
 
   useSeo({
-    title: content ? `${content.title} — Niramay Wellbeing, Ostfildern` : "Niramay Wellbeing",
+    title: content ? `${content.title} — ${TRANSLATIONS[lang].brand.name}, Ostfildern` : TRANSLATIONS[lang].brand.name,
     description: content?.description ?? "",
     canonical,
     lang,
@@ -2975,7 +2996,7 @@ const BlogPostPage = () => {
   const translationUrl = translation ? `${SITE_URL}${langPrefix(otherLang(lang))}/blog/${translation.slug}` : null;
   const seoPost = post ?? otherLangOnly;
   useSeo({
-    title: seoPost ? `${seoPost.title} — Niramay Wellbeing Blog` : "Niramay Wellbeing Blog",
+    title: seoPost ? `${seoPost.title} — ${TRANSLATIONS[lang].brand.name} Blog` : `${TRANSLATIONS[lang].brand.name} Blog`,
     description: seoPost?.excerpt || "",
     // The "only available in German/English" notice just points at the
     // real article, so that's its canonical — and it's kept out of the index.
@@ -3633,6 +3654,34 @@ const HealerProfile = ({
   );
 };
 
+// "Why Niramay": what the name means, why the site and social handles are
+// niramay.me, and which name stands for the organisation. The last line
+// keeps the brand name legally clear: it is a business name, the provider
+// is named in the Impressum (src/legal/config.ts).
+const BrandStory = ({ lang }: { lang: "EN" | "DE" }) => {
+  const b = TRANSLATIONS[lang].brand;
+  return (
+    <motion.div
+      id="our-name"
+      initial={{ opacity: 0, y: 30 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      transition={{ duration: 0.6 }}
+      className="mt-24 max-w-4xl mx-auto rounded-[2.5rem] border border-stone-100 bg-stone-50 p-8 md:p-12 grid md:grid-cols-[auto_1fr] gap-8 md:gap-12 items-center"
+    >
+      <img src="/logo.svg" alt="" aria-hidden="true" loading="lazy" className="w-28 h-28 md:w-40 md:h-40 mx-auto" />
+      <div>
+        <p className="text-sm font-bold uppercase tracking-wider text-primary/70 mb-2">{b.storyEyebrow}</p>
+        <h3 className="text-3xl md:text-4xl font-serif font-bold mb-6">{b.storyTitle}</h3>
+        <p className="text-lg text-muted-foreground mb-4 leading-relaxed">{b.storyMeaning}</p>
+        <p className="text-lg text-muted-foreground mb-4 leading-relaxed">{b.storyPurpose}</p>
+        <p className="text-lg text-muted-foreground mb-6 leading-relaxed">{b.storyOrganisation}</p>
+        <p className="text-sm text-muted-foreground/80 leading-relaxed">{b.storyLegal}</p>
+      </div>
+    </motion.div>
+  );
+};
+
 const AboutSection = ({ lang }: { lang: "EN" | "DE" }) => {
   const t = TRANSLATIONS[lang].about;
   return (
@@ -3679,6 +3728,8 @@ const AboutSection = ({ lang }: { lang: "EN" | "DE" }) => {
             <p className="text-white text-base md:text-lg font-medium leading-snug">{t.together}</p>
           </div>
         </motion.div>
+
+        <BrandStory lang={lang} />
       </div>
     </section>
   );
@@ -4063,9 +4114,8 @@ const Footer = ({ lang, onOpenLegal, onOpenCookieSettings, onOpenWithdraw }: { l
       <div className="container mx-auto px-6">
         <div className="grid md:grid-cols-4 gap-12 mb-16">
           <div className="col-span-2">
-            <div className="flex items-center gap-2 mb-6">
-              <img src="/logo.svg" alt="Niramay Logo" className="w-10 h-10 object-contain" referrerPolicy="no-referrer" />
-              <span className="font-serif text-2xl font-bold tracking-tight">Niramay</span>
+            <div className="mb-6" role="img" aria-label={TRANSLATIONS[lang].brand.name}>
+              <BrandLockup lang={lang} size="lg" />
             </div>
             <p className="text-muted-foreground text-lg max-w-md mb-8">
               {t.description}
@@ -4142,7 +4192,7 @@ const Footer = ({ lang, onOpenLegal, onOpenCookieSettings, onOpenWithdraw }: { l
         <Separator className="mb-8" />
         
         <div className="flex flex-col md:flex-row justify-between items-center gap-6 text-sm text-muted-foreground">
-          <p>© {new Date().getFullYear()} Niramay Wellbeing. {t.rights}</p>
+          <p>© {new Date().getFullYear()} {TRANSLATIONS[lang].brand.name}. {t.rights}</p>
           <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 md:gap-x-8">
             <button onClick={() => onOpenLegal("impressum")} className="hover:text-primary transition-colors cursor-pointer bg-transparent border-none p-0">{t.impressum}</button>
             <button onClick={() => onOpenLegal("privacy")} className="hover:text-primary transition-colors cursor-pointer bg-transparent border-none p-0">{t.privacy}</button>
@@ -4797,10 +4847,10 @@ const HomePage = () => {
   useSeo({
     title: lang === "EN"
       ? "Niramay Wellbeing — Yoga, Reiki & Holistic Therapy in Ostfildern"
-      : "Niramay Wellbeing — Yoga, Reiki & Ganzheitliche Therapie in Ostfildern",
+      : "Niramay Wohlbefinden — Yoga, Reiki & ganzheitliches Wohlbefinden in Ostfildern",
     description: lang === "EN"
       ? "Niramay Wellbeing: yoga, Reiki, NLP coaching, hypnotherapy and Vedic astrology guidance with Richa Kansal in Ostfildern, Germany. Book a free 15-minute call."
-      : "Niramay Wellbeing: Yoga, Reiki, NLP-Coaching, Hypnotherapie und vedische Astrologie mit Richa Kansal in Ostfildern. Vereinbaren Sie ein kostenloses 15-minütiges Gespräch.",
+      : "Niramay Wohlbefinden: Yoga, Reiki, NLP-Coaching, Hypnotherapie und vedische Astrologie mit Richa Kansal in Ostfildern – für Ihr ganzheitliches Wohlbefinden. Kostenloses 15-Minuten-Gespräch vereinbaren.",
     canonical: lang === "EN" ? `${SITE_URL}/` : `${SITE_URL}/de`,
     lang,
     alternates: { en: `${SITE_URL}/`, de: `${SITE_URL}/de` },

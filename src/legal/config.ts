@@ -13,14 +13,30 @@
 export type LegalLang = "EN" | "DE";
 
 /** Bumped whenever any legal text changes; stored with every booking record. */
-export const LEGAL_VERSION = "2026-10-12";
+export const LEGAL_VERSION = "2026-10-13";
 
 /** Month shown as "Stand" / "Last updated" in the documents. */
 export const LEGAL_UPDATED = { DE: "Oktober 2026", EN: "October 2026" } as const;
 
 export const LEGAL_CONFIG = {
-  /** Trade name as shown in the Impressum. */
-  businessName: { DE: "Niramay - Ganzheitliches Wohlbefinden", EN: "Niramay - Holistic Wellbeing" },
+  /**
+   * Business name (Geschäftsbezeichnung) as shown in the Impressum. The brand
+   * is "Niramay Wohlbefinden" in German and "Niramay Wellbeing" in English;
+   * niramay.me is the website and social media handle, not a business name.
+   * As long as legalForm is null this is only a designation of the sole
+   * freelancer named in `owners`, not a registered company.
+   *
+   * Separate from this: the "Niramay Wohlbefinden Verein" has its own
+   * statutes (Satzung) but is NOT yet entered in the Vereinsregister
+   * (confirmed by the owners, 2026-10-13), so it is a Verein ohne
+   * Rechtspersönlichkeit (§ 54 BGB) and must not use "e.V.". It hosts
+   * community events; it is not the provider of the paid services on this
+   * site. See verein below. LEGAL-REVIEW: once it is registered, set
+   * verein.registered and add register court + number (and, if the
+   * association ever offers services or content on this site itself, its
+   * own Impressum details: board members entitled to represent it).
+   */
+  businessName: { DE: "Niramay Wohlbefinden", EN: "Niramay Wellbeing (German: Niramay Wohlbefinden)" },
 
   /**
    * Natural persons named as business owner(s) in Impressum, AGB and privacy
@@ -31,6 +47,13 @@ export const LEGAL_CONFIG = {
    * as an owner.
    */
   owners: ["Richa Kansal"] as string[],
+
+  /** The association behind community events, see businessName. */
+  verein: {
+    name: "Niramay Wohlbefinden Verein",
+    /** Entered in the Vereinsregister? Only then may it be called "e.V.". */
+    registered: false as boolean,
+  },
 
   /**
    * Legal form, e.g. "GbR". null = sole freelancer, no legal form shown
