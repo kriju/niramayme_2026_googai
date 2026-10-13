@@ -22,6 +22,12 @@ type Post = { title?: string; excerpt?: string; image?: string; [key: string]: u
 // function already fetched. Keep the id in sync with POST_DATA_ID there.
 const POST_DATA_ID = "blog-post-data";
 
+// Same id as useJsonLd("ld-json-blogpost", …) in BlogPostPage (src/App.tsx),
+// which then updates this tag in place instead of adding a second one.
+const POST_JSONLD_ID = "ld-json-blogpost";
+// Keep in sync with BUSINESS_JSONLD_ID in src/lib/structuredData.ts.
+const BUSINESS_JSONLD_ID = `${SITE_URL}/#business`;
+
 // Keep in sync with src/lib/images.ts (and images.sizes in vercel.json).
 const IMAGE_WIDTHS = [640, 1080, 1600];
 const COVER_SIZES = "(min-width: 768px) 720px, calc(100vw - 48px)";
@@ -50,6 +56,96 @@ function serializePost(id: string, post: Post): string {
   }
   // "<" escaped so post content can never close the <script> tag early.
   return JSON.stringify(data).replace(/</g, "\\u003c");
+}
+
+// Millis from a Firestore Timestamp, if the field is one.
+function timestampMillis(value: unknown): number | null {
+  const ts = value as { toMillis?: () => number } | null;
+  return typeof ts?.toMillis === "function" ? ts.toMillis() : null;
+}
+
+// Same BlogPosting data BlogPostPage builds client-side, so Google gets it
+// without rendering the JS.
+function postJsonLd(post: Post, lang: "EN" | "DE", url: string): string {
+  const data: Record<string, unknown> = {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    headline: post.title,
+    description: post.excerpt,
+    inLanguage: lang === "EN" ? "en" : "de",
+    mainEntityOfPage: url,
+    url,
+    author: { "@type": "Person", name: (typeof post.author === "string" && post.author) || "Niramay" },
+    publisher: { "@id": BUSINESS_JSONLD_ID },
+  };
+  if (post.image) data.image = post.image;
+  const published = timestampMillis(post.createdAt);
+  const modified = timestampMillis(post.updatedAt);
+  if (published !== null) data.datePublished = new Date(published).toISOString();
+  if (modified !== null) data.dateModified = new Date(modified).toISOString();
+  if (typeof post.audioUrl === "string" && post.audioUrl) {
+    data.associatedMedia = { "@type": "AudioObject", contentUrl: post.audioUrl, name: post.title };
+  }
+  return JSON.stringify(data).replace(/</g, "\\u003c");
+}
+
+// **bold** / *italic*, as renderInline in src/App.tsx.
+function inlineHtml(text: string): string {
+  return escapeHtml(text)
+    .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
+    .replace(/\*([^*]+)\*/g, "<em>$1</em>");
+}
+
+// A plain-HTML version of the article inside #root, which React replaces
+// on mount — the same no-JS fallback scripts/prerender-routes.ts gives the
+// static pages, so Google indexes the post text without rendering the app.
+// Follows renderPostContent in src/App.tsx: "## " headings, "- " bullets,
+// "|" table rows, everything else a paragraph.
+function articleBody(post: Post, lang: "EN" | "DE"): string {
+  const content = typeof post.content === "string" ? post.content : "";
+  const blocks: string[] = [];
+  let list: string[] = [];
+  let rows: string[] = [];
+  const flushList = () => {
+    if (list.length) blocks.push(`<ul>${list.map(item => `<li>${inlineHtml(item)}</li>`).join("")}</ul>`);
+    list = [];
+  };
+  const flushTable = () => {
+    const cells = rows
+      .filter(row => !/^\|?\s*:?-{3,}:?\s*(\|\s*:?-{3,}:?\s*)*\|?$/.test(row))
+      .map(row => row.replace(/^\|/, "").replace(/\|$/, "").split("|").map(cell => `<td>${inlineHtml(cell.trim())}</td>`).join(""));
+    if (cells.length) blocks.push(`<table>${cells.map(row => `<tr>${row}</tr>`).join("")}</table>`);
+    rows = [];
+  };
+  for (const line of content.split("\n")) {
+    const trimmed = line.trim();
+    if (trimmed.startsWith("|")) {
+      flushList();
+      rows.push(trimmed);
+      continue;
+    }
+    if (!trimmed && rows.length) continue;
+    flushTable();
+    if (trimmed.startsWith("- ")) {
+      list.push(trimmed.slice(2));
+      continue;
+    }
+    flushList();
+    if (!trimmed) continue;
+    blocks.push(trimmed.startsWith("## ") ? `<h2>${inlineHtml(trimmed.slice(3))}</h2>` : `<p>${inlineHtml(trimmed)}</p>`);
+  }
+  flushList();
+  flushTable();
+  const author = (typeof post.author === "string" && post.author.trim()) || "Niramay";
+  const published = timestampMillis(post.createdAt);
+  const date = published !== null ? new Date(published).toISOString().slice(0, 10) : "";
+  const blogHome = lang === "DE" ? "/de/blog" : "/blog";
+  return `<main><article>
+        <h1>${escapeHtml(post.title)}</h1>
+        <p>${escapeHtml(author)}${date ? ` · <time datetime="${date}">${date}</time>` : ""}</p>
+        ${blocks.join("\n        ")}
+      </article>
+      <p><a href="${blogHome}">${lang === "DE" ? "Alle Beiträge" : "All posts"}</a></p></main>`;
 }
 
 let cachedShell: string | null = null;
@@ -170,6 +266,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     html = setTag(html, /<meta\s+name="robots"\s+content="[^"]*"\s*\/?>/, `<meta name="robots" content="noindex, follow" />`);
   }
 
+  // The shell is the English homepage; German pages need lang="de" so
+  // Google doesn't file them as English.
+  if (lang === "DE") html = html.replace(/<html lang="[^"]*">/, () => `<html lang="de">`);
+
   if (post?.title) {
     const title = `${post.title} — Niramay Wellbeing Blog`;
     const description = post.excerpt || "";
@@ -198,13 +298,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     html = setMeta(html, "name", "twitter:description", description);
     html = setMeta(html, "name", "twitter:image", image);
 
-    const headExtras = [`<script id="${POST_DATA_ID}" type="application/json">${serializePost(postId, post)}</script>`];
+    const headExtras = [
+      `<script id="${POST_DATA_ID}" type="application/json">${serializePost(postId, post)}</script>`,
+      `<script type="application/ld+json" id="${POST_JSONLD_ID}">${postJsonLd(post, lang, url)}</script>`,
+    ];
     // HEIC only renders in Safari, so preloading it elsewhere is wasted bytes.
     if (post.image && /^https:\/\//.test(post.image) && !/\.(heic|heif)(\?|$)/i.test(post.image)) {
       headExtras.unshift(coverPreload(post.image));
     }
     // Function replacer: post text may contain "$&"-style replacement patterns.
     html = html.replace("</head>", () => `    ${headExtras.join("\n    ")}\n  </head>`);
+    const body = articleBody(post, lang);
+    html = html.replace(/<div id="root"><\/div>/, () => `<div id="root">${body}</div>`);
   }
 
   res.setHeader("Content-Type", "text/html; charset=utf-8");

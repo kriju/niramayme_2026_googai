@@ -15,7 +15,10 @@
   },
   "redirects": [
     { "source": "/services/:id(nlp|hypnotherapy|past-life)", "destination": "/services/subconscious-healing", "permanent": true },
-    { "source": "/de/services/:id(nlp|hypnotherapy|past-life)", "destination": "/de/services/subconscious-healing", "permanent": true }
+    { "source": "/de/services/:id(nlp|hypnotherapy|past-life)", "destination": "/de/services/subconscious-healing", "permanent": true },
+    { "source": "/:page(our-services|sessions|impressum|privacy-policy)", "destination": "/", "permanent": true },
+    { "source": "/:page(about-.*)", "destination": "/", "permanent": true },
+    { "source": "/de/blog/jenseits-des-korperlichen-ein-tieferes-verstandnis-von-yoga", "destination": "/de/blog/jenseits-des-korperlichen-ein-tieferes-verstandnis-von-yoga-2", "permanent": true }
   ],
   "rewrites": [
     { "source": "/api/review-action", "destination": "/api/notify-review?op=action" },
