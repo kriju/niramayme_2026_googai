@@ -1989,7 +1989,8 @@ const ReviewQuote = ({ review, lang, clampClass, muted }: { review: DisplayRevie
 // tree photo becomes a faint, slowly drifting backdrop behind all of it.
 const Hero = ({ lang, onBook }: { lang: "EN" | "DE", onBook: (ctx?: BookingContext) => void }) => {
   const t = TRANSLATIONS[lang].hero;
-  const tBook = TRANSLATIONS[lang].book;
+  // The hero points to the newest book; the Books section shows them all.
+  const tBook = TRANSLATIONS[lang].newBook;
   const prefix = langPrefix(lang);
   const tAbout = TRANSLATIONS[lang].about;
   const upcoming = activeAnnouncements();
@@ -2200,15 +2201,9 @@ const Hero = ({ lang, onBook }: { lang: "EN" | "DE", onBook: (ctx?: BookingConte
           )}
 
           <motion.a {...reveal(0.46)} href="#book" className={`${glass} p-5 md:p-6 flex gap-4 items-center lg:flex-col lg:items-start min-w-[85%] sm:min-w-[60%] lg:min-w-0 snap-start group hover:bg-white/70 transition-colors`}>
-            <img
-              src={tBook.cover}
-              alt=""
-              width={900}
-              height={1350}
-              loading="lazy"
-              decoding="async"
-              className="w-16 lg:w-20 aspect-[2/3] object-cover rounded-md shadow-lg shadow-stone-900/20 -rotate-3 group-hover:rotate-0 transition-transform duration-500"
-            />
+            <div className="w-16 lg:w-20 shrink-0 aspect-[2/3] overflow-hidden rounded-md shadow-lg shadow-stone-900/20 -rotate-3 group-hover:rotate-0 transition-transform duration-500">
+              <BookCover book={tBook} compact />
+            </div>
             <div className="min-w-0">
               <p className="text-xs font-bold uppercase tracking-[0.18em] text-stone-500 mb-1">{t.bookLabel}</p>
               <p className="font-serif text-lg leading-snug">{tBook.title}</p>
@@ -4401,101 +4396,142 @@ const WithdrawalModal = ({ lang, open, onOpenChange, onOpenWiderruf }: { lang: "
   );
 };
 
-const BookSection = ({ lang }: { lang: "EN" | "DE" }) => {
-  const t = TRANSLATIONS[lang].book;
+type BookInfo = (typeof TRANSLATIONS)["EN"]["book"];
+
+// A book's cover. Until the artwork for a book is in /public (its `cover` is
+// empty), a typographic stand-in with the real title and author is shown, so
+// the page never needs to load an image from Amazon (which would hand the
+// visitor's IP address to a third party before they choose to go there).
+const BookCover = ({ book, compact = false, className = "" }: { book: BookInfo; compact?: boolean; className?: string }) => {
+  if (book.cover) {
+    return (
+      <img
+        src={book.cover}
+        alt={compact ? "" : book.title}
+        width={900}
+        height={1350}
+        loading="lazy"
+        decoding="async"
+        className={`w-full h-full object-cover ${className}`}
+      />
+    );
+  }
   return (
-    <section id="book" className="py-24 bg-[#FAF9F6] overflow-hidden">
+    <div
+      role={compact ? undefined : "img"}
+      aria-label={compact ? undefined : book.title}
+      aria-hidden={compact || undefined}
+      className={`w-full h-full flex flex-col items-center justify-between text-center bg-gradient-to-br from-emerald-800 via-teal-700 to-amber-600 text-white ${compact ? "p-1.5" : "p-8"} ${className}`}
+    >
+      {compact ? (
+        <span className="m-auto font-serif font-bold text-3xl leading-none drop-shadow">8</span>
+      ) : (
+        <>
+          <span className="text-xs font-semibold uppercase tracking-[0.3em] text-white/80">{book.author}</span>
+          <span className="flex flex-col items-center gap-4">
+            <span className="font-serif font-bold text-8xl leading-none drop-shadow-lg">8</span>
+            <span className="font-serif text-2xl font-bold leading-tight">{book.title}</span>
+            <span className="w-12 h-0.5 bg-white/60" />
+            <span className="font-serif italic text-base text-white/90 leading-snug">{book.subtitle}</span>
+          </span>
+          <Sparkles className="w-5 h-5 text-white/70" aria-hidden="true" />
+        </>
+      )}
+    </div>
+  );
+};
+
+// One book on the shelf: cover on one side, text and the Amazon link on the
+// other. `reverse` swaps the sides on wide screens so two books in a row
+// don't look like a copy of each other.
+const BookFeature = ({ book, lang, reverse = false, featured = false, headingId }: { book: BookInfo; lang: "EN" | "DE"; reverse?: boolean; featured?: boolean; headingId: string }) => {
+  const shelf = TRANSLATIONS[lang].bookShelf;
+  return (
+    <article aria-labelledby={headingId} className={`flex flex-col ${reverse ? "lg:flex-row-reverse" : "lg:flex-row"} items-center gap-12 lg:gap-16`}>
+      <motion.div
+        initial={{ opacity: 0, x: reverse ? 30 : -30 }}
+        whileInView={{ opacity: 1, x: 0 }}
+        viewport={{ once: true }}
+        className="lg:w-1/2 w-full relative"
+      >
+        <div className="relative z-10 max-w-[16rem] sm:max-w-sm mx-auto">
+          <div className="rounded-2xl overflow-hidden shadow-[20px_30px_60px_-12px_rgba(0,0,0,0.5)] group bg-stone-900 aspect-[2/3] border-r-4 border-stone-800">
+            <BookCover book={book} className="transition-transform duration-1000 group-hover:scale-105" />
+            <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-black/20 via-transparent to-transparent pointer-events-none" />
+          </div>
+          {featured && (
+            <span aria-hidden="true" className="absolute -top-3 -right-3 rotate-[8deg] rounded-full bg-amber-400 text-stone-900 text-xs font-bold uppercase tracking-widest px-4 py-2 shadow-lg">
+              {book.badges[0]}
+            </span>
+          )}
+        </div>
+        <div className={`absolute -top-20 ${reverse ? "-right-20" : "-left-20"} w-80 h-80 bg-primary/10 rounded-full blur-[100px] -z-10`} />
+      </motion.div>
+
+      <motion.div
+        initial={{ opacity: 0, x: reverse ? -30 : 30 }}
+        whileInView={{ opacity: 1, x: 0 }}
+        viewport={{ once: true }}
+        className="lg:w-1/2"
+      >
+        <div className="flex flex-wrap gap-3 mb-6">
+          {book.badges.map((badge) => (
+            <Badge key={badge} variant="outline" className="text-primary border-primary/20 bg-primary/5 px-4 py-1">
+              {badge}
+            </Badge>
+          ))}
+        </div>
+
+        <h3 id={headingId} className="text-3xl md:text-5xl font-serif font-bold mb-3 text-primary leading-tight">
+          {book.title}
+        </h3>
+        <p className="text-xl md:text-2xl font-serif italic text-stone-500 mb-6">
+          {book.subtitle}
+        </p>
+
+        <p className="text-lg text-muted-foreground mb-8 leading-relaxed">
+          {book.description}
+        </p>
+
+        <div className="flex items-center gap-4 mb-8">
+          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary/25 to-primary/10 border-2 border-white shadow-sm flex items-center justify-center text-primary font-serif font-bold" aria-hidden="true">
+            RK
+          </div>
+          <div>
+            <p className="font-bold text-stone-800">{book.author}</p>
+            <p className="text-sm text-stone-500">{shelf.authorRole}</p>
+          </div>
+        </div>
+
+        <a
+          href={book.link}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={buttonVariants({ size: "lg", className: "rounded-full px-8 md:px-10 h-14 md:h-16 text-base md:text-lg gap-3 shadow-xl hover:shadow-primary/20" })}
+        >
+          <Sparkles className="w-5 h-5" aria-hidden="true" />
+          {book.cta}
+          <ExternalLink className="w-4 h-4 opacity-80" aria-hidden="true" />
+          <span className="sr-only">{shelf.newTabHint}</span>
+        </a>
+      </motion.div>
+    </article>
+  );
+};
+
+// Richa's books, newest first.
+const BookSection = ({ lang }: { lang: "EN" | "DE" }) => {
+  const t = TRANSLATIONS[lang];
+  return (
+    <section id="book" aria-labelledby="books-heading" className="py-24 bg-[#FAF9F6] overflow-hidden">
       <div className="container mx-auto px-6">
-        <div className="flex flex-col lg:flex-row items-center gap-16">
-          <motion.div 
-            initial={{ opacity: 0, x: -30 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            className="lg:w-1/2 relative"
-          >
-            <div className="relative z-10 rounded-2xl overflow-hidden shadow-[20px_30px_60px_-12px_rgba(0,0,0,0.5)] group bg-stone-900 aspect-[2/3] max-w-sm mx-auto border-r-4 border-stone-800">
-              <img
-                src={t.cover}
-                alt={t.title}
-                width={900}
-                height={1350}
-                loading="lazy"
-                decoding="async"
-                className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105"
-                referrerPolicy="no-referrer"
-              />
-              <div className="absolute inset-0 bg-gradient-to-r from-black/20 via-transparent to-transparent" />
-              <div className="absolute inset-0 flex flex-col items-center justify-center p-12 text-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
-                <p className="text-white text-lg font-serif italic mb-4">{t.subtitle}</p>
-                <div className="w-12 h-0.5 bg-primary/60" />
-              </div>
-            </div>
-            {/* Decorative background elements */}
-            <div className="absolute -top-20 -left-20 w-80 h-80 bg-primary/10 rounded-full blur-[100px] -z-10 animate-pulse" />
-            <div className="absolute -bottom-20 -right-20 w-96 h-96 bg-stone-200 rounded-full blur-[120px] -z-10" />
-            
-            {/* Float badge */}
-            <motion.div 
-              animate={{ y: [0, -10, 0] }}
-              transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-              className="absolute -right-4 bottom-20 z-20 bg-white p-6 rounded-2xl shadow-xl border border-stone-100 hidden md:block"
-            >
-              <div className="flex flex-col items-center gap-2">
-                <div className="flex text-yellow-500">
-                  {[1,2,3,4,5].map(i => <Star key={i} className="w-4 h-4 fill-current" />)}
-                </div>
-                <p className="text-xs font-bold text-stone-400 tracking-widest uppercase">{t.badges[0]}</p>
-              </div>
-            </motion.div>
-          </motion.div>
-
-          <motion.div 
-            initial={{ opacity: 0, x: 30 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            className="lg:w-1/2"
-          >
-            <div className="flex flex-wrap gap-3 mb-6">
-              {t.badges.map((badge, idx) => (
-                <Badge key={idx} variant="outline" className="text-primary border-primary/20 bg-primary/5 px-4 py-1">
-                  {badge}
-                </Badge>
-              ))}
-            </div>
-            
-            <h2 className="text-4xl md:text-6xl font-serif font-bold mb-4 text-primary leading-tight">
-              {t.title}
-            </h2>
-            <h3 className="text-xl md:text-2xl font-serif italic text-stone-500 mb-8">
-              {t.subtitle}
-            </h3>
-            
-            <p className="text-lg text-muted-foreground mb-8 leading-relaxed">
-              {t.description}
-            </p>
-
-            <div className="flex items-center gap-4 mb-10">
-              <div className="w-14 h-14 rounded-full bg-gradient-to-br from-primary/25 to-primary/10 border-2 border-white shadow-sm flex items-center justify-center text-primary font-serif font-bold">
-                RK
-              </div>
-              <div>
-                <p className="font-bold text-stone-800">{t.author}</p>
-                <p className="text-sm text-stone-500">{lang === "EN" ? "Lead Trainer & Author" : "Cheftrainerin & Autorin"}</p>
-              </div>
-            </div>
-
-            <a 
-              href={t.link} 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="inline-block"
-            >
-              <Button size="lg" className="rounded-full px-10 h-16 text-lg gap-3 shadow-xl hover:shadow-primary/20 transition-all">
-                <Sparkles className="w-5 h-5" />
-                {t.cta}
-              </Button>
-            </a>
-          </motion.div>
+        <div className="text-center mb-16">
+          <p className="text-xs font-bold uppercase tracking-[0.2em] text-primary mb-3">{t.bookShelf.eyebrow}</p>
+          <h2 id="books-heading" className="text-4xl md:text-5xl font-serif font-bold text-stone-800">{t.bookShelf.title}</h2>
+        </div>
+        <div className="space-y-24 md:space-y-32">
+          <BookFeature book={t.newBook} lang={lang} featured headingId="book-8-limbs" />
+          <BookFeature book={t.book} lang={lang} reverse headingId="book-body-to-bliss" />
         </div>
       </div>
     </section>

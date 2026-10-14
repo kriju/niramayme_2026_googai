@@ -46,7 +46,7 @@ export const TRANSLATIONS = {
       courses: "Courses",
       astrology: "Astrology & Tarot",
       bookNow: "Book Now",
-      book: "The Book",
+      book: "Books",
       // Navbar group labels: the desktop/mobile nav collapses the flat
       // list of links above into three dropdowns (About, Offerings, Read)
       // plus the standalone Reviews/FAQ links — see Navbar in App.tsx.
@@ -91,7 +91,7 @@ export const TRANSLATIONS = {
       foundersCta: "Meet us",
       reviewsLabel: "Client stories",
       reviewsRating: (avg: string, n: number) => `${avg}/5 · ${n} reviews`,
-      bookLabel: "The book",
+      bookLabel: "New book",
       bookCta: "Discover the book",
     },
     services: {
@@ -790,6 +790,28 @@ export const TRANSLATIONS = {
       link: "https://www.amazon.de/stores/Richa-Jain-Kansal/author/B0H3W87WW9?language=en&ref=sr_ntt_srch_lnk_1&qid=1790675468&sr=8-1&shoppingPortalEnabled=true",
       badges: ["Holistic Guide", "Ancient Wisdom"],
     },
+    // Richa's second book. The title stays in its original English on the
+    // German page too, so it matches the Amazon listing people search for.
+    // cover: empty until the cover artwork is added to /public; BookCover in
+    // App.tsx then shows a typographic placeholder instead of an image.
+    // The link is the plain product URL (no tracking or affiliate
+    // parameters); the English page opens Amazon's English interface.
+    newBook: {
+      title: "Discovering the 8 Limbs of Yoga",
+      subtitle: "Robin's Magical Journey of Mind, Body & Heart",
+      description: "Join Robin on a magical journey through the eight limbs of yoga described by Patanjali: from kindness towards others and care for oneself, through posture, breath and focus, all the way to meditation and inner peace. A warm introduction to how yoga brings mind, body and heart together.",
+      author: "Richa Jain Kansal",
+      cta: "Buy on Amazon",
+      cover: "",
+      link: "https://www.amazon.de/-/en/dp/B0HMVV8T7P",
+      badges: ["New", "The 8 Limbs of Yoga"],
+    },
+    bookShelf: {
+      eyebrow: "Books by Richa",
+      title: "Wisdom to take home",
+      authorRole: "Lead Trainer & Author",
+      newTabHint: "(opens Amazon in a new tab)",
+    },
     auth: {
       navLogIn: "Log In",
       navSignUp: "Sign Up",
@@ -840,7 +862,7 @@ export const TRANSLATIONS = {
       courses: "Kurse",
       astrology: "Astrologie & Tarot",
       bookNow: "Jetzt buchen",
-      book: "Das Buch",
+      book: "Bücher",
       aboutGroup: "Über uns",
       trainers: "Richa & Riju",
       offerings: "Angebote",
@@ -876,7 +898,7 @@ export const TRANSLATIONS = {
       foundersCta: "Lernen Sie uns kennen",
       reviewsLabel: "Stimmen unserer Klienten",
       reviewsRating: (avg: string, n: number) => `${avg.replace(".", ",")}/5 · ${n} Bewertungen`,
-      bookLabel: "Das Buch",
+      bookLabel: "Neues Buch",
       bookCta: "Buch entdecken",
     },
     services: {
@@ -1565,6 +1587,22 @@ export const TRANSLATIONS = {
       cover: "/bookcover-de.webp",
       link: "https://www.amazon.de/stores/Richa-Jain-Kansal/author/B0H3W87WW9?language=en&ref=sr_ntt_srch_lnk_1&qid=1790675468&sr=8-1&shoppingPortalEnabled=true",
       badges: ["Ganzheitlicher Leitfaden", "Altes Wissen"],
+    },
+    newBook: {
+      title: "Discovering the 8 Limbs of Yoga",
+      subtitle: "Robin's Magical Journey of Mind, Body & Heart",
+      description: "Begleiten Sie Robin auf einer magischen Reise durch die acht Glieder des Yoga nach Patanjali: vom freundlichen Umgang mit anderen und der Achtsamkeit mit sich selbst über Haltung, Atem und Konzentration bis hin zu Meditation und innerem Frieden. Eine herzliche Einführung, wie Yoga Geist, Körper und Herz verbindet.",
+      author: "Richa Jain Kansal",
+      cta: "Bei Amazon kaufen",
+      cover: "",
+      link: "https://www.amazon.de/dp/B0HMVV8T7P",
+      badges: ["Neu", "Die 8 Glieder des Yoga"],
+    },
+    bookShelf: {
+      eyebrow: "Bücher von Richa",
+      title: "Weisheit für Zuhause",
+      authorRole: "Cheftrainerin & Autorin",
+      newTabHint: "(öffnet Amazon in einem neuen Tab)",
     },
     auth: {
       navLogIn: "Anmelden",
@@ -2337,12 +2375,12 @@ export const FAQS = [
   {
     category: "about",
     EN: {
-      question: "Can I buy Richa's book?",
-      answer: "Yes. \"Journey from Body to Bliss: The Niramay Path to Pancha Koshas\" is available on Amazon.",
+      question: "Can I buy Richa's books?",
+      answer: "Yes. Both of Richa's books are available on Amazon: \"Discovering the 8 Limbs of Yoga: Robin's Magical Journey of Mind, Body & Heart\" and \"Journey from Body to Bliss: The Niramay Path to Pancha Koshas\". You'll find the links in the Books section on our homepage.",
     },
     DE: {
-      question: "Kann ich Richas Buch kaufen?",
-      answer: "Ja. „Journey from Body to Bliss: The Niramay Path to Pancha Koshas\" ist bei Amazon erhältlich.",
+      question: "Kann ich Richas Bücher kaufen?",
+      answer: "Ja. Beide Bücher von Richa sind bei Amazon erhältlich: „Discovering the 8 Limbs of Yoga: Robin's Magical Journey of Mind, Body & Heart\" und „Journey from Body to Bliss: The Niramay Path to Pancha Koshas\". Die Links finden Sie im Bereich „Bücher\" auf unserer Startseite.",
     }
   },
 ];
