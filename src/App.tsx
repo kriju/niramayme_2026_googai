@@ -1158,20 +1158,20 @@ const CourseIntakeModal = ({ lang, courseId, onClose, onOpenPrivacy, onOpenLegal
 
   const inputClass = "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2";
 
-  const summary = (
-    <div className="bg-stone-50 p-4 rounded-xl border border-stone-100">
-      <p className="text-xs uppercase tracking-wider text-muted-foreground mb-1">{t.selectedLabel}</p>
-      <p className="font-bold">{content.title}</p>
-      <p className="text-sm text-muted-foreground">{chosenSession ? chosenSession[lang] : content.time} · <span className="font-semibold text-foreground">{content.price}</span></p>
-    </div>
-  );
-
   // What Stripe will charge, incl. the discount; INR stays the listed price.
   const inrPrice = "inrPrice" in course ? course.inrPrice : "";
   const eurPrice = price ? formatEuro(price.totalCents, lang) : null;
   const priceText = price
     ? `${eurPrice}${price.discount ? ` (${lang === "DE" ? "statt" : "instead of"} ${formatEuro(price.baseCents, lang)}, ${t.discountKinds[price.discount.kind]} ${price.discount.percent}%)` : ""}${inrPrice ? ` / ${inrPrice}` : ""}`
     : content.price;
+
+  const summary = (
+    <div className="bg-stone-50 p-4 rounded-xl border border-stone-100">
+      <p className="text-xs uppercase tracking-wider text-muted-foreground mb-1">{t.selectedLabel}</p>
+      <p className="font-bold">{content.title}</p>
+      <p className="text-sm text-muted-foreground">{chosenSession ? chosenSession[lang] : content.time} · <span className="font-semibold text-foreground">{price?.discount ? <><s className="font-normal text-muted-foreground">{formatEuro(price.baseCents, lang)}</s> {eurPrice}{inrPrice ? ` / ${inrPrice}` : ""}</> : content.price}</span></p>
+    </div>
+  );
 
   const questions = (
     <p className="text-xs text-muted-foreground">
