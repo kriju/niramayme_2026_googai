@@ -880,7 +880,7 @@ export const TRANSLATIONS = {
       bookCta: "Buch entdecken",
     },
     services: {
-      title: "Ergebnisorientierte Heilung",
+      title: "Ergebnis\u00ADorientierte Heilung", // soft hyphen: one word is wider than a 320px phone
       description: "Wir bieten nicht nur Sitzungen an; wir bieten Lösungen für Ihr körperliches, geistiges und spirituelles Wohlbefinden.",
       outcomeLabel: "Das Ergebnis",
       learnMore: "Mehr erfahren & buchen",

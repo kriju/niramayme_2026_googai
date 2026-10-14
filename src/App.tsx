@@ -2071,7 +2071,7 @@ const Hero = ({ lang, onBook }: { lang: "EN" | "DE", onBook: (ctx?: BookingConte
         {/* Left: promise + actions */}
         <div className="min-w-0">
           <motion.div {...reveal(0)}>
-            <Badge variant="secondary" className="mb-5 px-4 py-1 rounded-full bg-white/70 backdrop-blur text-primary font-medium ring-1 ring-stone-200/70">
+            <Badge variant="secondary" className="mb-5 h-auto max-w-full whitespace-normal text-left sm:h-5 sm:whitespace-nowrap px-4 py-1 rounded-full bg-white/70 backdrop-blur text-primary font-medium ring-1 ring-stone-200/70">
               <MapPin className="w-3.5 h-3.5 mr-1.5" />{t.badge}
             </Badge>
           </motion.div>
@@ -2096,7 +2096,7 @@ const Hero = ({ lang, onBook }: { lang: "EN" | "DE", onBook: (ctx?: BookingConte
             </span>
           </motion.a>
           <motion.div {...reveal(0.24)} className="flex flex-wrap gap-3">
-            <Button size="lg" className="rounded-full px-6 md:px-8 gap-2 h-12 md:h-14 text-base md:text-lg shadow-lg shadow-stone-900/10" onClick={() => onBook({ title: t.ctaPrimary })}>
+            <Button size="lg" className="rounded-full px-6 md:px-8 gap-2 h-auto min-h-12 max-w-full py-2.5 whitespace-normal text-center sm:h-12 sm:py-0 sm:whitespace-nowrap md:h-14 text-base md:text-lg shadow-lg shadow-stone-900/10" onClick={() => onBook({ title: t.ctaPrimary })}>
               {t.ctaPrimary} <ArrowRight className="w-5 h-5" />
             </Button>
             <a href="#services">
@@ -2260,20 +2260,20 @@ const ServiceCard = ({ service, index, lang, onLearnMore }: { service: any, inde
           {service.link && service.openInModal ? (
             <Button
               variant="link"
-              className="mt-6 p-0 h-auto font-bold text-primary group-hover:translate-x-1 transition-transform"
+              className="mt-6 p-0 h-auto whitespace-normal text-left font-bold text-primary group-hover:translate-x-1 transition-transform"
               onClick={() => onLearnMore?.(service)}
             >
               {content.linkLabel || t.learnMore} <ArrowRight className="w-4 h-4 ml-2" />
             </Button>
           ) : service.link ? (
             <a href={service.link} target="_blank" rel="noopener noreferrer" className="inline-block mt-6">
-              <Button variant="link" className="p-0 h-auto font-bold text-primary group-hover:translate-x-1 transition-transform">
+              <Button variant="link" className="p-0 h-auto whitespace-normal text-left font-bold text-primary group-hover:translate-x-1 transition-transform">
                 {content.linkLabel || t.learnMore} <ArrowRight className="w-4 h-4 ml-2" />
               </Button>
             </a>
           ) : (
             <Link to={`${prefix}/services/${service.id}`} className="inline-block mt-6">
-              <Button variant="link" className="p-0 h-auto font-bold text-primary group-hover:translate-x-1 transition-transform">
+              <Button variant="link" className="p-0 h-auto whitespace-normal text-left font-bold text-primary group-hover:translate-x-1 transition-transform">
                 {content.linkLabel || t.learnMore} <ArrowRight className="w-4 h-4 ml-2" />
               </Button>
             </Link>
@@ -3283,7 +3283,7 @@ const ServicesSection = ({ lang, onLearnMore }: { lang: "EN" | "DE", onLearnMore
           </p>
         </div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {HOME_SERVICES.map((service, idx) => (
             <ServiceCard key={service.id} service={service} index={idx} lang={lang} onLearnMore={onLearnMore} />
           ))}
@@ -4112,8 +4112,8 @@ const Footer = ({ lang, onOpenLegal, onOpenCookieSettings, onOpenWithdraw }: { l
   return (
     <footer className="bg-stone-50 pt-24 pb-12 border-t">
       <div className="container mx-auto px-6">
-        <div className="grid md:grid-cols-4 gap-12 mb-16">
-          <div className="col-span-2">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-16">
+          <div className="md:col-span-2">
             <div className="mb-6" role="img" aria-label={TRANSLATIONS[lang].brand.name}>
               <BrandLockup lang={lang} size="lg" />
             </div>
