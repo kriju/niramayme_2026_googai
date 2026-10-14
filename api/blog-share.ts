@@ -271,7 +271,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (lang === "DE") html = html.replace(/<html lang="[^"]*">/, () => `<html lang="de">`);
 
   if (post?.title) {
-    const title = `${post.title} — Niramay Wellbeing Blog`;
+    const title = `${post.title} — ${lang === "DE" ? "Niramay Wohlbefinden" : "Niramay Wellbeing"} Blog`;
     const description = post.excerpt || "";
     const url = `${SITE_URL}${blogPath(lang, slug)}`;
     const image = shareImage(post.image);

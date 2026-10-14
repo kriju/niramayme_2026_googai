@@ -32,7 +32,7 @@ export function businessJsonLd(lang: Lang) {
     "@type": "HealthAndBeautyBusiness",
     "@id": BUSINESS_JSONLD_ID,
     name: "Niramay Wellbeing",
-    alternateName: ["Niramay", "niramay.me"],
+    alternateName: ["Niramay Wohlbefinden", "Niramay", "niramay.me"],
     // Google's logo/knowledge-panel guidelines want a raster image of at
     // least 112x112; the SVG stays as the general image.
     logo: `${SITE_URL}/apple-touch-icon.png`,
@@ -103,7 +103,7 @@ export function websiteJsonLd(_lang: Lang) {
     "@type": "WebSite",
     "@id": WEBSITE_JSONLD_ID,
     name: "Niramay Wellbeing",
-    alternateName: ["Niramay", "niramay.me"],
+    alternateName: ["Niramay Wohlbefinden", "Niramay", "niramay.me"],
     url: `${SITE_URL}/`,
     publisher: { "@id": BUSINESS_JSONLD_ID },
     inLanguage: ["en", "de"],

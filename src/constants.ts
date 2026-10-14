@@ -62,6 +62,21 @@ export const TRANSLATIONS = {
       openMenu: "Open menu",
       closeMenu: "Close menu",
     },
+    // Brand name and the story behind it (header/footer lockup, "Our name"
+    // block in the About section). "Niramay Wellbeing" is the English and
+    // "Niramay Wohlbefinden" the German form of the same name.
+    brand: {
+      name: "Niramay Wellbeing",
+      wordmark: "Niramay",
+      descriptor: "Wellbeing",
+      homeLabel: "Niramay Wellbeing — home",
+      storyEyebrow: "Our name",
+      storyTitle: "Why Niramay",
+      storyMeaning: "Niramay (Sanskrit निरामय, nirāmaya) means “free from ailment”. We understand it in its fullest sense: free from illness, negativity and toxins — in body, mind and spirit.",
+      storyPurpose: "Our purpose is that every person can become niramay. That is why our website and social media channels carry the name niramay.me.",
+      storyOrganisation: "Niramay Wellbeing (in German: Niramay Wohlbefinden) is the name under which Richa and Riju Kansal pursue this purpose. It is the foundation of their shared commitment to accompany people on their path to wellbeing and, through them, to help heal the world we live in.",
+      storyLegal: "“Niramay Wellbeing” is the business name of this initiative. Community events are hosted by the Niramay Wohlbefinden Verein, an association with its own statutes that is not yet entered in the register of associations. Unless stated otherwise, the services offered on this website are provided by Richa Kansal (see Legal Notice).",
+    },
     hero: {
       badge: "Holistic Wellbeing in Ostfildern, Germany",
       title: "Start Your Healing Journey Today.",
@@ -855,6 +870,18 @@ export const TRANSLATIONS = {
       openMenu: "Menü öffnen",
       closeMenu: "Menü schließen",
     },
+    brand: {
+      name: "Niramay Wohlbefinden",
+      wordmark: "Niramay",
+      descriptor: "Wohlbefinden",
+      homeLabel: "Niramay Wohlbefinden – Startseite",
+      storyEyebrow: "Unser Name",
+      storyTitle: "Warum Niramay",
+      storyMeaning: "Niramay (Sanskrit निरामय, nirāmaya) bedeutet „frei von Leiden“. Wir verstehen das Wort in seinem vollen Sinn: frei von Krankheit, Negativität und Giftstoffen – in Körper, Geist und Seele.",
+      storyPurpose: "Unser Ziel ist, dass jeder Mensch niramay werden kann. Deshalb tragen unsere Website und unsere Social-Media-Kanäle den Namen niramay.me.",
+      storyOrganisation: "Niramay Wohlbefinden (englisch: Niramay Wellbeing) ist der Name, unter dem Richa und Riju Kansal dieses Ziel verfolgen. Er steht für ihr gemeinsames Anliegen, Menschen auf ihrem Weg zu mehr Wohlbefinden zu begleiten und so zu einer heilsameren Welt beizutragen.",
+      storyLegal: "„Niramay Wohlbefinden“ ist die Geschäftsbezeichnung dieser Initiative. Gemeinschaftsveranstaltungen richtet der Niramay Wohlbefinden Verein aus, ein Verein mit eigener Satzung, der noch nicht im Vereinsregister eingetragen ist. Anbieterin der auf dieser Website angebotenen Leistungen ist, soweit nicht anders angegeben, Richa Kansal (siehe Impressum).",
+    },
     hero: {
       badge: "Ganzheitliches Wohlbefinden in Ostfildern, Deutschland",
       title: "Beginnen Sie heute Ihre Heilungsreise.",
@@ -879,7 +906,7 @@ export const TRANSLATIONS = {
       priceLabel: "Investition",
     },
     astrologyPage: {
-      seoTitle: "Vedische Astrologie & Tarot — Niramay Wellbeing",
+      seoTitle: "Vedische Astrologie & Tarot — Niramay Wohlbefinden",
       seoDescription: "Vedische Astrologie (Kundali-Lesungen), Tarot-Beratung und intuitive Seelenberatung mit Richa Kansal, online oder in Ostfildern bei Stuttgart.",
       badge: "Astrologie & Tarot",
       title: "Vedische Astrologie & Tarot",
@@ -965,8 +992,8 @@ export const TRANSLATIONS = {
       seeAll: "Alle Fragen ansehen",
       pageTitle: "Häufig gestellte Fragen",
       pageDescription: "Antworten rund um Buchung, Sitzungen, unsere Angebote und das Niramay-Team in Ostfildern – vom kostenlosen Kennenlerngespräch bis zur Frage, was Sie mitbringen sollten.",
-      seoTitle: "FAQ — Yoga, Reiki & Ganzheitliche Therapie in Ostfildern | Niramay Wellbeing",
-      seoDescription: "Antworten auf häufige Fragen zu Niramay Wellbeing in Ostfildern: Buchung, Sitzungsdauer, Online-Sitzungen, Sprache, Stornierung, Reiki, Hypnotherapie, vedische Astrologie und mehr.",
+      seoTitle: "FAQ — Yoga, Reiki & ganzheitliches Wohlbefinden in Ostfildern | Niramay Wohlbefinden",
+      seoDescription: "Antworten auf häufige Fragen zu Niramay Wohlbefinden in Ostfildern: Buchung, Sitzungsdauer, Online-Sitzungen, Sprache, Stornierung, Reiki, Hypnotherapie, vedische Astrologie und mehr.",
       breadcrumb: "FAQ",
       categories: {
         start: "Erste Schritte",
@@ -1399,7 +1426,7 @@ export const TRANSLATIONS = {
     },
     yogaSeries: {
       badge: "Online · Serie mit 8 Einheiten",
-      seoTitle: "Yoga für Stress, Immunität & Schlaf — Online-Serie mit 8 Einheiten | Niramay Wellbeing",
+      seoTitle: "Yoga für Stress, Immunität & Schlaf — Online-Serie mit 8 Einheiten | Niramay Wohlbefinden",
       seoDescription: "Eine Live-Online-Yogaserie mit 8 Einheiten (Di & Do, 20–21 Uhr, 4 Wochen) mit sanfter Dehnung, Atemübungen, Meditation und Tiefenentspannung für besseren Umgang mit Stress, ein starkes Immunsystem und erholsamen Schlaf. 79 €.",
       breadcrumbCourses: "Kurse",
       intro: "Eine sanfte, strukturierte Online-Serie über 4 Wochen, die Ihr Nervensystem beruhigt, die natürlichen Abwehrkräfte Ihres Körpers stärkt und Ihnen zu tieferem Schlaf verhilft. Jede Live-Einheit baut auf der vorherigen auf – am Ende haben Sie eine einfache Routine, die Sie selbstständig weiterführen können.",
@@ -1442,7 +1469,7 @@ export const TRANSLATIONS = {
     },
     yogaAdventure: {
       badge: "Online · Kinder 9–14 · Workshop",
-      seoTitle: "Yoga-Abenteuer für Kinder (9–14) — Online-Yoga-Workshop | Niramay Wellbeing",
+      seoTitle: "Yoga-Abenteuer für Kinder (9–14) — Online-Yoga-Workshop | Niramay Wohlbefinden",
       seoDescription: "Ein lustiger, interaktiver 1,5-stündiger Online-Yoga-Workshop für Kinder von 9–14 Jahren: Bewegung, Atmung, Konzentration, Spiele und Selbstentdeckung in einer kleinen Gruppe mit max. 12 Kindern. Wählen Sie den 24. oder 29. Oktober. 15 € / ₹1500.",
       breadcrumbCourses: "Kurse",
       intro: "Eine spielerische Gelegenheit für Kinder, Yoga durch Bewegung, Atmung, Konzentration, Spiele und Selbstentdeckung zu erleben – in einer kleinen, interaktiven Gruppe. Es ist EIN Workshop an ZWEI Terminen – Sie wählen nur einen Termin, und die Gebühr gilt für diese eine Einheit. Anmeldung bis zum 20. Oktober.",
@@ -2857,7 +2884,7 @@ export const EVENTS = [
     EN: {
       title: "International Yoga Day 2026",
       location: "Kemnat Festhalle, Ostfildern",
-      description: "Hosted by Niramay Wohlbefinden Verein, with the full team leading poses, talks, and a closing ceremony.",
+      description: "Hosted by the Niramay Wohlbefinden Verein (association), with the full team leading poses, talks, and a closing ceremony.",
     },
     DE: {
       title: "Internationaler Yoga-Tag 2026",

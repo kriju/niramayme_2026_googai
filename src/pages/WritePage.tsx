@@ -90,7 +90,7 @@ const LoginForm = () => {
     <div className="min-h-screen flex items-center justify-center bg-stone-50 px-6">
       <div className="w-full max-w-sm bg-white rounded-2xl border border-stone-100 shadow-sm p-8">
         <div className="flex items-center gap-2 mb-8 justify-center">
-          <img src="/logo.svg" alt="Niramay Logo" className="w-8 h-8" referrerPolicy="no-referrer" />
+          <img src="/logo.svg" alt="Niramay Wellbeing" className="w-8 h-8" referrerPolicy="no-referrer" />
           <span className="font-serif text-xl font-bold">{wt.pageTitle}</span>
         </div>
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -820,7 +820,7 @@ const WriteDashboard = ({ user }: { user: User }) => {
     <div className="max-w-3xl mx-auto px-6 py-12">
       <div className="flex items-center justify-between mb-10">
         <div className="flex items-center gap-2">
-          <img src="/logo.svg" alt="Niramay Logo" className="w-8 h-8" referrerPolicy="no-referrer" />
+          <img src="/logo.svg" alt="Niramay Wellbeing" className="w-8 h-8" referrerPolicy="no-referrer" />
           <span className="font-serif text-xl font-bold">{wt.pageTitle}</span>
           <span className="text-sm text-muted-foreground">— {displayName}</span>
         </div>

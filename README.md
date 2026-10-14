@@ -2,6 +2,26 @@
 <img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
 </div>
 
+# Niramay Wellbeing · niramay.me
+
+## Brand and naming
+
+| Name | Use |
+| --- | --- |
+| **Niramay Wellbeing** (English) / **Niramay Wohlbefinden** (German) | The name of the organisation behind the initiative. Used in the header and footer lockup, page titles, copyright line and structured data. The German pages show the German form. |
+| **niramay.me** | The website address and the handle on all social media channels (Instagram, Facebook, YouTube). |
+| **Niramay** | Short form in running text only (e.g. "the Niramay team", consent checkboxes). |
+
+**What the name means.** *Niramay* (Sanskrit निरामय, *nirāmaya*) means "free from ailment": free from illness, negativity and toxins, in body, mind and spirit. The purpose of the initiative is that every person can become *niramay*, which is why the website and social media handles are **niramay.me**. **Niramay Wellbeing** (*Niramay Wohlbefinden*) is the name under which Richa and Riju Kansal pursue this purpose, and the foundation of their shared commitment to help heal the world they live in.
+
+**Legal status.** "Niramay Wellbeing" / "Niramay Wohlbefinden" is a business name (*Geschäftsbezeichnung*), not a registered company. Unless stated otherwise, the provider of the services on the site is Richa Kansal as a freelancer. The **Niramay Wohlbefinden Verein** is a separate association with its own statutes (*Satzung*) that is not yet entered in the register of associations, so it is a *Verein ohne Rechtspersönlichkeit* (§ 54 BGB) and must not call itself "e.V." until it is registered. It hosts community events. The source of truth for these facts is `src/legal/config.ts`, and the Impressum explains the name ("Hinweis zur Bezeichnung"). Once the Verein is registered, set `verein.registered` there, add its register details and have the legal texts reviewed. Note: in German, do not describe the organisation as a *Stiftung*, which is a specific legal form.
+
+**Logo.** `public/logo.svg` is the original Niramay artwork, unchanged: the white background and white fills were removed so it is transparent, and the canvas is cropped to the green ring so the logo fills its space. `favicon-16x16.png`, `favicon-32x32.png`, `apple-touch-icon.png` (white background, as iOS requires) and the logo tile in `og-default.jpg` (link previews) are rendered from it. Regenerate them whenever the SVG changes.
+
+**Search (German).** German pages use "Niramay Wohlbefinden" in page titles, descriptions, `og:site_name` and the visible brand, and the homepage title is "Niramay Wohlbefinden — Yoga, Reiki & ganzheitliches Wohlbefinden in Ostfildern", so searches for "Niramay Wohlbefinden" and "Wohlbefinden Ostfildern" match. The structured data keeps one entity name ("Niramay Wellbeing") with "Niramay Wohlbefinden" as `alternateName`.
+
+---
+
 # Run and deploy your AI Studio app
 
 This contains everything you need to run your app locally.
