@@ -213,7 +213,8 @@ export async function renderInvoicePdf(data: InvoiceData): Promise<Buffer> {
     if (i === 0) textRight(formatEuro(data.baseCents, data.lang));
     y -= 14;
   });
-  for (const line of wrap(pdfSafe(`${l.period}: ${data.servicePeriod}`), font, 9, itemWidth)) {
+  // Services booked without a fixed date (readings, Reiki) have no period.
+  for (const line of data.servicePeriod ? wrap(pdfSafe(`${l.period}: ${data.servicePeriod}`), font, 9, itemWidth) : []) {
     text(line, left, 9, font, muted);
     y -= 12;
   }

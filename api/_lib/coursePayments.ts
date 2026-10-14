@@ -21,6 +21,7 @@ import {
 import { emailKey, ensureAlumniCode, normalizeCode, quote, redeemCode, type Quote } from "./discounts.js";
 import { buildCourseIcs } from "./ics.js";
 import { renderInvoicePdf, reserveInvoiceNumber, type InvoiceData } from "./invoice.js";
+import { fulfilService } from "./servicePayments.js";
 import { hasStripe, stripeRequest, verifyWebhook, WebhookSignatureError, type CheckoutSession } from "./stripe.js";
 
 // Online course payments via Stripe Checkout (Phase 2). All routes live in
@@ -65,7 +66,7 @@ function upcoming(sessions: CourseSession[], now = Date.now()): boolean {
   return sessions.some((s) => new Date(s.start).getTime() > now);
 }
 
-async function readJson(req: VercelRequest): Promise<Record<string, unknown>> {
+export async function readJson(req: VercelRequest): Promise<Record<string, unknown>> {
   const body = req.body;
   if (body && typeof body === "object" && !Buffer.isBuffer(body)) return body as Record<string, unknown>;
   try {
@@ -221,7 +222,11 @@ export async function handleStripeWebhook(req: VercelRequest, res: VercelRespons
   try {
     if (event.type === "checkout.session.completed" || event.type === "checkout.session.async_payment_succeeded") {
       const session = event.data.object as CheckoutSession;
-      if (session.payment_status === "paid") await fulfil(session);
+      if (session.payment_status === "paid") {
+        // Astrology, tarot, guidance and Reiki (servicePayments.ts) vs courses.
+        if (session.metadata?.kind === "service") await fulfilService(session);
+        else await fulfil(session);
+      }
     } else if (event.type === "checkout.session.async_payment_failed") {
       const session = event.data.object as CheckoutSession;
       await sendEmail({
@@ -329,7 +334,7 @@ function sessionListText(course: CourseInfo, sessions: CourseSession[], lang: La
   return sessions.map((s) => `• ${formatSessionDate(s.start, lang)}–${new Intl.DateTimeFormat(lang === "DE" ? "de-DE" : "en-GB", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/Berlin" }).format(new Date(s.end))} (${lang === "DE" ? "deutsche Zeit" : "German time"})${course.pickOne ? "" : ` – ${s.label[lang]}`}`);
 }
 
-function wrapHtml(paragraphs: string[]): string {
+export function wrapHtml(paragraphs: string[]): string {
   return `
     <div style="font-family: -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; max-width: 560px; margin: 0 auto; color: #292524; line-height: 1.5;">
       ${paragraphs.map((p) => `<p>${escapeHtml(p).replace(/\n/g, "<br/>")}</p>`).join("\n      ")}

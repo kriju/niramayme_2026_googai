@@ -4,13 +4,14 @@ import { LEGAL_CONFIG, LEGAL_VERSION, vatPriceNote, type LegalLang } from "./con
 // (BookingLegalBlock in src/App.tsx) and the "Vertrag widerrufen" dialog.
 //
 // Two kinds of forms:
-//  - binding:     pay-first bookings (astrology, guidance, tarot, in-person
-//                 Reiki, online courses). The button is labelled
+//  - binding:     every booking (astrology, guidance, tarot, Reiki in person
+//                 and at a distance, online courses). The button is labelled
 //                 "Zahlungspflichtig buchen" (§ 312j Abs. 3 BGB) and the price
 //                 incl. the VAT note is shown directly above it (§ 312j Abs. 2).
-//  - non-binding: distance Reiki requests - the contract only comes into being
-//                 when Richa confirms, so the button says "Anfrage senden" and
-//                 no early-start request is collected.
+//                 Payment follows via Stripe Checkout (or UPI for INR).
+//  - non-binding: no longer used (distance Reiki was a free request until
+//                 all payments moved to Stripe); requestNote/requestButton
+//                 are kept for a future enquiry form.
 //
 // LEGAL-REVIEW: whether the pay-first flow (details -> payment instructions ->
 // "I've paid") counts as the order button for § 312j BGB is a judgement call;

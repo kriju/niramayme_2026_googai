@@ -623,7 +623,7 @@ export const TRANSLATIONS = {
       paidError: "Couldn't confirm your payment claim. Please try again, or message us on WhatsApp.",
       confirmationTitle: "Thank you!",
       inPersonConfirmationBody: "We've noted your payment claim and will confirm your in-person session within 24–48 hours.",
-      distanceConfirmationBody: "Your request has been sent to Richa. She will get in touch with you for the next steps.",
+      distanceConfirmationBody: "We've noted your UPI payment claim. Once it's verified, Richa will get in touch within 24–48 hours to arrange your session.",
       confirmationSentTo: "A confirmation email has been sent to:",
       closeBtn: "Close",
     },
@@ -764,6 +764,7 @@ export const TRANSLATIONS = {
       confirmationBody: "Thank you for joining. We'll verify your UPI payment. 24 hours before the session we'll email you a reminder with the Google Meet link.",
       paidTitle: "Payment received — you're booked in!",
       paidBody: "Thank you! Your confirmation email with the invoice and a calendar file is on its way. 24 hours before each session we'll email you a reminder with the Google Meet link.",
+      servicePaidBody: "Thank you! Your confirmation email with the invoice is on its way. Richa will get in touch with you within 24–48 hours to arrange everything (for in-person Reiki: your chosen calendar slot applies).",
       cancelledTitle: "Payment cancelled",
       cancelledBody: "Nothing was charged. You can book again whenever you like.",
       confirmationSentTo: "A confirmation email has been sent to:",
@@ -1420,7 +1421,7 @@ export const TRANSLATIONS = {
       paidError: "Ihre Zahlungsmeldung konnte nicht bestätigt werden. Bitte versuchen Sie es erneut oder schreiben Sie uns über WhatsApp.",
       confirmationTitle: "Vielen Dank!",
       inPersonConfirmationBody: "Wir haben Ihre Zahlungsmeldung erhalten und bestätigen Ihre Sitzung vor Ort innerhalb von 24–48 Stunden.",
-      distanceConfirmationBody: "Ihre Anfrage wurde an Richa gesendet. Sie meldet sich bei Ihnen, um die nächsten Schritte zu besprechen.",
+      distanceConfirmationBody: "Wir haben Ihre UPI-Zahlungsmeldung erhalten. Sobald sie verifiziert ist, meldet sich Richa innerhalb von 24–48 Stunden, um Ihre Sitzung zu vereinbaren.",
       confirmationSentTo: "Eine Bestätigungs-E-Mail wurde gesendet an:",
       closeBtn: "Schließen",
     },
@@ -1561,6 +1562,7 @@ export const TRANSLATIONS = {
       confirmationBody: "Vielen Dank für Ihre Anmeldung. Wir prüfen Ihre UPI-Zahlung. 24 Stunden vor dem Termin erinnern wir Sie per E-Mail – mit dem Google-Meet-Link.",
       paidTitle: "Zahlung erhalten – Sie sind angemeldet!",
       paidBody: "Vielen Dank! Ihre Bestätigungs-E-Mail mit Rechnung und Kalenderdatei ist unterwegs. 24 Stunden vor jeder Einheit erinnern wir Sie per E-Mail – mit dem Google-Meet-Link.",
+      servicePaidBody: "Vielen Dank! Ihre Bestätigungs-E-Mail mit Rechnung ist unterwegs. Richa meldet sich innerhalb von 24–48 Stunden bei Ihnen, um alles Weitere zu vereinbaren (bei Reiki vor Ort gilt Ihr gewählter Kalendertermin).",
       cancelledTitle: "Zahlung abgebrochen",
       cancelledBody: "Es wurde nichts abgebucht. Sie können jederzeit erneut buchen.",
       confirmationSentTo: "Eine Bestätigungs-E-Mail wurde gesendet an:",
@@ -2288,11 +2290,11 @@ export const FAQS = [
     category: "services",
     EN: {
       question: "How much is a Vedic Astrology reading, and how do I pay?",
-      answer: "A reading costs 25 EUR or 2500 INR (special offer — usually 50 EUR or 5000 INR), paid in advance via PayPal or SEPA bank transfer (EUR) or UPI (INR). Include your reference code in the payment note — your slot is confirmed within 24–48 hours.",
+      answer: "A reading costs 25 EUR or 2500 INR (special offer — usually 50 EUR or 5000 INR), paid in advance online by card, Apple Pay/Google Pay, PayPal or SEPA (EUR, via our payment provider Stripe), or via UPI (INR). You receive a confirmation with invoice straight away, and Richa gets in touch within 24–48 hours to arrange your reading.",
     },
     DE: {
       question: "Was kostet eine Vedische Astrologie-Lesung, und wie bezahle ich?",
-      answer: "Eine Lesung kostet 25 EUR oder 2500 INR (Sonderangebot – regulär 50 EUR oder 5000 INR), zahlbar im Voraus per PayPal oder SEPA-Überweisung (EUR) bzw. UPI (INR). Geben Sie Ihren Referenzcode im Verwendungszweck an – Ihr Termin wird innerhalb von 24–48 Stunden bestätigt.",
+      answer: "Eine Lesung kostet 25 EUR oder 2500 INR (Sonderangebot – regulär 50 EUR oder 5000 INR), zahlbar im Voraus online per Karte, Apple Pay/Google Pay, PayPal oder SEPA (EUR, über unseren Zahlungsdienstleister Stripe) bzw. per UPI (INR). Sie erhalten sofort eine Bestätigung mit Rechnung, und Richa meldet sich innerhalb von 24–48 Stunden, um Ihre Lesung zu vereinbaren.",
     }
   },
   {

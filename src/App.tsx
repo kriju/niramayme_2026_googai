@@ -342,6 +342,35 @@ const BirthDetailsFields = ({ t, nameLabel, values, onChange }: { t: typeof TRAN
   </>
 );
 
+// Stripe Checkout for astrology, guidance, tarot and Reiki requests
+// (api/_lib/servicePayments.ts): the server prices the saved request and
+// returns the Checkout URL; the visitor comes back to this page with
+// ?booking=paid|cancelled (CheckoutResultDialog).
+const startServiceCheckout = async (collectionName: "astrologyRequests" | "tarotRequests" | "reikiRequests", requestId: string) => {
+  const response = await fetch("/api/service-checkout", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ collection: collectionName, requestId, returnPath: window.location.pathname }),
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok || typeof data.url !== "string") throw new Error(data.error || `HTTP ${response.status}`);
+  window.location.assign(data.url);
+};
+
+// "Pay in EUR" box shared by the service dialogs.
+const StripePayBox = ({ lang, price, onPay, redirecting }: { lang: "EN" | "DE", price: string, onPay: () => void, redirecting: boolean }) => {
+  const t = TRANSLATIONS[lang].courseIntake;
+  return (
+    <div className="p-4 rounded-xl border border-stone-100 space-y-3">
+      <p className="font-bold text-sm">{t.paymentEURTitle}</p>
+      <p className="text-xs text-muted-foreground">{t.payStripeBody}</p>
+      <Button size="lg" className="rounded-full w-full" onClick={onPay} disabled={redirecting}>
+        {redirecting ? t.redirecting : t.payStripeBtn.replace("{price}", price)}
+      </Button>
+    </div>
+  );
+};
+
 const AstrologyIntakeModal = ({ lang, open, onOpenChange, onOpenPrivacy, onOpenLegal, variant = "astrology", initialPackage = "individual" }: { lang: "EN" | "DE", open: boolean, onOpenChange: (o: boolean) => void, onOpenPrivacy: () => void, onOpenLegal: (type: LegalDocType) => void, variant?: IntakeVariant, initialPackage?: GuidancePackage }) => {
   const t = TRANSLATIONS[lang].astrologyIntake;
   const tg = TRANSLATIONS[lang].guidanceIntake;
@@ -365,6 +394,7 @@ const AstrologyIntakeModal = ({ lang, open, onOpenChange, onOpenPrivacy, onOpenL
   const [requestId, setRequestId] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [paying, setPaying] = useState(false);
+  const [redirecting, setRedirecting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Prefill from the signed-in user's saved profile, without overwriting
@@ -389,6 +419,24 @@ const AstrologyIntakeModal = ({ lang, open, onOpenChange, onOpenPrivacy, onOpenL
   const isValid = Boolean(form.name.trim() && detailsValid && form.contact.trim() && form.consent && isLegalComplete(legal));
   const whatsappHref = `https://wa.me/${ASTROLOGY_WHATSAPP_NUMBER}?text=${encodeURIComponent(isGuidance ? tg.whatsappTemplate : isTarot ? tt.whatsappTemplate : t.whatsappTemplate)}`;
   const priceValue = isGuidance ? tg.packages[pkg].priceValue : isTarot ? tt.priceValue : t.priceValue;
+  // EUR amounts charged via Stripe (api/_lib/servicePayments.ts) and INR via UPI.
+  const eurPrice = lang === "DE"
+    ? (isGuidance ? (isCouple ? "90 €" : "50 €") : isTarot ? "10 €" : "25 €")
+    : (isGuidance ? (isCouple ? "€90" : "€50") : isTarot ? "€10" : "€25");
+  const inrPrice = isGuidance ? (isCouple ? "₹9,000" : "₹5,000") : isTarot ? "₹1,000" : "₹2,500";
+
+  const payWithStripe = async () => {
+    if (!requestId || redirecting) return;
+    setRedirecting(true);
+    setError(null);
+    try {
+      await startServiceCheckout(requestCollection, requestId);
+    } catch (err) {
+      console.error("Error starting checkout:", err);
+      setError(TRANSLATIONS[lang].courseIntake.checkoutError.replace("{email}", "richa@niramay.me"));
+      setRedirecting(false);
+    }
+  };
 
   const resetAndClose = () => {
     onOpenChange(false);
@@ -400,6 +448,7 @@ const AstrologyIntakeModal = ({ lang, open, onOpenChange, onOpenPrivacy, onOpenL
       setLegal(EMPTY_LEGAL_STATE);
       setRequestId(null);
       setError(null);
+      setRedirecting(false);
     }, 300);
   };
 
@@ -436,14 +485,8 @@ const AstrologyIntakeModal = ({ lang, open, onOpenChange, onOpenPrivacy, onOpenL
         }),
       });
       setRequestId(docRef.id);
+      // Next: pay via Stripe (confirmation comes from its webhook) or UPI.
       setStep("payment");
-      // Best-effort admin notification — the request is already saved above
-      // regardless of whether this succeeds.
-      fetch("/api/notify-astrology-request", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ requestId: docRef.id, kind: "submitted", ...(isTarot && { collection: "tarotRequests" }) }),
-      }).catch(err => console.error("Failed to notify admin of new astrology request:", err));
     } catch (err) {
       console.error("Error submitting astrology request:", err);
       setError(t.submitError);
@@ -587,32 +630,17 @@ const AstrologyIntakeModal = ({ lang, open, onOpenChange, onOpenPrivacy, onOpenL
               <DialogTitle className="text-2xl font-serif">{t.step2Title}</DialogTitle>
             </DialogHeader>
             <div className="space-y-5 py-2">
-              <div className="bg-stone-50 p-4 rounded-xl border border-stone-100 text-center">
-                <p className="text-xs uppercase tracking-wider text-muted-foreground mb-1">{t.refCodeLabel}</p>
-                <p className="text-2xl font-bold font-mono tracking-wide">{refCode}</p>
-                <p className="text-xs text-muted-foreground mt-1">{t.refCodeNote}</p>
-              </div>
               <div>
                 <p className="text-xs font-bold uppercase tracking-wider text-primary/50 mb-1">{t.priceLabel}</p>
                 {isGuidance && <p className="text-sm text-muted-foreground">{tg.packages[pkg].title}</p>}
                 <p className="text-lg font-semibold">{priceValue}</p>
               </div>
-              <div className="grid sm:grid-cols-2 gap-4">
-                <div className="p-4 rounded-xl border border-stone-100 space-y-2">
-                  <p className="font-bold text-sm">{t.paymentEURTitle}</p>
-                  <p className="text-sm">{t.paypalLabel}: <span className="font-mono">richa@niramay.me</span></p>
-                  <p className="text-xs text-muted-foreground">{t.paypalNote}</p>
-                  <Separator className="my-2" />
-                  <p className="text-sm">{t.bankLabel}</p>
-                  <p className="text-xs font-mono">IBAN: DE08 1001 1001 2721 9373 31</p>
-                  <p className="text-xs font-mono">BIC: NTSBDEB1XXX</p>
-                  <p className="text-xs text-muted-foreground">{t.bankNote}</p>
-                </div>
-                <div className="p-4 rounded-xl border border-stone-100 space-y-2">
-                  <p className="font-bold text-sm">{t.paymentINRTitle}</p>
-                  <p className="text-sm">{t.upiLabel}: <span className="font-mono">richa944@icici</span></p>
-                  <p className="text-xs text-muted-foreground">{t.upiNote}</p>
-                </div>
+              <StripePayBox lang={lang} price={eurPrice} onPay={payWithStripe} redirecting={redirecting} />
+              <div className="p-4 rounded-xl border border-stone-100 space-y-2">
+                <p className="font-bold text-sm">{TRANSLATIONS[lang].courseIntake.paymentINRTitle}</p>
+                <p className="text-sm">{t.upiLabel}: <span className="font-mono">richa944@icici</span> · <span className="font-semibold">{inrPrice}</span></p>
+                <p className="text-xs text-muted-foreground">{t.refCodeNote} <span className="font-mono font-semibold text-foreground">{refCode}</span></p>
+                <p className="text-xs text-muted-foreground">{t.upiNote}</p>
               </div>
               {error && <p className="text-sm text-red-600">{error}</p>}
               <div className="flex gap-3">
@@ -622,8 +650,8 @@ const AstrologyIntakeModal = ({ lang, open, onOpenChange, onOpenPrivacy, onOpenL
                     so a harmless duplicate (Richa sees two emails, same
                     name/DOB) is the simplest correct behavior for v1. */}
                 <Button variant="outline" className="rounded-full" onClick={() => setStep("details")}>{t.backBtn}</Button>
-                <Button size="lg" className="rounded-full flex-1" onClick={handlePaid} disabled={paying}>
-                  {paying ? t.paidSubmitting : t.paidBtn}
+                <Button variant="outline" size="lg" className="rounded-full flex-1" onClick={handlePaid} disabled={paying}>
+                  {paying ? t.paidSubmitting : TRANSLATIONS[lang].courseIntake.paidBtn}
                 </Button>
               </div>
             </div>
@@ -680,6 +708,7 @@ const ReikiIntakeModal = ({ lang, pkg, onClose, onOpenPrivacy, onOpenLegal }: { 
   const [requestId, setRequestId] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [paying, setPaying] = useState(false);
+  const [redirecting, setRedirecting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const open = pkg !== null;
 
@@ -715,7 +744,25 @@ const ReikiIntakeModal = ({ lang, pkg, onClose, onOpenPrivacy, onOpenLegal }: { 
       setLegal(EMPTY_LEGAL_STATE);
       setRequestId(null);
       setError(null);
+      setRedirecting(false);
     }, 300);
+  };
+
+  // EUR amounts charged via Stripe (api/_lib/servicePayments.ts); distance
+  // packages can also be paid in INR via UPI.
+  const eurPrice = { "in-person": 40, "distance-single": 20, "distance-renewal": 55 }[shownPkg];
+  const inrPrice = shownPkg === "distance-single" ? "₹2,000" : shownPkg === "distance-renewal" ? "₹5,900" : "";
+  const payWithStripe = async () => {
+    if (!requestId || redirecting) return;
+    setRedirecting(true);
+    setError(null);
+    try {
+      await startServiceCheckout("reikiRequests", requestId);
+    } catch (err) {
+      console.error("Error starting checkout:", err);
+      setError(TRANSLATIONS[lang].courseIntake.checkoutError.replace("{email}", "richa@niramay.me"));
+      setRedirecting(false);
+    }
   };
 
   const notify = (id: string, kind: "submitted" | "payment_claimed") =>
@@ -741,13 +788,12 @@ const ReikiIntakeModal = ({ lang, pkg, onClose, onOpenPrivacy, onOpenLegal }: { 
         lang,
         createdAt: serverTimestamp(),
         paymentClaimed: false,
-        // Distance requests are non-binding: no early-start request is shown.
-        legalAcks: toLegalAcks(isInPerson ? legal : { ...legal, earlyStart: false }),
+        legalAcks: toLegalAcks(legal),
       });
       setRequestId(docRef.id);
-      setStep(isInPerson ? "calendar" : "done");
-      // Best-effort — the request is already saved above regardless.
-      notify(docRef.id, "submitted");
+      // Every package is paid up front; in person picks a calendar slot first.
+      // The confirmation comes from the Stripe webhook (or the UPI claim).
+      setStep(isInPerson ? "calendar" : "payment");
     } catch (err) {
       console.error("Error submitting reiki request:", err);
       setError(t.submitError);
@@ -825,10 +871,10 @@ const ReikiIntakeModal = ({ lang, pkg, onClose, onOpenPrivacy, onOpenLegal }: { 
                   </button>.
                 </span>
               </label>
-              <BookingLegalBlock lang={lang} binding={isInPerson} price={pkgContent.investment} value={legal} onChange={setLegal} onOpenLegal={onOpenLegal} />
+              <BookingLegalBlock lang={lang} binding price={pkgContent.investment} value={legal} onChange={setLegal} onOpenLegal={onOpenLegal} />
               {error && <p className="text-sm text-red-600">{error}</p>}
               <Button type="submit" size="lg" className="rounded-full w-full" disabled={!isValid || submitting}>
-                {submitting ? t.submitting : isInPerson ? BOOKING_LEGAL_TEXT[lang].bindingButton : BOOKING_LEGAL_TEXT[lang].requestButton}
+                {submitting ? t.submitting : BOOKING_LEGAL_TEXT[lang].bindingButton}
               </Button>
             </form>
           </>
@@ -867,31 +913,23 @@ const ReikiIntakeModal = ({ lang, pkg, onClose, onOpenPrivacy, onOpenLegal }: { 
               <DialogTitle className="text-2xl font-serif">{t.paymentTitle}</DialogTitle>
             </DialogHeader>
             <div className="space-y-5 py-2">
-              <div className="bg-stone-50 p-4 rounded-xl border border-stone-100 text-center">
-                <p className="text-xs uppercase tracking-wider text-muted-foreground mb-1">{t.refCodeLabel}</p>
-                <p className="text-2xl font-bold font-mono tracking-wide">{refCode}</p>
-                <p className="text-xs text-muted-foreground mt-1">{t.refCodeNote}</p>
-              </div>
-              <div>
-                <p className="text-xs font-bold uppercase tracking-wider text-primary/50 mb-1">{t.priceLabel}</p>
-                <p className="text-lg font-semibold">{pkgContent.investment}</p>
-              </div>
-              <div className="p-4 rounded-xl border border-stone-100 space-y-2">
-                <p className="font-bold text-sm">{t.paymentEURTitle}</p>
-                <p className="text-sm">{t.paypalLabel}: <span className="font-mono">richa@niramay.me</span></p>
-                <p className="text-xs text-muted-foreground">{t.paypalNote}</p>
-                <Separator className="my-2" />
-                <p className="text-sm">{t.bankLabel}</p>
-                <p className="text-xs font-mono">IBAN: DE08 1001 1001 2721 9373 31</p>
-                <p className="text-xs font-mono">BIC: NTSBDEB1XXX</p>
-                <p className="text-xs text-muted-foreground">{t.bankNote}</p>
-              </div>
+              {summary}
+              <StripePayBox lang={lang} price={formatEuro(eurPrice * 100, lang)} onPay={payWithStripe} redirecting={redirecting} />
+              {inrPrice && (
+                <div className="p-4 rounded-xl border border-stone-100 space-y-2">
+                  <p className="font-bold text-sm">{TRANSLATIONS[lang].courseIntake.paymentINRTitle}</p>
+                  <p className="text-sm">UPI: <span className="font-mono">richa944@icici</span> · <span className="font-semibold">{inrPrice}</span></p>
+                  <p className="text-xs text-muted-foreground">{t.refCodeNote} <span className="font-mono font-semibold text-foreground">{refCode}</span></p>
+                </div>
+              )}
               {error && <p className="text-sm text-red-600">{error}</p>}
               <div className="flex gap-3">
-                <Button variant="outline" className="rounded-full" onClick={() => setStep("calendar")}>{t.backBtn}</Button>
-                <Button size="lg" className="rounded-full flex-1" onClick={handlePaid} disabled={paying}>
-                  {paying ? t.paidSubmitting : t.paidBtn}
-                </Button>
+                {isInPerson && <Button variant="outline" className="rounded-full" onClick={() => setStep("calendar")}>{t.backBtn}</Button>}
+                {inrPrice && (
+                  <Button variant="outline" size="lg" className="rounded-full flex-1" onClick={handlePaid} disabled={paying}>
+                    {paying ? t.paidSubmitting : TRANSLATIONS[lang].courseIntake.paidBtn}
+                  </Button>
+                )}
               </div>
             </div>
           </>
@@ -4769,6 +4807,7 @@ const AppLayout = () => {
         </Suspense>
       )}
       <Footer lang={lang} onOpenLegal={setLegalModal} onOpenCookieSettings={openCookieSettings} onOpenWithdraw={openWithdraw} />
+      <CheckoutResultDialog lang={lang} />
 
       <LegalModal
         type={legalModal}
@@ -4835,6 +4874,33 @@ const AppLayout = () => {
   );
 };
 
+// Stripe Checkout sends the visitor back to the page they booked from with
+// ?booking=paid|cancelled (&type=service for astrology, tarot, guidance and
+// Reiki); this shows the matching message on any page.
+const CheckoutResultDialog = ({ lang }: { lang: "EN" | "DE" }) => {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const params = new URLSearchParams(location.search);
+  const result = params.get("booking");
+  const t = TRANSLATIONS[lang].courseIntake;
+  const close = () => navigate(location.pathname + location.hash, { replace: true });
+  const paid = result === "paid";
+  return (
+    <Dialog open={paid || result === "cancelled"} onOpenChange={(o) => !o && close()}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle className="text-2xl font-serif">{paid ? t.paidTitle : t.cancelledTitle}</DialogTitle>
+        </DialogHeader>
+        <div className="flex items-start gap-3 py-2">
+          {paid && <CheckCircle2 className="w-6 h-6 text-primary shrink-0 mt-0.5" />}
+          <p className="text-muted-foreground">{paid ? (params.get("type") === "service" ? t.servicePaidBody : t.paidBody) : t.cancelledBody}</p>
+        </div>
+        <Button className="rounded-full w-full" onClick={close}>{t.closeBtn}</Button>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
 // Details page for a `bookable` course, whose copy lives in
 // TRANSLATIONS[lang][course.pageKey] (e.g. yogaSeries, yogaAdventure).
 // The Courses tile stays short and links here for the full picture.
@@ -4849,11 +4915,6 @@ const CoursePage = () => {
   const sp = TRANSLATIONS[lang].servicePage;
   const prefix = langPrefix(lang);
   const canonical = `${SITE_URL}${prefix}/courses/${id}`;
-  // Stripe Checkout sends the visitor back here with ?booking=paid|cancelled.
-  const location = useLocation();
-  const navigate = useNavigate();
-  const checkoutResult = new URLSearchParams(location.search).get("booking");
-  const closeCheckoutResult = () => navigate(location.pathname, { replace: true });
 
   useSeo({
     title: ys.seoTitle,
@@ -4913,23 +4974,6 @@ const CoursePage = () => {
             </div>
           ))}
         </div>
-
-        <Dialog open={checkoutResult === "paid" || checkoutResult === "cancelled"} onOpenChange={(o) => !o && closeCheckoutResult()}>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle className="text-2xl font-serif">
-                {checkoutResult === "paid" ? TRANSLATIONS[lang].courseIntake.paidTitle : TRANSLATIONS[lang].courseIntake.cancelledTitle}
-              </DialogTitle>
-            </DialogHeader>
-            <div className="flex items-start gap-3 py-2">
-              {checkoutResult === "paid" && <CheckCircle2 className="w-6 h-6 text-primary shrink-0 mt-0.5" />}
-              <p className="text-muted-foreground">
-                {checkoutResult === "paid" ? TRANSLATIONS[lang].courseIntake.paidBody : TRANSLATIONS[lang].courseIntake.cancelledBody}
-              </p>
-            </div>
-            <Button className="rounded-full w-full" onClick={closeCheckoutResult}>{TRANSLATIONS[lang].courseIntake.closeBtn}</Button>
-          </DialogContent>
-        </Dialog>
 
         <Button size="lg" className="rounded-full gap-2 mb-16" onClick={() => onBookCourse(course.id)} disabled={closed}>
           {closed ? closedLabel : ys.bookCta}

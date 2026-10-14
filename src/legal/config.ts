@@ -13,7 +13,7 @@
 export type LegalLang = "EN" | "DE";
 
 /** Bumped whenever any legal text changes; stored with every booking record. */
-export const LEGAL_VERSION = "2026-10-13";
+export const LEGAL_VERSION = "2026-10-14";
 
 /** Month shown as "Stand" / "Last updated" in the documents. */
 export const LEGAL_UPDATED = { DE: "Oktober 2026", EN: "October 2026" } as const;

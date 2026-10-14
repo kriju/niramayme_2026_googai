@@ -7,6 +7,7 @@ import { withNotice } from "./_lib/withdrawal.js";
 import { COURSES, COURSE_CONTACT_EMAIL, bookedSessions, isCourseId, type CourseId, type Lang } from "./_lib/courses.js";
 import { handleCheckout, handleDailyCron, handleQuote, handleStripeWebhook, refCodeFor } from "./_lib/coursePayments.js";
 import { buildCourseIcs } from "./_lib/ics.js";
+import { handleServiceCheckout } from "./_lib/servicePayments.js";
 
 // Course bookings. Besides the notification emails below, this function also
 // serves the Stripe payment routes (see api/_lib/coursePayments.ts), reached
@@ -32,6 +33,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     case "checkout": return handleCheckout(req, res);
     case "webhook": return handleStripeWebhook(req, res);
     case "cron": return handleDailyCron(req, res);
+    case "service-checkout": return handleServiceCheckout(req, res);
   }
   if (req.method !== "POST") {
     res.setHeader("Allow", "POST");

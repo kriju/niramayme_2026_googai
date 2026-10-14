@@ -29,6 +29,7 @@
     { "source": "/api/newsletter-announce", "destination": "/api/newsletter?op=announce" },
     { "source": "/api/course-quote", "destination": "/api/notify-course-booking?op=quote" },
     { "source": "/api/course-checkout", "destination": "/api/notify-course-booking?op=checkout" },
+    { "source": "/api/service-checkout", "destination": "/api/notify-course-booking?op=service-checkout" },
     { "source": "/api/stripe-webhook", "destination": "/api/notify-course-booking?op=webhook" },
     { "source": "/api/course-cron", "destination": "/api/notify-course-booking?op=cron" },
     { "source": "/sitemap.xml", "destination": "/api/sitemap" },
