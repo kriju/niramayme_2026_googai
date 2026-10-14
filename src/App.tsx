@@ -2201,9 +2201,15 @@ const Hero = ({ lang, onBook }: { lang: "EN" | "DE", onBook: (ctx?: BookingConte
           )}
 
           <motion.a {...reveal(0.46)} href="#book" className={`${glass} p-5 md:p-6 flex gap-4 items-center lg:flex-col lg:items-start min-w-[85%] sm:min-w-[60%] lg:min-w-0 snap-start group hover:bg-white/70 transition-colors`}>
-            <div className="w-16 lg:w-20 shrink-0 aspect-[2/3] overflow-hidden rounded-md shadow-lg shadow-stone-900/20 -rotate-3 group-hover:rotate-0 transition-transform duration-500">
-              <BookCover book={tBook} compact />
-            </div>
+            <img
+              src={tBook.coverThumb}
+              alt=""
+              width={200}
+              height={249}
+              loading="lazy"
+              decoding="async"
+              className="w-16 lg:w-20 shrink-0 h-auto rounded-md shadow-lg shadow-stone-900/20 -rotate-3 group-hover:rotate-0 transition-transform duration-500"
+            />
             <div className="min-w-0">
               <p className="text-xs font-bold uppercase tracking-[0.18em] text-stone-500 mb-1">{t.bookLabel}</p>
               <p className="font-serif text-lg leading-snug">{tBook.title}</p>
@@ -4396,49 +4402,20 @@ const WithdrawalModal = ({ lang, open, onOpenChange, onOpenWiderruf }: { lang: "
   );
 };
 
-type BookInfo = (typeof TRANSLATIONS)["EN"]["book"];
-
-// A book's cover. Until the artwork for a book is in /public (its `cover` is
-// empty), a typographic stand-in with the real title and author is shown, so
-// the page never needs to load an image from Amazon (which would hand the
-// visitor's IP address to a third party before they choose to go there).
-const BookCover = ({ book, compact = false, className = "" }: { book: BookInfo; compact?: boolean; className?: string }) => {
-  if (book.cover) {
-    return (
-      <img
-        src={book.cover}
-        alt={compact ? "" : book.title}
-        width={900}
-        height={1350}
-        loading="lazy"
-        decoding="async"
-        className={`w-full h-full object-cover ${className}`}
-      />
-    );
-  }
-  return (
-    <div
-      role={compact ? undefined : "img"}
-      aria-label={compact ? undefined : book.title}
-      aria-hidden={compact || undefined}
-      className={`w-full h-full flex flex-col items-center justify-between text-center bg-gradient-to-br from-emerald-800 via-teal-700 to-amber-600 text-white ${compact ? "p-1.5" : "p-8"} ${className}`}
-    >
-      {compact ? (
-        <span className="m-auto font-serif font-bold text-3xl leading-none drop-shadow">8</span>
-      ) : (
-        <>
-          <span className="text-xs font-semibold uppercase tracking-[0.3em] text-white/80">{book.author}</span>
-          <span className="flex flex-col items-center gap-4">
-            <span className="font-serif font-bold text-8xl leading-none drop-shadow-lg">8</span>
-            <span className="font-serif text-2xl font-bold leading-tight">{book.title}</span>
-            <span className="w-12 h-0.5 bg-white/60" />
-            <span className="font-serif italic text-base text-white/90 leading-snug">{book.subtitle}</span>
-          </span>
-          <Sparkles className="w-5 h-5 text-white/70" aria-hidden="true" />
-        </>
-      )}
-    </div>
-  );
+type BookInfo = {
+  title: string;
+  subtitle: string;
+  description: string;
+  author: string;
+  cta: string;
+  cover: string;
+  link: string;
+  badges: readonly string[];
+  // Optional extras; covers without a size are 900×1350 (2:3).
+  highlights?: readonly string[];
+  authorRole?: string;
+  coverWidth?: number;
+  coverHeight?: number;
 };
 
 // One book on the shelf: cover on one side, text and the Amazon link on the
@@ -4446,6 +4423,8 @@ const BookCover = ({ book, compact = false, className = "" }: { book: BookInfo; 
 // don't look like a copy of each other.
 const BookFeature = ({ book, lang, reverse = false, featured = false, headingId }: { book: BookInfo; lang: "EN" | "DE"; reverse?: boolean; featured?: boolean; headingId: string }) => {
   const shelf = TRANSLATIONS[lang].bookShelf;
+  const coverWidth = book.coverWidth ?? 900;
+  const coverHeight = book.coverHeight ?? 1350;
   return (
     <article aria-labelledby={headingId} className={`flex flex-col ${reverse ? "lg:flex-row-reverse" : "lg:flex-row"} items-center gap-12 lg:gap-16`}>
       <motion.div
@@ -4455,8 +4434,16 @@ const BookFeature = ({ book, lang, reverse = false, featured = false, headingId 
         className="lg:w-1/2 w-full relative"
       >
         <div className="relative z-10 max-w-[16rem] sm:max-w-sm mx-auto">
-          <div className="rounded-2xl overflow-hidden shadow-[20px_30px_60px_-12px_rgba(0,0,0,0.5)] group bg-stone-900 aspect-[2/3] border-r-4 border-stone-800">
-            <BookCover book={book} className="transition-transform duration-1000 group-hover:scale-105" />
+          <div className="rounded-2xl overflow-hidden shadow-[20px_30px_60px_-12px_rgba(0,0,0,0.5)] group bg-stone-900 border-r-4 border-stone-800" style={{ aspectRatio: `${coverWidth} / ${coverHeight}` }}>
+            <img
+              src={book.cover}
+              alt={`${book.title}: ${book.subtitle}, ${book.author}`}
+              width={coverWidth}
+              height={coverHeight}
+              loading="lazy"
+              decoding="async"
+              className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105"
+            />
             <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-black/20 via-transparent to-transparent pointer-events-none" />
           </div>
           {featured && (
@@ -4493,13 +4480,24 @@ const BookFeature = ({ book, lang, reverse = false, featured = false, headingId 
           {book.description}
         </p>
 
+        {book.highlights && (
+          <ul className="grid sm:grid-cols-2 gap-x-6 gap-y-3 mb-8">
+            {book.highlights.map((item) => (
+              <li key={item} className="flex gap-2.5 text-stone-700 leading-snug">
+                <CheckCircle2 className="w-5 h-5 text-primary shrink-0 mt-0.5" aria-hidden="true" />
+                {item}
+              </li>
+            ))}
+          </ul>
+        )}
+
         <div className="flex items-center gap-4 mb-8">
           <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary/25 to-primary/10 border-2 border-white shadow-sm flex items-center justify-center text-primary font-serif font-bold" aria-hidden="true">
             RK
           </div>
           <div>
             <p className="font-bold text-stone-800">{book.author}</p>
-            <p className="text-sm text-stone-500">{shelf.authorRole}</p>
+            <p className="text-sm text-stone-500">{book.authorRole ?? shelf.authorRole}</p>
           </div>
         </div>
 

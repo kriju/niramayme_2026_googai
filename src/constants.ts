@@ -790,21 +790,30 @@ export const TRANSLATIONS = {
       link: "https://www.amazon.de/stores/Richa-Jain-Kansal/author/B0H3W87WW9?language=en&ref=sr_ntt_srch_lnk_1&qid=1790675468&sr=8-1&shoppingPortalEnabled=true",
       badges: ["Holistic Guide", "Ancient Wisdom"],
     },
-    // Richa's second book. The title stays in its original English on the
-    // German page too, so it matches the Amazon listing people search for.
-    // cover: empty until the cover artwork is added to /public; BookCover in
-    // App.tsx then shows a typographic placeholder instead of an image.
-    // The link is the plain product URL (no tracking or affiliate
-    // parameters); the English page opens Amazon's English interface.
+    // Richa's second book, a children's book (text from its back cover).
+    // It is only published in English, so the German page shows the English
+    // title and says the book is in English. The link is the plain product
+    // URL (no tracking or affiliate parameters); the English page opens
+    // Amazon's English interface.
     newBook: {
       title: "Discovering the 8 Limbs of Yoga",
       subtitle: "Robin's Magical Journey of Mind, Body & Heart",
-      description: "Join Robin on a magical journey through the eight limbs of yoga described by Patanjali: from kindness towards others and care for oneself, through posture, breath and focus, all the way to meditation and inner peace. A warm introduction to how yoga brings mind, body and heart together.",
+      description: "Join Robin on a journey through the 8 Limbs of Yoga, where every adventure brings a new lesson about the body, breath, mind, heart, and the world around us. Perfect for ages 4–13: read together when they're little, and discover independently as they grow.",
+      highlights: [
+        "Magical stories that spark imagination",
+        "Yoga, breathing & mindfulness activities",
+        "Life lessons children can actually use",
+        "A meaningful keepsake to return to as they grow",
+      ],
       author: "Richa Jain Kansal",
+      authorRole: "Kids Yoga Instructor & Author",
       cta: "Buy on Amazon",
-      cover: "",
+      cover: "/bookcover-8-limbs.webp",
+      coverThumb: "/bookcover-8-limbs-thumb.webp",
+      coverWidth: 872,
+      coverHeight: 1084,
       link: "https://www.amazon.de/-/en/dp/B0HMVV8T7P",
-      badges: ["New", "The 8 Limbs of Yoga"],
+      badges: ["New", "Ages 4–13", "Yoga for Kids"],
     },
     bookShelf: {
       eyebrow: "Books by Richa",
@@ -1591,12 +1600,22 @@ export const TRANSLATIONS = {
     newBook: {
       title: "Discovering the 8 Limbs of Yoga",
       subtitle: "Robin's Magical Journey of Mind, Body & Heart",
-      description: "Begleiten Sie Robin auf einer magischen Reise durch die acht Glieder des Yoga nach Patanjali: vom freundlichen Umgang mit anderen und der Achtsamkeit mit sich selbst über Haltung, Atem und Konzentration bis hin zu Meditation und innerem Frieden. Eine herzliche Einführung, wie Yoga Geist, Körper und Herz verbindet.",
+      description: "Begleiten Sie Robin auf einer Reise durch die 8 Glieder des Yoga, bei der jedes Abenteuer eine neue Lektion über Körper, Atem, Geist, Herz und die Welt um uns herum bereithält. Ideal für Kinder von 4 bis 13 Jahren: gemeinsam vorlesen, solange sie klein sind, und später selbst entdecken. Das Buch ist auf Englisch erschienen.",
+      highlights: [
+        "Magische Geschichten, die die Fantasie anregen",
+        "Yoga-, Atem- und Achtsamkeitsübungen",
+        "Lebenslektionen, die Kinder wirklich anwenden können",
+        "Ein wertvolles Andenken, zu dem sie beim Großwerden zurückkehren",
+      ],
       author: "Richa Jain Kansal",
+      authorRole: "Kinderyoga-Lehrerin & Autorin",
       cta: "Bei Amazon kaufen",
-      cover: "",
+      cover: "/bookcover-8-limbs.webp",
+      coverThumb: "/bookcover-8-limbs-thumb.webp",
+      coverWidth: 872,
+      coverHeight: 1084,
       link: "https://www.amazon.de/dp/B0HMVV8T7P",
-      badges: ["Neu", "Die 8 Glieder des Yoga"],
+      badges: ["Neu", "4–13 Jahre", "Kinderyoga", "Auf Englisch"],
     },
     bookShelf: {
       eyebrow: "Bücher von Richa",
