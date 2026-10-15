@@ -125,7 +125,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }).format(createdAt);
 
     await sendEmail({
-      to: process.env.ADMIN_NOTIFY_EMAIL || "riju.kansal@niramay.me",
+      // Richa handles these (ADMIN_NOTIFY_EMAIL is for reviews/comments).
+      to: process.env.ASTROLOGY_NOTIFY_EMAIL || "richa@niramay.me",
       replyTo: isEmailContact ? String(request.contact).trim() : undefined,
       subject: adminSubject(kind === "submitted"
         ? `New ${svc.adminLabel} request — ${refCode}`

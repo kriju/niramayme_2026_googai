@@ -46,8 +46,10 @@ const ARRANGE: Record<Lang, string> = {
   DE: "Richa meldet sich innerhalb von 24–48 Stunden bei Ihnen, um Ihren Termin zu vereinbaren.",
 };
 
+// Richa handles astrology, tarot and guidance as well as Reiki. Not
+// ADMIN_NOTIFY_EMAIL: that one is shared with reviews and blog comments.
 function astrologyAdmin(): string {
-  return process.env.ADMIN_NOTIFY_EMAIL || "riju.kansal@niramay.me";
+  return process.env.ASTROLOGY_NOTIFY_EMAIL || "richa@niramay.me";
 }
 function reikiAdmin(): string {
   return process.env.REIKI_NOTIFY_EMAIL || "richa@niramay.me";
