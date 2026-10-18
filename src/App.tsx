@@ -1712,6 +1712,7 @@ const Navbar = ({ lang, altPath, onBook, belowAnnouncement = false }: { lang: "E
                 </NavigationMenu.Trigger>
                 <NavigationMenu.Content className="w-48 p-2">
                   <NavDropdownLink to={`${prefix}/#about`}>{t.trainers}</NavDropdownLink>
+                  <NavDropdownLink to={`${prefix}/#our-name`}>{TRANSLATIONS[lang].brand.storyTitle}</NavDropdownLink>
                   <NavDropdownLink to={`${prefix}/#events`}>{t.events}</NavDropdownLink>
                 </NavigationMenu.Content>
               </NavigationMenu.Item>
@@ -1807,6 +1808,7 @@ const Navbar = ({ lang, altPath, onBook, belowAnnouncement = false }: { lang: "E
                 <AccordionContent>
                   <div className="flex flex-col gap-3 pl-2">
                     <Link to={`${prefix}/#about`} onClick={closeMobileMenu} className="text-muted-foreground hover:text-primary transition-colors">{t.trainers}</Link>
+                    <Link to={`${prefix}/#our-name`} onClick={closeMobileMenu} className="text-muted-foreground hover:text-primary transition-colors">{TRANSLATIONS[lang].brand.storyTitle}</Link>
                     <Link to={`${prefix}/#events`} onClick={closeMobileMenu} className="text-muted-foreground hover:text-primary transition-colors">{t.events}</Link>
                   </div>
                 </AccordionContent>
@@ -3668,7 +3670,7 @@ const BrandStory = ({ lang }: { lang: "EN" | "DE" }) => {
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ duration: 0.6 }}
-      className="mt-24 max-w-4xl mx-auto rounded-[2.5rem] border border-stone-100 bg-stone-50 p-8 md:p-12 grid md:grid-cols-[auto_1fr] gap-8 md:gap-12 items-center"
+      className="mt-24 scroll-mt-28 max-w-4xl mx-auto rounded-[2.5rem] border border-stone-100 bg-stone-50 p-8 md:p-12 grid md:grid-cols-[auto_1fr] gap-8 md:gap-12 items-center"
     >
       <img src="/logo.svg" alt="" aria-hidden="true" loading="lazy" className="w-28 h-28 md:w-40 md:h-40 mx-auto" />
       <div>
