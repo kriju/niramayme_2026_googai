@@ -1960,6 +1960,23 @@ const SeeOriginalButton = ({ src, lang, className }: { src: string, lang: "EN" |
   );
 };
 
+// Reviewers sometimes wrap their text in quote marks or leave trailing
+// spaces; the cards add their own marks, so strip those to avoid “"…"”.
+const QUOTE_MARK = "\"'“”„‟‘’‚«»";
+const cleanQuote = (text: string) => {
+  let t = text.trim();
+  // Only unwrap when wrapped at both ends, so a review ending in a quoted
+  // word ("…called it 'magic'") keeps its own marks.
+  while (t.length > 1 && QUOTE_MARK.includes(t[0]) && QUOTE_MARK.includes(t[t.length - 1])) {
+    t = t.slice(1, -1).trim();
+  }
+  return t;
+};
+
+// German typesetting opens low („…“); English uses “…”.
+const quoted = (text: string, quoteLang: string) =>
+  quoteLang === "DE" ? `„${cleanQuote(text)}“` : `“${cleanQuote(text)}”`;
+
 // The quote itself, clamped with a Read more toggle, plus a note when it's in
 // another language than the page (and the translation, when there is one).
 const ReviewQuote = ({ review, lang, clampClass, muted }: { review: DisplayReview, lang: "EN" | "DE", clampClass: string, muted: string }) => {
@@ -1969,7 +1986,7 @@ const ReviewQuote = ({ review, lang, clampClass, muted }: { review: DisplayRevie
   const foreign = review.quoteLang && review.quoteLang !== lang ? review.quoteLang : undefined;
   return (
     <div>
-      <p className={`font-serif italic leading-relaxed ${expanded ? "" : clampClass}`}>"{review.content}"</p>
+      <p lang={(review.quoteLang ?? lang).toLowerCase()} className={`font-quote italic leading-relaxed ${expanded ? "" : clampClass}`}>{quoted(review.content, review.quoteLang ?? lang)}</p>
       {isLong && (
         <button type="button" onClick={() => setExpanded(e => !e)} className={`mt-2 text-xs font-medium underline underline-offset-4 ${muted}`}>
           {expanded ? t.showLess : t.readMore}
@@ -2186,7 +2203,7 @@ const Hero = ({ lang, onBook }: { lang: "EN" | "DE", onBook: (ctx?: BookingConte
                     exit={{ opacity: 0, y: -8 }}
                     transition={{ duration: 0.4 }}
                   >
-                    <p className="font-serif italic text-[15px] md:text-base leading-relaxed text-stone-800 line-clamp-4">"{review.content}"</p>
+                    <p lang={(review.quoteLang ?? lang).toLowerCase()} className="font-quote italic text-[15px] md:text-base leading-relaxed text-stone-800 line-clamp-4">{quoted(review.content, review.quoteLang ?? lang)}</p>
                     <p className="mt-3 text-sm font-semibold text-stone-700">{review.name}{review.role && <span className="font-normal text-stone-500"> · {review.role}</span>}</p>
                     {reviewSourceLine(review, lang) && <p className="mt-0.5 text-xs text-stone-500">{reviewSourceLine(review, lang)}</p>}
                   </motion.div>
