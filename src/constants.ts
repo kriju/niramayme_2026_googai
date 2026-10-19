@@ -1769,7 +1769,7 @@ export const SERVICES = [
       description: "Heal at the root by working with your subconscious mind through NLP Coaching, Hypnotherapy and Past Life Regression.",
       outcome: "Release limiting beliefs, anxiety and old emotional patterns, and create lasting change from within.",
       price: "Indicative: €100 for a package of 3 sessions",
-      priceNote: "In person in Ostfildern. After a free first conversation Richa recommends how many sessions suit you; you then receive a personal link to book and pay online.",
+      priceNote: "In person in Ostfildern. After a free first conversation Richa recommends how many sessions suit you; you then receive a personal link to book and pay online. A 3-session package is taken within one month (extension by arrangement).",
       details: [
         "Most of what we think, feel and do is driven by the subconscious mind, which is why willpower alone often isn't enough to change a habit, a fear or a recurring pattern. Subconscious Healing brings together three complementary approaches to work directly at that deeper level.",
         "NLP (Neuro-Linguistic Programming) Coaching helps you identify and reframe limiting beliefs, change unhelpful thought and behaviour patterns, and move towards your goals with clarity and confidence.",
@@ -1783,7 +1783,7 @@ export const SERVICES = [
       description: "Heilen Sie an der Wurzel, indem Sie mit Ihrem Unterbewusstsein arbeiten – durch NLP-Coaching, Hypnotherapie und Rückführung in vergangene Leben.",
       outcome: "Lösen Sie einschränkende Überzeugungen, Ängste und alte emotionale Muster und schaffen Sie nachhaltige Veränderung von innen heraus.",
       price: "Richtwert: 100 € für ein Paket mit 3 Sitzungen",
-      priceNote: "Vor Ort in Ostfildern. Nach einem kostenlosen ersten Gespräch empfiehlt Richa, wie viele Sitzungen zu Ihnen passen; anschließend erhalten Sie einen persönlichen Link, um online zu buchen und zu bezahlen.",
+      priceNote: "Vor Ort in Ostfildern. Nach einem kostenlosen ersten Gespräch empfiehlt Richa, wie viele Sitzungen zu Ihnen passen; anschließend erhalten Sie einen persönlichen Link, um online zu buchen und zu bezahlen. Ein Paket mit 3 Sitzungen wird innerhalb eines Monats wahrgenommen (Verlängerung nach Absprache).",
       details: [
         "Der Großteil unseres Denkens, Fühlens und Handelns wird vom Unterbewusstsein gesteuert – deshalb reicht Willenskraft allein oft nicht aus, um eine Gewohnheit, eine Angst oder ein wiederkehrendes Muster zu verändern. Die Heilung des Unterbewusstseins vereint drei sich ergänzende Ansätze, die genau auf dieser tieferen Ebene ansetzen.",
         "NLP-Coaching (Neuro-Linguistisches Programmieren) hilft Ihnen, einschränkende Überzeugungen zu erkennen und neu zu bewerten, hinderliche Denk- und Verhaltensmuster zu verändern und Ihre Ziele mit Klarheit und Zuversicht anzugehen.",
