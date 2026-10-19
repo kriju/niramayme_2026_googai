@@ -120,7 +120,7 @@ export const TRANSLATIONS = {
       home: "Home",
       breadcrumbServices: "Services",
       otherServicesTitle: "Explore Other Services",
-      whatsappCta: "Or message us on WhatsApp",
+      whatsappCta: "Questions first? Message us on WhatsApp",
       clientsSayTitle: "What clients say",
       formatLabel: "Format",
       priceLabel: "Investment",
@@ -201,7 +201,6 @@ export const TRANSLATIONS = {
       ctaTitle: "Still have a question?",
       ctaBody: "Book a free 15-minute call or message us on WhatsApp — we're happy to help.",
       ctaBook: "Free 15-Min Call",
-      ctaWhatsapp: "Message us on WhatsApp",
     },
     sessions: {
       title: "Ongoing Sessions",
@@ -937,7 +936,7 @@ export const TRANSLATIONS = {
       home: "Startseite",
       breadcrumbServices: "Leistungen",
       otherServicesTitle: "Weitere Angebote entdecken",
-      whatsappCta: "Oder schreiben Sie uns auf WhatsApp",
+      whatsappCta: "Erst Fragen? Schreiben Sie uns auf WhatsApp",
       clientsSayTitle: "Das sagen Klientinnen und Klienten",
       formatLabel: "Format",
       priceLabel: "Investition",
@@ -1018,7 +1017,6 @@ export const TRANSLATIONS = {
       ctaTitle: "Noch Fragen offen?",
       ctaBody: "Buchen Sie ein kostenloses 15-minütiges Gespräch oder schreiben Sie uns auf WhatsApp – wir helfen gern weiter.",
       ctaBook: "Kostenloses 15-Min-Gespräch",
-      ctaWhatsapp: "Auf WhatsApp schreiben",
     },
     sessions: {
       title: "Laufende Sitzungen",

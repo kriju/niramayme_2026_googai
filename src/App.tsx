@@ -2798,14 +2798,18 @@ const ServicePage = () => {
             <Sparkles className="w-4 h-4" />
             {isReiki ? tr.cta : isAstrology ? ta.cta : isGuidance ? tg.cta : ("ctaLabel" in content && content.ctaLabel) || nav.bookNow}
           </Button>
-          <a
-            href={`https://wa.me/4915175315761?text=${encodeURIComponent(`Hi, I'm interested in "${content.title}".`)}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors inline-flex items-center gap-2"
-          >
-            <MessageCircle className="w-4 h-4" /> {sp.whatsappCta}
-          </a>
+          {/* Only next to a booking form; the generic button already opens
+              the contact panel with WhatsApp, so a second link would repeat it. */}
+          {(isReiki || isAstrology || isGuidance || service.id === "tarot") && (
+            <a
+              href={`https://wa.me/4915175315761?text=${encodeURIComponent(`Hi, I'm interested in "${content.title}".`)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors inline-flex items-center gap-2"
+            >
+              <MessageCircle className="w-4 h-4" /> {sp.whatsappCta}
+            </a>
+          )}
         </div>
 
         <div className="pt-10 border-t border-stone-100">
@@ -4243,14 +4247,6 @@ const FAQPage = () => {
               <Sparkles className="w-4 h-4" />
               {t.ctaBook}
             </Button>
-            <a
-              href="https://wa.me/4915175315761"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors inline-flex items-center gap-2"
-            >
-              <MessageCircle className="w-4 h-4" /> {t.ctaWhatsapp}
-            </a>
           </div>
         </div>
       </div>
