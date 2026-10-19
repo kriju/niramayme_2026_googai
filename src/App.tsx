@@ -24,7 +24,9 @@ import {
   ExternalLink,
   Heart,
   Volume2,
-  Image as ImageIcon
+  Image as ImageIcon,
+  Phone,
+  Mail
 } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { db } from "./lib/firebase";
@@ -57,7 +59,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { NavigationMenu } from "@base-ui/react/navigation-menu";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { SERVICES, ASTROLOGY_SERVICE_IDS, ASTROLOGY_PAGE_PATH, TESTIMONIALS, type ClientStory, FAQS, HEALER_CERTIFICATIONS, HEALER_IMAGES, TRANSLATIONS, REVIEW_GROUPS, reviewGroupOf, categoryLabel, ONGOING_SESSIONS, COURSES, EVENTS, ANNOUNCEMENTS, GOOGLE_CALENDAR_URL, GOOGLE_REVIEW_URL, BUSINESS_STREET_ADDRESS, BUSINESS_POSTAL_CODE, BUSINESS_CITY, GOOGLE_MAPS_URL, GOOGLE_MAPS_EMBED_URL } from "./constants";
+import { SERVICES, ASTROLOGY_SERVICE_IDS, ASTROLOGY_PAGE_PATH, TESTIMONIALS, type ClientStory, FAQS, HEALER_CERTIFICATIONS, HEALER_IMAGES, TRANSLATIONS, REVIEW_GROUPS, reviewGroupOf, categoryLabel, ONGOING_SESSIONS, COURSES, EVENTS, ANNOUNCEMENTS, GOOGLE_REVIEW_URL, BUSINESS_STREET_ADDRESS, BUSINESS_POSTAL_CODE, BUSINESS_CITY, GOOGLE_MAPS_URL, GOOGLE_MAPS_EMBED_URL } from "./constants";
 import { LEGAL_DOCS, LEGAL_LINK_LABELS, type LegalDocType, type LegalLink } from "./legal";
 import { BOOKING_LEGAL_TEXT, EMPTY_LEGAL_STATE, WITHDRAW_TEXT, isLegalComplete, toLegalAcks, type BookingLegalState } from "./legal/booking";
 import { LEGAL_CONFIG, vatPriceNote } from "./legal/config";
@@ -198,19 +200,27 @@ const ConsentEmbed = ({ kind, lang, children, className = "" }: { kind: "calenda
   );
 };
 
+// "Book now" / free 15-minute call: no calendar any more (removed with the
+// move to Stripe) — visitors reach Richa directly by WhatsApp, phone or
+// email, and paid sessions are booked through their own forms or a personal
+// payment link (/pay/:id, see PayPage).
+const CONTACT_PHONE_DISPLAY = "+49 151 75315761";
+const CONTACT_PHONE_TEL = "+4915175315761";
 const BookingDialog = ({ context, lang, open, onOpenChange }: { context: BookingContext | null, lang: "EN" | "DE", open: boolean, onOpenChange: (o: boolean) => void }) => {
   const t = TRANSLATIONS[lang].booking;
   const title = context?.title || t.title;
-  const subtitle = context?.subtitle || t.calendlyDesc;
+  const subtitle = context?.subtitle || t.contactDesc;
   const meta: BookingMeta[] = context?.meta || [
     { icon: Sparkles, label: `${t.discoveryLabel} · ${t.discoveryValue}` },
     { icon: Clock, label: `${t.availabilityLabel} · ${t.availabilityValue}` },
   ];
+  const message = context?.title ? t.whatsappTopic.replace("{topic}", context.title) : t.whatsappGeneral;
+  const linkClass = "flex items-center gap-3 p-4 rounded-xl border border-stone-200 hover:border-primary/40 hover:bg-stone-50 transition-colors";
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[900px] h-[90vh] flex flex-col p-0 overflow-hidden">
-        <DialogHeader className="p-6 pb-4 border-b border-stone-100 space-y-2">
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader className="space-y-2">
           <DialogTitle className="text-2xl md:text-3xl font-serif">{title}</DialogTitle>
           {subtitle && <p className="text-sm text-muted-foreground">{subtitle}</p>}
           {meta.length > 0 && (
@@ -224,24 +234,20 @@ const BookingDialog = ({ context, lang, open, onOpenChange }: { context: Booking
             </div>
           )}
         </DialogHeader>
-        <div className="flex-1 w-full h-full min-h-0 relative">
-          <ConsentEmbed kind="calendar" lang={lang} className="h-full">
-            <iframe
-              src={GOOGLE_CALENDAR_URL}
-              className="w-full h-full border-0"
-              title="Google Calendar Appointment Scheduling"
-            />
-          </ConsentEmbed>
-          <div className="absolute bottom-4 right-4">
-            <a
-              href={GOOGLE_CALENDAR_URL.replace('?gv=true', '')}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-xs text-muted-foreground hover:text-primary underline bg-background/80 backdrop-blur-sm px-2 py-1 rounded"
-            >
-              {lang === "EN" ? "Trouble viewing? Open in new tab" : "Probleme bei der Anzeige? In neuem Tab öffnen"}
-            </a>
-          </div>
+        <div className="grid gap-3 py-2">
+          <a className={linkClass} href={`https://wa.me/4915175315761?text=${encodeURIComponent(message)}`} target="_blank" rel="noopener noreferrer">
+            <MessageCircle className="w-5 h-5 text-primary shrink-0" />
+            <span><span className="block font-semibold text-sm">{t.whatsappBtn}</span><span className="block text-xs text-muted-foreground">{t.whatsappHint}</span></span>
+          </a>
+          <a className={linkClass} href={`tel:${CONTACT_PHONE_TEL}`}>
+            <Phone className="w-5 h-5 text-primary shrink-0" />
+            <span><span className="block font-semibold text-sm">{t.callBtn}</span><span className="block text-xs text-muted-foreground">{CONTACT_PHONE_DISPLAY}</span></span>
+          </a>
+          <a className={linkClass} href={`mailto:richa@niramay.me?subject=${encodeURIComponent(context?.title || t.title)}`}>
+            <Mail className="w-5 h-5 text-primary shrink-0" />
+            <span><span className="block font-semibold text-sm">{t.emailBtn}</span><span className="block text-xs text-muted-foreground">richa@niramay.me</span></span>
+          </a>
+          <p className="text-xs text-muted-foreground">{t.privacyHint}</p>
         </div>
       </DialogContent>
     </Dialog>
@@ -346,11 +352,11 @@ const BirthDetailsFields = ({ t, nameLabel, values, onChange }: { t: typeof TRAN
 // (api/_lib/servicePayments.ts): the server prices the saved request and
 // returns the Checkout URL; the visitor comes back to this page with
 // ?booking=paid|cancelled (CheckoutResultDialog).
-const startServiceCheckout = async (collectionName: "astrologyRequests" | "tarotRequests" | "reikiRequests", requestId: string) => {
+const startServiceCheckout = async (collectionName: "astrologyRequests" | "tarotRequests" | "reikiRequests" | "paymentRequests", requestId: string, extra: Record<string, unknown> = {}) => {
   const response = await fetch("/api/service-checkout", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ collection: collectionName, requestId, returnPath: window.location.pathname }),
+    body: JSON.stringify({ collection: collectionName, requestId, returnPath: window.location.pathname, ...extra }),
   });
   const data = await response.json().catch(() => ({}));
   if (!response.ok || typeof data.url !== "string") throw new Error(data.error || `HTTP ${response.status}`);
@@ -690,7 +696,7 @@ const AstrologyIntakeModal = ({ lang, open, onOpenChange, onOpenPrivacy, onOpenL
 // email, and Richa follows up with next steps herself. See firestore.rules
 // for what's enforced server-side.
 type ReikiPackageId = "in-person" | "distance-single" | "distance-renewal";
-type ReikiStep = "details" | "calendar" | "payment" | "done";
+type ReikiStep = "details" | "payment" | "done";
 type ReikiForm = { name: string; email: string; whatsapp: string; reason: string; consent: boolean };
 const EMPTY_REIKI_FORM: ReikiForm = { name: "", email: "", whatsapp: "", reason: "", consent: false };
 const REIKI_PACKAGE_IDS: ReikiPackageId[] = ["in-person", "distance-single", "distance-renewal"];
@@ -791,9 +797,9 @@ const ReikiIntakeModal = ({ lang, pkg, onClose, onOpenPrivacy, onOpenLegal }: { 
         legalAcks: toLegalAcks(legal),
       });
       setRequestId(docRef.id);
-      // Every package is paid up front; in person picks a calendar slot first.
+      // Every package is paid up front; Richa arranges the time afterwards.
       // The confirmation comes from the Stripe webhook (or the UPI claim).
-      setStep(isInPerson ? "calendar" : "payment");
+      setStep("payment");
     } catch (err) {
       console.error("Error submitting reiki request:", err);
       setError(t.submitError);
@@ -830,7 +836,7 @@ const ReikiIntakeModal = ({ lang, pkg, onClose, onOpenPrivacy, onOpenLegal }: { 
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && resetAndClose()}>
-      <DialogContent className={step === "calendar" ? "sm:max-w-[900px] h-[90vh] flex flex-col p-0 overflow-hidden" : "sm:max-w-lg max-h-[85vh] overflow-y-auto"}>
+      <DialogContent className="sm:max-w-lg max-h-[85vh] overflow-y-auto">
         {step === "details" && (
           <>
             <DialogHeader>
@@ -880,33 +886,6 @@ const ReikiIntakeModal = ({ lang, pkg, onClose, onOpenPrivacy, onOpenLegal }: { 
           </>
         )}
 
-        {step === "calendar" && (
-          <>
-            <DialogHeader className="p-6 pb-4 border-b border-stone-100 space-y-2">
-              <DialogTitle className="text-2xl md:text-3xl font-serif">{t.calendarTitle}</DialogTitle>
-              <p className="text-sm text-muted-foreground">{t.calendarDesc}</p>
-            </DialogHeader>
-            <div className="flex-1 w-full min-h-0 relative">
-              <ConsentEmbed kind="calendar" lang={lang} className="h-full">
-                <iframe src={GOOGLE_CALENDAR_URL} className="w-full h-full border-0" title="Google Calendar Appointment Scheduling" />
-              </ConsentEmbed>
-              <div className="absolute bottom-4 right-4">
-                <a
-                  href={GOOGLE_CALENDAR_URL.replace('?gv=true', '')}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-xs text-muted-foreground hover:text-primary underline bg-background/80 backdrop-blur-sm px-2 py-1 rounded"
-                >
-                  {t.calendarOpenTab}
-                </a>
-              </div>
-            </div>
-            <div className="p-4 border-t border-stone-100">
-              <Button size="lg" className="rounded-full w-full" onClick={() => setStep("payment")}>{t.calendarDoneBtn}</Button>
-            </div>
-          </>
-        )}
-
         {step === "payment" && (
           <>
             <DialogHeader>
@@ -924,7 +903,6 @@ const ReikiIntakeModal = ({ lang, pkg, onClose, onOpenPrivacy, onOpenLegal }: { 
               )}
               {error && <p className="text-sm text-red-600">{error}</p>}
               <div className="flex gap-3">
-                {isInPerson && <Button variant="outline" className="rounded-full" onClick={() => setStep("calendar")}>{t.backBtn}</Button>}
                 {inrPrice && (
                   <Button variant="outline" size="lg" className="rounded-full flex-1" onClick={handlePaid} disabled={paying}>
                     {paying ? t.paidSubmitting : TRANSLATIONS[lang].courseIntake.paidBtn}
@@ -2801,6 +2779,17 @@ const ServicePage = () => {
                 );
               })}
             </div>
+          </div>
+        )}
+
+        {/* Indicative price for services agreed personally (Subconscious
+            Healing): the package is set after the first conversation and
+            paid via a personal payment link (PayPage). */}
+        {!isReiki && "priceNote" in content && content.priceNote && (
+          <div className="mb-8 rounded-2xl border border-stone-100 bg-stone-50 p-5">
+            <p className="text-xs font-bold uppercase tracking-wider text-primary/50 mb-1">{sp.priceLabel}</p>
+            <p className="text-lg font-semibold">{content.price}</p>
+            <p className="text-sm text-muted-foreground mt-1">{content.priceNote}</p>
           </div>
         )}
 
@@ -4798,8 +4787,8 @@ const AppLayout = () => {
       <Navbar lang={lang} altPath={altPath} onBook={openBooking} belowAnnouncement={announcements.length > 0} />
       <LangSuggestion lang={lang} altPath={altPath} belowAnnouncement={announcements.length > 0} />
       <Outlet context={{ lang, setAltPath, onBook: openBooking, onBookAstrology: () => setAstrologyIntakeOpen(true), onBookReiki: setReikiPackage, onBookGuidance: (pkg = "individual") => { setGuidancePackage(pkg); setGuidanceIntakeOpen(true); }, onBookTarot: () => setTarotIntakeOpen(true), onBookCourse: setCourseBookingId, onOpenLegal: setLegalModal } satisfies LayoutContext} />
-      {/* Newsletter sign-up on every page; blog posts have their own box under the article. */}
-      {!/^\/(de\/)?blog\/[^/]+/.test(location.pathname) && (
+      {/* Newsletter sign-up on every page; blog posts have their own box under the article, and private payment links get none. */}
+      {!/^\/(de\/)?(blog|pay)\/[^/]+/.test(location.pathname) && (
         <Suspense fallback={null}>
           <div className="container mx-auto px-6 max-w-3xl">
             <NewsletterSignup lang={lang} variant="site" onOpenPrivacy={() => setLegalModal("privacy")} />
@@ -4871,6 +4860,73 @@ const AppLayout = () => {
 
       <CookieConsent lang={lang} reopen={cookieSettingsOpen} onClose={() => setCookieSettingsOpen(false)} onOpenPrivacy={() => { setCookieSettingsOpen(false); setLegalModal("privacy"); }} />
     </div>
+  );
+};
+
+// Personal payment link (/pay/:id), created by a founder on /write for a
+// package agreed in conversation (api/_lib/paymentRequests.ts). Shows the
+// package and amount from the server, collects the same legal
+// acknowledgements as every booking form and hands over to Stripe.
+type PayLink = { firstName: string; description: string; amountCents: number; lang: "EN" | "DE"; paid: boolean; expired: boolean };
+const PayPage = () => {
+  const { id } = useParams<{ id: string }>();
+  const { lang, onOpenLegal } = useOutletContext<LayoutContext>();
+  const t = TRANSLATIONS[lang].payPage;
+  const [link, setLink] = useState<PayLink | null>(null);
+  const [state, setState] = useState<"loading" | "ready" | "missing">("loading");
+  const [legal, setLegal] = useState<BookingLegalState>(EMPTY_LEGAL_STATE);
+  const [redirecting, setRedirecting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  useNoIndex();
+  useSeo({ title: t.seoTitle, description: "", canonical: `${SITE_URL}/`, lang });
+
+  useEffect(() => {
+    fetch(`/api/payment-request?sub=get&id=${encodeURIComponent(id ?? "")}`)
+      .then(r => (r.ok ? r.json() : Promise.reject(r.status)))
+      .then((data: PayLink) => { setLink(data); setState("ready"); })
+      .catch(() => setState("missing"));
+  }, [id]);
+
+  const pay = async () => {
+    if (!id || !isLegalComplete(legal) || redirecting) return;
+    setRedirecting(true);
+    setError(null);
+    try {
+      await startServiceCheckout("paymentRequests", id, { legalAcks: toLegalAcks(legal) });
+    } catch (err) {
+      console.error("Error starting checkout:", err);
+      setError(TRANSLATIONS[lang].courseIntake.checkoutError.replace("{email}", "richa@niramay.me"));
+      setRedirecting(false);
+    }
+  };
+
+  return (
+    <main className="pt-32 pb-24">
+      <div className="container mx-auto px-6 max-w-lg">
+        <h1 className="text-3xl md:text-4xl font-serif font-bold mb-6">{t.title}</h1>
+        {state === "loading" && <p className="text-muted-foreground">…</p>}
+        {state === "missing" && <p className="text-muted-foreground">{t.missing}</p>}
+        {state === "ready" && link && (link.paid || link.expired) && (
+          <p className="text-muted-foreground">{link.paid ? t.alreadyPaid : t.expired}</p>
+        )}
+        {state === "ready" && link && !link.paid && !link.expired && (
+          <div className="grid gap-5">
+            <p className="text-muted-foreground">{t.intro.replace("{name}", link.firstName)}</p>
+            <div className="bg-stone-50 p-4 rounded-xl border border-stone-100">
+              <p className="text-xs uppercase tracking-wider text-muted-foreground mb-1">{t.packageLabel}</p>
+              <p className="font-bold">{link.description}</p>
+              <p className="text-lg font-semibold mt-1">{formatEuro(link.amountCents, lang)}</p>
+            </div>
+            <BookingLegalBlock lang={lang} binding price={formatEuro(link.amountCents, lang)} value={legal} onChange={setLegal} onOpenLegal={onOpenLegal} />
+            {error && <p className="text-sm text-red-600">{error}</p>}
+            <Button size="lg" className="rounded-full w-full" onClick={pay} disabled={!isLegalComplete(legal) || redirecting}>
+              {redirecting ? TRANSLATIONS[lang].courseIntake.redirecting : BOOKING_LEGAL_TEXT[lang].bindingButton}
+            </Button>
+            <p className="text-xs text-muted-foreground">{TRANSLATIONS[lang].courseIntake.payStripeBody}</p>
+          </div>
+        )}
+      </div>
+    </main>
   );
 };
 
@@ -5129,12 +5185,14 @@ export default function App() {
             <Route path="blog/:slug" element={<BlogPostPage />} />
             <Route path="faq" element={<FAQPage />} />
             <Route path="astrology-tarot" element={<AstrologyTarotPage />} />
+            <Route path="pay/:id" element={<PayPage />} />
             <Route path="de" element={<HomePage />} />
             <Route path="de/services/:id" element={<ServicePage />} />
             <Route path="de/courses/:id" element={<CoursePage />} />
             <Route path="de/blog/:slug" element={<BlogPostPage />} />
             <Route path="de/faq" element={<FAQPage />} />
             <Route path="de/astrology-tarot" element={<AstrologyTarotPage />} />
+            <Route path="de/pay/:id" element={<PayPage />} />
             {/* An unknown path under /de falls back to the German home page
                 rather than jumping to the English one. */}
             <Route path="de/*" element={<Navigate to="/de" replace />} />

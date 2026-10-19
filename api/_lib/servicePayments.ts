@@ -17,8 +17,7 @@ import { hasStripe, stripeRequest, type CheckoutSession } from "./stripe.js";
 // creates the Checkout Session, and the Stripe webhook (coursePayments.ts,
 // metadata.kind = "service") calls fulfilService: mark paid, invoice,
 // confirmation + admin email. No discounts, no .ics — the appointment is
-// arranged afterwards (Reiki in person: the calendar slot picked before
-// paying).
+// arranged afterwards by Richa.
 //
 //   POST /api/service-checkout  {collection, requestId, returnPath}
 //
@@ -28,7 +27,8 @@ import { hasStripe, stripeRequest, type CheckoutSession } from "./stripe.js";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-export const SERVICE_COLLECTIONS = ["astrologyRequests", "tarotRequests", "reikiRequests"] as const;
+// paymentRequests: personal payment links created on /write (paymentRequests.ts).
+export const SERVICE_COLLECTIONS = ["astrologyRequests", "tarotRequests", "reikiRequests", "paymentRequests"] as const;
 export type ServiceCollection = typeof SERVICE_COLLECTIONS[number];
 
 type ServiceInfo = {
@@ -56,6 +56,17 @@ function reikiAdmin(): string {
 }
 
 export function serviceFor(collection: ServiceCollection, request: Record<string, any>): ServiceInfo {
+  if (collection === "paymentRequests") {
+    const description = String(request.description || "Niramay");
+    return {
+      id: "payment-link", refPrefix: "PAY", amountCents: Number(request.amountCents), adminTo: astrologyAdmin(),
+      title: { EN: description, DE: description },
+      next: {
+        EN: "Richa will get in touch with you within 24–48 hours to agree the dates of your sessions.",
+        DE: "Richa meldet sich innerhalb von 24–48 Stunden bei Ihnen, um die Termine Ihrer Sitzungen zu vereinbaren.",
+      },
+    };
+  }
   if (collection === "tarotRequests") {
     return {
       id: "tarot", refPrefix: "TAR", amountCents: 1000, adminTo: astrologyAdmin(), next: ARRANGE,
@@ -68,8 +79,8 @@ export function serviceFor(collection: ServiceCollection, request: Record<string
         id: "reiki-in-person", refPrefix: "RKI", amountCents: 4000, adminTo: reikiAdmin(),
         title: { EN: "In-Person Reiki Immersion (45 mins)", DE: "Reiki-Immersion vor Ort (45 Min.)" },
         next: {
-          EN: "Your session takes place at the time you chose in our booking calendar. If you haven't picked a time yet, just reply to this email.",
-          DE: "Ihre Sitzung findet zu dem Termin statt, den Sie in unserem Buchungskalender gewählt haben. Falls Sie noch keinen Termin gewählt haben, antworten Sie einfach auf diese E-Mail.",
+          EN: "Richa will get in touch with you within 24–48 hours to agree the date and time of your in-person session in Ostfildern.",
+          DE: "Richa meldet sich innerhalb von 24–48 Stunden bei Ihnen, um Datum und Uhrzeit Ihrer Sitzung vor Ort in Ostfildern zu vereinbaren.",
         },
       };
     }
@@ -137,6 +148,18 @@ export async function handleServiceCheckout(req: VercelRequest, res: VercelRespo
     if (!snap.exists) throw new HttpError(404, "request_not_found");
     const request = snap.data() as Record<string, any>;
     if (request.paid) throw new HttpError(409, "already_paid");
+    if (collection === "paymentRequests") {
+      // The pay page can't write to Firestore (admin-only collection), so
+      // the order-button acknowledgements are recorded here.
+      if (!(request.expiresAt?.toMillis?.() > Date.now())) throw new HttpError(410, "link_expired");
+      const acks = body.legalAcks as Record<string, unknown> | undefined;
+      if (!acks || acks.agb !== true || acks.withdrawalInfo !== true || typeof acks.earlyStart !== "boolean"
+        || typeof acks.version !== "string" || acks.version.length > 20) {
+        throw new HttpError(400, "legal_acks_required");
+      }
+      request.legalAcks = { version: acks.version, agb: true, withdrawalInfo: true, earlyStart: acks.earlyStart };
+      await ref.update({ legalAcks: request.legalAcks, legalAcksAt: FieldValue.serverTimestamp() });
+    }
 
     const svc = serviceFor(collection, request);
     const lang: Lang = request.lang === "DE" ? "DE" : "EN";

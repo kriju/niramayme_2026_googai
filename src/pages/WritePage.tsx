@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { Upload, Trash2, LogOut, Lock, Pencil, Languages, AlertTriangle, ClipboardCheck, Globe, MessageSquare, Send, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import PaymentLinksPanel from "../components/PaymentLinksPanel";
 import { db } from "../lib/firebase";
 import { auth } from "../lib/firebase-auth";
 import {
@@ -1309,7 +1310,7 @@ export default function WritePage() {
 
   return (
     <div className="min-h-screen bg-stone-50">
-      {user ? <WriteDashboard user={user} /> : <LoginForm />}
+      {user ? <><WriteDashboard user={user} /><PaymentLinksPanel user={user} /></> : <LoginForm />}
     </div>
   );
 }

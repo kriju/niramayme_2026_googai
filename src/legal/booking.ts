@@ -20,9 +20,10 @@ import { LEGAL_CONFIG, LEGAL_VERSION, vatPriceNote, type LegalLang } from "./con
 // LEGAL-REVIEW: whether the pay-first flow (details -> payment instructions ->
 // "I've paid") counts as the order button for § 312j BGB is a judgement call;
 // the "binding" button is placed on the details step, where the visitor
-// commits to the booking. For in-person Reiki the calendar slot is picked
-// AFTER that button - have a lawyer check that the essential features (date)
-// do not need to be known beforehand.
+// commits to the booking. Sessions without a fixed date (Reiki, astrology,
+// tarot, guidance, packages bought via a personal payment link) get their
+// date agreed with Richa AFTER payment - have a lawyer check that the
+// essential features (date) do not need to be known beforehand.
 // LEGAL-REVIEW: the early-start checkbox is optional. Without it nothing may
 // start before the 14 days are over (so fixed-date courses and quick
 // readings inside that window would be delivered on the customer's express

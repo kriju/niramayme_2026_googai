@@ -2,7 +2,6 @@ import { LEGAL_DOCS } from "./legal";
 import { ADDRESS } from "./legal/config";
 import { Heart, Sparkles, Brain, ShieldCheck, Moon, Star, GraduationCap, Award, History, WandSparkles } from "lucide-react";
 
-export const GOOGLE_CALENDAR_URL = "https://calendar.google.com/calendar/appointments/schedules/AcZssZ0bFjK2E2xI3wiT55LqPigmiOHHDxGTghizdBbhy4MSdbw1p6CRUsxVk8gZYqJTnMgoKOAcJjZO?gv=true";
 export const GOOGLE_REVIEW_URL = "https://www.google.com/search?q=Niramay+Ostfildern+reviews";
 
 // The registered business address (same one disclosed in the Impressum,
@@ -45,7 +44,7 @@ export const TRANSLATIONS = {
       sessions: "Sessions",
       courses: "Courses",
       astrology: "Astrology & Tarot",
-      bookNow: "Book Now",
+      bookNow: "Contact Us",
       book: "The Book",
       // Navbar group labels: the desktop/mobile nav collapses the flat
       // list of links above into three dropdowns (About, Offerings, Read)
@@ -82,7 +81,7 @@ export const TRANSLATIONS = {
       title: "Start Your Healing Journey Today.",
       titleItalic: "Healing",
       description: "Bridging ancient wisdom and modern psychology to help you find balance, clarity, and lasting transformation.",
-      ctaPrimary: "Book a Free 15-Min Call",
+      ctaPrimary: "Free 15-Min Call",
       ctaSecondary: "Explore Services",
       // The first screen introduces the two people behind Niramay.
       foundersLabel: "Your teachers",
@@ -201,7 +200,7 @@ export const TRANSLATIONS = {
       },
       ctaTitle: "Still have a question?",
       ctaBody: "Book a free 15-minute call or message us on WhatsApp — we're happy to help.",
-      ctaBook: "Book a Free 15-Min Call",
+      ctaBook: "Free 15-Min Call",
       ctaWhatsapp: "Message us on WhatsApp",
     },
     sessions: {
@@ -220,14 +219,28 @@ export const TRANSLATIONS = {
       contactNote: "Questions about a course? Reach out via WhatsApp or email us at richa@niramay.me",
     },
     booking: {
-      title: "Book Your Session",
-      calendlyTitle: "Google Calendar Booking",
-      calendlyDesc: "Select a time slot that works best for your healing journey.",
-      calendlyBtn: "Open Booking Page",
+      title: "Get in Touch",
+      contactDesc: "Message or call Richa — tell us what you'd like to work on and we'll find the right session and a time together. The first 15-minute conversation is free.",
       discoveryLabel: "Free Discovery",
       discoveryValue: "15-Min Call",
       availabilityLabel: "Availability",
       availabilityValue: "Mon - Fri, 9am - 6pm",
+      whatsappBtn: "Chat on WhatsApp",
+      whatsappHint: "Usually answered the same day",
+      whatsappGeneral: "Hi Richa, I'd like a free 15-minute call to talk about a session.",
+      whatsappTopic: "Hi Richa, I'm interested in \"{topic}\" and would like to know more.",
+      callBtn: "Call us",
+      emailBtn: "Email",
+      privacyHint: "Please don't share detailed health information by WhatsApp — we'll discuss it personally.",
+    },
+    payPage: {
+      seoTitle: "Book & Pay | Niramay Wellbeing",
+      title: "Book and Pay",
+      intro: "Hi {name}, here is the package we discussed. Please check it, confirm the terms below and pay securely online.",
+      packageLabel: "Your package",
+      alreadyPaid: "This link has already been paid — thank you! Your confirmation and invoice were sent by email. Questions? Write to richa@niramay.me.",
+      expired: "This payment link has expired. Please message Richa on WhatsApp or write to richa@niramay.me for a new one.",
+      missing: "We couldn't find this payment link. Please check the link, or message Richa on WhatsApp or write to richa@niramay.me.",
     },
     footer: {
       description: "Empowering your journey towards holistic wellness through a unique blend of ancient wisdom and modern therapy.",
@@ -622,7 +635,7 @@ export const TRANSLATIONS = {
       paidSubmitting: "Confirming...",
       paidError: "Couldn't confirm your payment claim. Please try again, or message us on WhatsApp.",
       confirmationTitle: "Thank you!",
-      inPersonConfirmationBody: "We've noted your payment claim and will confirm your in-person session within 24–48 hours.",
+      inPersonConfirmationBody: "We've noted your payment claim. Richa will get in touch within 24–48 hours to arrange the date and time of your session.",
       distanceConfirmationBody: "We've noted your UPI payment claim. Once it's verified, Richa will get in touch within 24–48 hours to arrange your session.",
       confirmationSentTo: "A confirmation email has been sent to:",
       closeBtn: "Close",
@@ -764,7 +777,7 @@ export const TRANSLATIONS = {
       confirmationBody: "Thank you for joining. We'll verify your UPI payment. 24 hours before the session we'll email you a reminder with the Google Meet link.",
       paidTitle: "Payment received — you're booked in!",
       paidBody: "Thank you! Your confirmation email with the invoice and a calendar file is on its way. 24 hours before each session we'll email you a reminder with the Google Meet link.",
-      servicePaidBody: "Thank you! Your confirmation email with the invoice is on its way. Richa will get in touch with you within 24–48 hours to arrange everything (for in-person Reiki: your chosen calendar slot applies).",
+      servicePaidBody: "Thank you! Your confirmation email with the invoice is on its way. Richa will get in touch with you within 24–48 hours to arrange everything (Reiki in person: Richa agrees the date and time with you).",
       cancelledTitle: "Payment cancelled",
       cancelledBody: "Nothing was charged. You can book again whenever you like.",
       confirmationSentTo: "A confirmation email has been sent to:",
@@ -859,7 +872,7 @@ export const TRANSLATIONS = {
       sessions: "Sitzungen",
       courses: "Kurse",
       astrology: "Astrologie & Tarot",
-      bookNow: "Jetzt buchen",
+      bookNow: "Kontakt",
       book: "Das Buch",
       aboutGroup: "Über uns",
       trainers: "Richa & Riju",
@@ -888,7 +901,7 @@ export const TRANSLATIONS = {
       title: "Beginnen Sie heute Ihre Heilungsreise.",
       titleItalic: "Heilungs",
       description: "Die Verbindung von altem Wissen und moderner Psychologie, um Ihnen zu helfen, Balance, Klarheit und dauerhafte Transformation zu finden.",
-      ctaPrimary: "Kostenloses 15-Min-Gespräch buchen",
+      ctaPrimary: "Kostenloses 15-Min-Gespräch",
       ctaSecondary: "Leistungen entdecken",
       foundersLabel: "Ihre Lehrenden",
       foundersNames: "Richa & Riju Kansal",
@@ -1004,7 +1017,7 @@ export const TRANSLATIONS = {
       },
       ctaTitle: "Noch Fragen offen?",
       ctaBody: "Buchen Sie ein kostenloses 15-minütiges Gespräch oder schreiben Sie uns auf WhatsApp – wir helfen gern weiter.",
-      ctaBook: "Kostenloses 15-Min-Gespräch buchen",
+      ctaBook: "Kostenloses 15-Min-Gespräch",
       ctaWhatsapp: "Auf WhatsApp schreiben",
     },
     sessions: {
@@ -1023,14 +1036,28 @@ export const TRANSLATIONS = {
       contactNote: "Fragen zu einem Kurs? Schreiben Sie uns über WhatsApp oder per E-Mail an richa@niramay.me",
     },
     booking: {
-      title: "Ihre Sitzung buchen",
-      calendlyTitle: "Google Kalender Buchung",
-      calendlyDesc: "Wählen Sie ein Zeitfenster, das am besten zu Ihrer Heilungsreise passt.",
-      calendlyBtn: "Buchungsseite öffnen",
-      discoveryLabel: "Kostenlose Entdeckung",
-      discoveryValue: "15-Min-Anruf",
-      availabilityLabel: "Verfügbarkeit",
+      title: "Kontakt aufnehmen",
+      contactDesc: "Schreiben Sie Richa oder rufen Sie an – erzählen Sie uns, woran Sie arbeiten möchten, und wir finden gemeinsam die passende Sitzung und einen Termin. Das erste 15-minütige Gespräch ist kostenlos.",
+      discoveryLabel: "Kostenloses Kennenlernen",
+      discoveryValue: "15-Min-Gespräch",
+      availabilityLabel: "Erreichbarkeit",
       availabilityValue: "Mo - Fr, 9:00 - 18:00 Uhr",
+      whatsappBtn: "Per WhatsApp schreiben",
+      whatsappHint: "Meist noch am selben Tag beantwortet",
+      whatsappGeneral: "Hallo Richa, ich hätte gern ein kostenloses 15-minütiges Gespräch zu einer Sitzung.",
+      whatsappTopic: "Hallo Richa, ich interessiere mich für „{topic}“ und möchte mehr erfahren.",
+      callBtn: "Anrufen",
+      emailBtn: "E-Mail",
+      privacyHint: "Bitte teilen Sie per WhatsApp keine ausführlichen Gesundheitsangaben – das besprechen wir persönlich.",
+    },
+    payPage: {
+      seoTitle: "Buchen & bezahlen | Niramay Wohlbefinden",
+      title: "Buchen und bezahlen",
+      intro: "Hallo {name}, hier ist das besprochene Paket. Bitte prüfen Sie es, bestätigen Sie unten die Bedingungen und bezahlen Sie sicher online.",
+      packageLabel: "Ihr Paket",
+      alreadyPaid: "Dieser Link wurde bereits bezahlt – vielen Dank! Bestätigung und Rechnung haben Sie per E-Mail erhalten. Fragen? Schreiben Sie an richa@niramay.me.",
+      expired: "Dieser Zahlungslink ist abgelaufen. Bitte schreiben Sie Richa per WhatsApp oder an richa@niramay.me, um einen neuen zu erhalten.",
+      missing: "Diesen Zahlungslink konnten wir nicht finden. Bitte prüfen Sie den Link oder schreiben Sie Richa per WhatsApp oder an richa@niramay.me.",
     },
     footer: {
       description: "Stärken Sie Ihre Reise zu ganzheitlichem Wohlbefinden durch eine einzigartige Mischung aus altem Wissen und moderner Therapie.",
@@ -1420,7 +1447,7 @@ export const TRANSLATIONS = {
       paidSubmitting: "Wird bestätigt...",
       paidError: "Ihre Zahlungsmeldung konnte nicht bestätigt werden. Bitte versuchen Sie es erneut oder schreiben Sie uns über WhatsApp.",
       confirmationTitle: "Vielen Dank!",
-      inPersonConfirmationBody: "Wir haben Ihre Zahlungsmeldung erhalten und bestätigen Ihre Sitzung vor Ort innerhalb von 24–48 Stunden.",
+      inPersonConfirmationBody: "Wir haben Ihre Zahlungsmeldung erhalten. Richa meldet sich innerhalb von 24–48 Stunden, um Datum und Uhrzeit Ihrer Sitzung zu vereinbaren.",
       distanceConfirmationBody: "Wir haben Ihre UPI-Zahlungsmeldung erhalten. Sobald sie verifiziert ist, meldet sich Richa innerhalb von 24–48 Stunden, um Ihre Sitzung zu vereinbaren.",
       confirmationSentTo: "Eine Bestätigungs-E-Mail wurde gesendet an:",
       closeBtn: "Schließen",
@@ -1562,7 +1589,7 @@ export const TRANSLATIONS = {
       confirmationBody: "Vielen Dank für Ihre Anmeldung. Wir prüfen Ihre UPI-Zahlung. 24 Stunden vor dem Termin erinnern wir Sie per E-Mail – mit dem Google-Meet-Link.",
       paidTitle: "Zahlung erhalten – Sie sind angemeldet!",
       paidBody: "Vielen Dank! Ihre Bestätigungs-E-Mail mit Rechnung und Kalenderdatei ist unterwegs. 24 Stunden vor jeder Einheit erinnern wir Sie per E-Mail – mit dem Google-Meet-Link.",
-      servicePaidBody: "Vielen Dank! Ihre Bestätigungs-E-Mail mit Rechnung ist unterwegs. Richa meldet sich innerhalb von 24–48 Stunden bei Ihnen, um alles Weitere zu vereinbaren (bei Reiki vor Ort gilt Ihr gewählter Kalendertermin).",
+      servicePaidBody: "Vielen Dank! Ihre Bestätigungs-E-Mail mit Rechnung ist unterwegs. Richa meldet sich innerhalb von 24–48 Stunden bei Ihnen, um alles Weitere zu vereinbaren (Reiki vor Ort: Richa vereinbart Datum und Uhrzeit mit Ihnen).",
       cancelledTitle: "Zahlung abgebrochen",
       cancelledBody: "Es wurde nichts abgebucht. Sie können jederzeit erneut buchen.",
       confirmationSentTo: "Eine Bestätigungs-E-Mail wurde gesendet an:",
@@ -1741,6 +1768,8 @@ export const SERVICES = [
       title: "Subconscious Healing",
       description: "Heal at the root by working with your subconscious mind through NLP Coaching, Hypnotherapy and Past Life Regression.",
       outcome: "Release limiting beliefs, anxiety and old emotional patterns, and create lasting change from within.",
+      price: "Indicative: €100 for a package of 3 sessions",
+      priceNote: "In person in Ostfildern. After a free first conversation Richa recommends how many sessions suit you; you then receive a personal link to book and pay online.",
       details: [
         "Most of what we think, feel and do is driven by the subconscious mind, which is why willpower alone often isn't enough to change a habit, a fear or a recurring pattern. Subconscious Healing brings together three complementary approaches to work directly at that deeper level.",
         "NLP (Neuro-Linguistic Programming) Coaching helps you identify and reframe limiting beliefs, change unhelpful thought and behaviour patterns, and move towards your goals with clarity and confidence.",
@@ -1753,6 +1782,8 @@ export const SERVICES = [
       title: "Heilung des Unterbewusstseins",
       description: "Heilen Sie an der Wurzel, indem Sie mit Ihrem Unterbewusstsein arbeiten – durch NLP-Coaching, Hypnotherapie und Rückführung in vergangene Leben.",
       outcome: "Lösen Sie einschränkende Überzeugungen, Ängste und alte emotionale Muster und schaffen Sie nachhaltige Veränderung von innen heraus.",
+      price: "Richtwert: 100 € für ein Paket mit 3 Sitzungen",
+      priceNote: "Vor Ort in Ostfildern. Nach einem kostenlosen ersten Gespräch empfiehlt Richa, wie viele Sitzungen zu Ihnen passen; anschließend erhalten Sie einen persönlichen Link, um online zu buchen und zu bezahlen.",
       details: [
         "Der Großteil unseres Denkens, Fühlens und Handelns wird vom Unterbewusstsein gesteuert – deshalb reicht Willenskraft allein oft nicht aus, um eine Gewohnheit, eine Angst oder ein wiederkehrendes Muster zu verändern. Die Heilung des Unterbewusstseins vereint drei sich ergänzende Ansätze, die genau auf dieser tieferen Ebene ansetzen.",
         "NLP-Coaching (Neuro-Linguistisches Programmieren) hilft Ihnen, einschränkende Überzeugungen zu erkennen und neu zu bewerten, hinderliche Denk- und Verhaltensmuster zu verändern und Ihre Ziele mit Klarheit und Zuversicht anzugehen.",
@@ -2177,11 +2208,11 @@ export const FAQS = [
     featured: true,
     EN: {
       question: "How do I book?",
-      answer: "Click \"Book Now\" to pick a slot in our Google Calendar (Mon–Fri, 9am–6pm). For weekly group classes, message us on WhatsApp or email richa@niramay.me. VHS courses are booked directly with VHS Ostfildern using the course number.",
+      answer: "Online courses, Reiki, astrology, tarot and guidance sessions are booked and paid directly on their pages. For everything else — or if you're unsure what suits you — click \"Contact Us\" to message Richa on WhatsApp, call or email richa@niramay.me (Mon–Fri, 9am–6pm); the first 15-minute conversation is free. For weekly group classes, message us on WhatsApp too. VHS courses are booked directly with VHS Ostfildern using the course number.",
     },
     DE: {
       question: "Wie buche ich einen Termin?",
-      answer: "Klicken Sie auf „Jetzt buchen\" und wählen Sie einen Termin in unserem Google-Kalender (Mo–Fr, 9–18 Uhr). Für die wöchentlichen Gruppenkurse schreiben Sie uns per WhatsApp oder an richa@niramay.me. VHS-Kurse buchen Sie direkt bei der VHS Ostfildern über die Kursnummer.",
+      answer: "Online-Kurse, Reiki, Astrologie, Tarot und Begleitung buchen und bezahlen Sie direkt auf der jeweiligen Seite. Für alles andere – oder wenn Sie unsicher sind, was zu Ihnen passt – klicken Sie auf „Kontakt\", um Richa per WhatsApp zu schreiben, anzurufen oder eine E-Mail an richa@niramay.me zu senden (Mo–Fr, 9–18 Uhr); das erste 15-minütige Gespräch ist kostenlos. Für die wöchentlichen Gruppenkurse schreiben Sie uns ebenfalls per WhatsApp. VHS-Kurse buchen Sie direkt bei der VHS Ostfildern über die Kursnummer.",
     }
   },
   {
