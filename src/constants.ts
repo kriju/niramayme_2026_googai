@@ -45,7 +45,7 @@ export const TRANSLATIONS = {
       courses: "Courses",
       astrology: "Astrology & Tarot",
       bookNow: "Contact Us",
-      book: "The Book",
+      book: "Books",
       // Navbar group labels: the desktop/mobile nav collapses the flat
       // list of links above into three dropdowns (About, Offerings, Read)
       // plus the standalone Reviews/FAQ links — see Navbar in App.tsx.
@@ -90,7 +90,7 @@ export const TRANSLATIONS = {
       foundersCta: "Meet us",
       reviewsLabel: "Client stories",
       reviewsRating: (avg: string, n: number) => `${avg}/5 · ${n} reviews`,
-      bookLabel: "The book",
+      bookLabel: "New book",
       bookCta: "Discover the book",
     },
     services: {
@@ -822,6 +822,37 @@ export const TRANSLATIONS = {
       link: "https://www.amazon.de/stores/Richa-Jain-Kansal/author/B0H3W87WW9?language=en&ref=sr_ntt_srch_lnk_1&qid=1790675468&sr=8-1&shoppingPortalEnabled=true",
       badges: ["Holistic Guide", "Ancient Wisdom"],
     },
+    // Richa's second book, a children's book (text from its back cover).
+    // It is only published in English, so the German page shows the English
+    // title and says the book is in English. The link is the plain product
+    // URL (no tracking or affiliate parameters); the English page opens
+    // Amazon's English interface.
+    newBook: {
+      title: "Discovering the 8 Limbs of Yoga",
+      subtitle: "Robin's Magical Journey of Mind, Body & Heart",
+      description: "Join Robin on a journey through the 8 Limbs of Yoga, where every adventure brings a new lesson about the body, breath, mind, heart, and the world around us. Perfect for ages 4–13: read together when they're little, and discover independently as they grow.",
+      highlights: [
+        "Magical stories that spark imagination",
+        "Yoga, breathing & mindfulness activities",
+        "Life lessons children can actually use",
+        "A meaningful keepsake to return to as they grow",
+      ],
+      author: "Richa Jain Kansal",
+      authorRole: "Kids Yoga Instructor & Author",
+      cta: "Buy on Amazon",
+      cover: "/bookcover-8-limbs.webp",
+      coverThumb: "/bookcover-8-limbs-thumb.webp",
+      coverWidth: 872,
+      coverHeight: 1084,
+      link: "https://www.amazon.de/-/en/dp/B0HMVV8T7P",
+      badges: ["New", "Ages 4–13", "Yoga for Kids"],
+    },
+    bookShelf: {
+      eyebrow: "Books by Richa",
+      title: "Wisdom to take home",
+      authorRole: "Lead Trainer & Author",
+      newTabHint: "(opens Amazon in a new tab)",
+    },
     auth: {
       navLogIn: "Log In",
       navSignUp: "Sign Up",
@@ -872,7 +903,7 @@ export const TRANSLATIONS = {
       courses: "Kurse",
       astrology: "Astrologie & Tarot",
       bookNow: "Kontakt",
-      book: "Das Buch",
+      book: "Bücher",
       aboutGroup: "Über uns",
       trainers: "Richa & Riju",
       offerings: "Angebote",
@@ -908,7 +939,7 @@ export const TRANSLATIONS = {
       foundersCta: "Lernen Sie uns kennen",
       reviewsLabel: "Stimmen unserer Klienten",
       reviewsRating: (avg: string, n: number) => `${avg.replace(".", ",")}/5 · ${n} Bewertungen`,
-      bookLabel: "Das Buch",
+      bookLabel: "Neues Buch",
       bookCta: "Buch entdecken",
     },
     services: {
@@ -1630,6 +1661,32 @@ export const TRANSLATIONS = {
       cover: "/bookcover-de.webp",
       link: "https://www.amazon.de/stores/Richa-Jain-Kansal/author/B0H3W87WW9?language=en&ref=sr_ntt_srch_lnk_1&qid=1790675468&sr=8-1&shoppingPortalEnabled=true",
       badges: ["Ganzheitlicher Leitfaden", "Altes Wissen"],
+    },
+    newBook: {
+      title: "Discovering the 8 Limbs of Yoga",
+      subtitle: "Robin's Magical Journey of Mind, Body & Heart",
+      description: "Begleiten Sie Robin auf einer Reise durch die 8 Glieder des Yoga, bei der jedes Abenteuer eine neue Lektion über Körper, Atem, Geist, Herz und die Welt um uns herum bereithält. Ideal für Kinder von 4 bis 13 Jahren: gemeinsam vorlesen, solange sie klein sind, und später selbst entdecken. Das Buch ist auf Englisch erschienen.",
+      highlights: [
+        "Magische Geschichten, die die Fantasie anregen",
+        "Yoga-, Atem- und Achtsamkeitsübungen",
+        "Lebenslektionen, die Kinder wirklich anwenden können",
+        "Ein wertvolles Andenken, zu dem sie beim Großwerden zurückkehren",
+      ],
+      author: "Richa Jain Kansal",
+      authorRole: "Kinderyoga-Lehrerin & Autorin",
+      cta: "Bei Amazon kaufen",
+      cover: "/bookcover-8-limbs.webp",
+      coverThumb: "/bookcover-8-limbs-thumb.webp",
+      coverWidth: 872,
+      coverHeight: 1084,
+      link: "https://www.amazon.de/dp/B0HMVV8T7P",
+      badges: ["Neu", "4–13 Jahre", "Kinderyoga", "Auf Englisch"],
+    },
+    bookShelf: {
+      eyebrow: "Bücher von Richa",
+      title: "Weisheit für Zuhause",
+      authorRole: "Cheftrainerin & Autorin",
+      newTabHint: "(öffnet Amazon in einem neuen Tab)",
     },
     auth: {
       navLogIn: "Anmelden",
@@ -2406,12 +2463,12 @@ export const FAQS = [
   {
     category: "about",
     EN: {
-      question: "Can I buy Richa's book?",
-      answer: "Yes. \"Journey from Body to Bliss: The Niramay Path to Pancha Koshas\" is available on Amazon.",
+      question: "Can I buy Richa's books?",
+      answer: "Yes. Both of Richa's books are available on Amazon: \"Discovering the 8 Limbs of Yoga: Robin's Magical Journey of Mind, Body & Heart\" and \"Journey from Body to Bliss: The Niramay Path to Pancha Koshas\". You'll find the links in the Books section on our homepage.",
     },
     DE: {
-      question: "Kann ich Richas Buch kaufen?",
-      answer: "Ja. „Journey from Body to Bliss: The Niramay Path to Pancha Koshas\" ist bei Amazon erhältlich.",
+      question: "Kann ich Richas Bücher kaufen?",
+      answer: "Ja. Beide Bücher von Richa sind bei Amazon erhältlich: „Discovering the 8 Limbs of Yoga: Robin's Magical Journey of Mind, Body & Heart\" und „Journey from Body to Bliss: The Niramay Path to Pancha Koshas\". Die Links finden Sie im Bereich „Bücher\" auf unserer Startseite.",
     }
   },
 ];
