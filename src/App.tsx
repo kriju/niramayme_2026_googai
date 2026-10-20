@@ -34,7 +34,6 @@ import { AuthProvider, useAuth } from "./lib/auth";
 import { AuthDialog } from "./components/AuthDialog";
 import {
   collection,
-  onSnapshot,
   query,
   orderBy,
   addDoc,
@@ -67,6 +66,7 @@ import { getStoredConsent, grantAnalyticsConsent, denyAnalyticsConsent, initAnal
 import { SITE_URL, BUSINESS_JSONLD_ID, useJsonLd, useSeo, useNoIndex } from "./lib/seo";
 import { businessJsonLd as businessJsonLdFor, richaJsonLd as richaJsonLdFor, websiteJsonLd as websiteJsonLdFor } from "./lib/structuredData";
 import { responsiveImage } from "./lib/images";
+import { loadApprovedReviews, loadPublishedBlogs } from "./lib/publicFeed";
 
 // A single booking dialog, controlled from the App root (see the other
 // ...DetailModal components below for the same lift-state-up pattern).
@@ -1541,22 +1541,13 @@ const BlogSection = ({ lang }: { lang: "EN" | "DE" }) => {
   const t = TRANSLATIONS[lang].blog;
 
   useEffect(() => {
-    // Public visitors only ever see published posts — see the isBlogAdmin()
-    // OR clause in firestore.rules that additionally lets Richa/Riju read
-    // their own drafts from the /write dashboard.
-    const q = query(
-      collection(db, "blogs"),
-      where("lang", "==", lang),
-      where("published", "==", true),
-      orderBy("createdAt", "desc")
-    );
-
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const b = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      setBlogs(b);
-    });
-
-    return () => unsubscribe();
+    // Cached list of published posts (see src/lib/publicFeed.ts), not a live
+    // Firestore listener, which cost one read per post for every visitor.
+    let cancelled = false;
+    loadPublishedBlogs(lang)
+      .then(b => { if (!cancelled) setBlogs(b); })
+      .catch(err => console.error("Failed to load blog posts:", err));
+    return () => { cancelled = true; };
   }, [lang]);
 
   const filtered = filter === "all" ? blogs : blogs.filter(b => b.category === filter);
@@ -2159,13 +2150,14 @@ const Hero = ({ lang, onBook }: { lang: "EN" | "DE", onBook: (ctx?: BookingConte
   const [reviewIndex, setReviewIndex] = useState(0);
   const [reviewsPaused, setReviewsPaused] = useState(false);
 
-  // One-shot read (not a live listener) — TestimonialsSection further down
-  // keeps its own subscription. All approved reviews, not just the latest few,
-  // so the card can show the overall rating; there are only a few dozen.
+  // One-shot read of the cached feed, shared with TestimonialsSection further
+  // down (see src/lib/publicFeed.ts). All approved reviews, not just the
+  // latest few, so the card can show the overall rating; there are only a
+  // few dozen.
   useEffect(() => {
     let cancelled = false;
-    getDocs(query(collection(db, "reviews"), where("approved", "==", true), orderBy("createdAt", "desc")))
-      .then(snap => { if (!cancelled) setApprovedReviews(snap.docs.map(d => ({ id: d.id, ...d.data() }))); })
+    loadApprovedReviews()
+      .then(items => { if (!cancelled) setApprovedReviews(items); })
       .catch(() => {});
     return () => { cancelled = true; };
   }, []);
@@ -3924,12 +3916,11 @@ const TestimonialsSection = ({ lang }: { lang: "EN" | "DE" }) => {
   const t = TRANSLATIONS[lang].testimonials;
   
   useEffect(() => {
-    const q = query(collection(db, "reviews"), where("approved", "==", true), orderBy("createdAt", "desc"));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const reviews = snapshot.docs.map(doc => {
-        const data = doc.data();
+    let cancelled = false;
+    loadApprovedReviews().then(items => {
+      if (cancelled) return;
+      const reviews = items.map(data => {
         return {
-          id: doc.id,
           ...data,
           // Make review content available in both language variants
           EN: {
@@ -3943,8 +3934,8 @@ const TestimonialsSection = ({ lang }: { lang: "EN" | "DE" }) => {
         };
       });
       setDynamicReviews(reviews);
-    });
-    return () => unsubscribe();
+    }).catch(err => console.error("Failed to load reviews:", err));
+    return () => { cancelled = true; };
   }, []); // Remove lang from dependency to avoid unnecessary re-triggers, though it works either way
 
   // Both sources in one list, newest first, so a review approved today is
