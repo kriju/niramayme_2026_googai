@@ -4,6 +4,8 @@ import { sendEmail } from "./_lib/mailer.js";
 import { handleReviewAction } from "./_lib/reviewAction.js";
 import { makeReviewToken } from "./_lib/reviewToken.js";
 import { adminSubject, escapeHtml, getSiteUrl } from "./_lib/util.js";
+import { HttpError } from "./_lib/engagement.js";
+import { claimNotification, enforceNotifyRateLimit } from "./_lib/notifyGuard.js";
 
 // Called by the browser right after a review is saved to Firestore (see
 // LeaveReviewModal in src/App.tsx). It re-fetches the review server-side by
@@ -25,11 +27,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   try {
     const db = getAdminDb();
+    await enforceNotifyRateLimit(db, req);
     const snap = await db.collection("reviews").doc(reviewId).get();
     if (!snap.exists) {
       return res.status(404).json({ error: "Review not found" });
     }
     const review = snap.data() as Record<string, any>;
+
+    const release = await claimNotification(db, "reviews", reviewId, "submitted");
+    if (!release) return res.status(200).json({ ok: true, duplicate: true });
 
     const token = makeReviewToken(reviewId);
     const siteUrl = getSiteUrl(req);
@@ -63,10 +69,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       subject: adminSubject(`New review from ${review.name || "a visitor"} — needs approval`),
       html,
       tag: "admin-review",
-    });
+    }).catch(async (error) => { await release(); throw error; });
 
     return res.status(200).json({ ok: true });
   } catch (error) {
+    if (error instanceof HttpError) {
+      return res.status(error.status).json({ error: error.code });
+    }
     console.error("notify-review failed:", error);
     return res.status(500).json({ error: "Failed to send notification" });
   }
@@ -131,7 +140,7 @@ export function renderEmailHtml(params: {
 
     <p style="color: #a8a29e; font-size: 12px; margin-top: 24px;">
       You're getting this because you're the admin contact for Niramay's website reviews.
-      Clicking Approve makes this review visible on the public Testimonials section immediately.
+      Clicking Approve makes this review visible on the public Testimonials section within a few minutes.
       Clicking Reject keeps it permanently unpublished but keeps a record of it.
     </p>
   </div>

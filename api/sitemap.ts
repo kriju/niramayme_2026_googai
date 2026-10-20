@@ -1,5 +1,6 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { getAdminDb } from "./_lib/firebaseAdmin.js";
+import { handlePublicFeed } from "./_lib/publicFeed.js";
 
 const SITE_URL = "https://www.niramay.me";
 
@@ -60,6 +61,9 @@ function isoDate(value: unknown): string | undefined {
 // public/sitemap.xml was hand-written once and never grew new <url> entries
 // as posts got published from /write.
 export default async function handler(req: VercelRequest, res: VercelResponse) {
+  // The homepage's cached blog/review lists (/api/public-feed, rewritten here).
+  if (req.query.op === "feed") return handlePublicFeed(req, res);
+
   const pairs: LocalizedPair[] = [
     { en: `${SITE_URL}/`, de: `${SITE_URL}/de`, changefreq: "weekly", priority: "1.0" },
     { en: `${SITE_URL}/faq`, de: `${SITE_URL}/de/faq`, changefreq: "monthly", priority: "0.7" },

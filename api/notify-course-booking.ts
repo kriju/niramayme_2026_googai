@@ -3,6 +3,8 @@ import { getAdminDb } from "./_lib/firebaseAdmin.js";
 import { sendEmail } from "./_lib/mailer.js";
 import { adminSubject, escapeHtml } from "./_lib/util.js";
 import { withNotice } from "./_lib/withdrawal.js";
+import { HttpError } from "./_lib/engagement.js";
+import { claimNotification, enforceNotifyRateLimit } from "./_lib/notifyGuard.js";
 
 import { COURSES, COURSE_CONTACT_EMAIL, bookedSessions, isCourseId, type CourseId, type Lang } from "./_lib/courses.js";
 import { handleCheckout, handleDailyCron, handleQuote, handleStripeWebhook, refCodeFor } from "./_lib/coursePayments.js";
@@ -50,6 +52,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   try {
     const db = getAdminDb();
+    await enforceNotifyRateLimit(db, req);
     const snap = await db.collection("courseBookings").doc(requestId).get();
     if (!snap.exists) {
       return res.status(404).json({ error: "Course booking not found" });
@@ -80,6 +83,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       timeZone: "Europe/Berlin",
     }).format(createdAt);
 
+    const release = await claimNotification(db, "courseBookings", requestId, kind);
+    if (!release) return res.status(200).json({ ok: true, duplicate: true });
+
     const adminParams = {
       refCode, kind, booking, formattedDate,
       courseTitle: course.EN.title,
@@ -95,7 +101,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       text: renderAdminEmailText(adminParams),
       html: renderAdminEmailHtml(adminParams),
       tag: "admin-course",
-    });
+    }).catch(async (error) => { await release(); throw error; });
 
     if (EMAIL_RE.test(String(booking.email || "").trim())) {
       const customerParams = {
@@ -134,6 +140,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     return res.status(200).json({ ok: true });
   } catch (error) {
+    if (error instanceof HttpError) {
+      return res.status(error.status).json({ error: error.code });
+    }
     console.error("notify-course-booking failed:", error);
     return res.status(500).json({ error: "Failed to send notification" });
   }

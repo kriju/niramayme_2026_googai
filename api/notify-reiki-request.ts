@@ -3,6 +3,8 @@ import { getAdminDb } from "./_lib/firebaseAdmin.js";
 import { sendEmail } from "./_lib/mailer.js";
 import { adminSubject, escapeHtml } from "./_lib/util.js";
 import { handleWithdrawal, withNotice } from "./_lib/withdrawal.js";
+import { HttpError } from "./_lib/engagement.js";
+import { claimNotification, enforceNotifyRateLimit } from "./_lib/notifyGuard.js";
 
 // UPI (INR) payments only — EUR payments go through Stripe Checkout
 // (api/_lib/servicePayments.ts), whose webhook sends the confirmation.
@@ -50,6 +52,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   try {
     const db = getAdminDb();
+    await enforceNotifyRateLimit(db, req);
     const snap = await db.collection("reikiRequests").doc(requestId).get();
     if (!snap.exists) {
       return res.status(404).json({ error: "Reiki request not found" });
@@ -57,6 +60,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const request = snap.data() as Record<string, any>;
     const pkgId: PackageId = request.package in PACKAGES ? request.package : "distance-single";
     const isInPerson = pkgId === "in-person";
+    if (kind === "payment_claimed" && !request.paymentClaimed) {
+      return res.status(400).json({ error: "Payment has not been claimed" });
+    }
 
     // Derived the same way the client derives it (src/App.tsx) — never
     // stored separately, so the two can't drift.
@@ -71,6 +77,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       timeZone: "Europe/Berlin",
     }).format(createdAt);
 
+    const release = await claimNotification(db, "reikiRequests", requestId, kind);
+    if (!release) return res.status(200).json({ ok: true, duplicate: true });
+
     const adminParams = { refCode, kind, request, formattedDate, pkgTitle: pkg.EN.title, price: pkg.EN.price, isInPerson };
     await sendEmail({
       to: process.env.REIKI_NOTIFY_EMAIL || "richa@niramay.me",
@@ -81,7 +90,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       text: renderAdminEmailText(adminParams),
       html: renderAdminEmailHtml(adminParams),
       tag: "admin-reiki",
-    });
+    }).catch(async (error) => { await release(); throw error; });
 
     if (EMAIL_RE.test(String(request.email || "").trim())) {
       const customerParams = { refCode, kind, lang, name: request.name, pkgTitle: pkg[lang].title, price: pkg[lang].price, isInPerson };
@@ -102,6 +111,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     return res.status(200).json({ ok: true });
   } catch (error) {
+    if (error instanceof HttpError) {
+      return res.status(error.status).json({ error: error.code });
+    }
     console.error("notify-reiki-request failed:", error);
     return res.status(500).json({ error: "Failed to send notification" });
   }
