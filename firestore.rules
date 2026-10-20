@@ -451,10 +451,9 @@ service cloud.firestore {
       // the admin-SDK notify endpoint (api/notify-reiki-request.ts).
       allow get, list: if false;
       allow create: if isValidId(requestId) && isValidReikiRequest(incoming());
-      // Only in-person bookings take payment up front; the visitor can flip
-      // their own "I've paid" flag once, and nothing else.
-      allow update: if existing()['package'] == 'in-person'
-                    && existing().paymentClaimed == false
+      // Every package is paid up front (Stripe, or UPI for INR); the visitor
+      // can flip their own "I've paid" (UPI) flag once, and nothing else.
+      allow update: if existing().paymentClaimed == false
                     && incoming().paymentClaimed == true
                     && incoming().diff(existing()).affectedKeys().hasOnly(['paymentClaimed']);
       allow delete: if false;

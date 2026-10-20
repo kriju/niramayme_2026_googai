@@ -1,4 +1,5 @@
 import nodemailer from "nodemailer";
+import { LOGO_EMAIL_URL } from "./logo.js";
 
 // Every email the site sends goes through here. With BREVO_API_KEY set it
 // goes out via Brevo's transactional API from a dedicated sender on our own
@@ -19,6 +20,7 @@ export type Email = {
   replyTo?: string;
   // Shown in Brevo's transactional logs, to filter by kind of email.
   tag?: string;
+  attachments?: { filename: string; content: Buffer; contentType: string }[];
 };
 
 const BREVO_API = "https://api.brevo.com/v3";
@@ -74,6 +76,9 @@ async function sendViaBrevo(email: Email): Promise<void> {
     htmlContent: email.html,
     ...(email.text ? { textContent: email.text } : {}),
     ...(email.tag ? { tags: [email.tag] } : {}),
+    ...(email.attachments?.length
+      ? { attachment: email.attachments.map((a) => ({ name: a.filename, content: a.content.toString("base64") })) }
+      : {}),
   });
 }
 
@@ -92,10 +97,21 @@ async function sendViaGmail(email: Email): Promise<void> {
     subject: email.subject,
     text: email.text,
     html: email.html,
+    attachments: email.attachments,
   });
 }
 
-export async function sendEmail(email: Email): Promise<void> {
+// Logo on top of every email to customers and subscribers; internal
+// notifications (tag "admin-…") stay plain.
+const LOGO_HEADER = `<div style="text-align:center;margin:0 auto 8px;max-width:560px;"><img src="${LOGO_EMAIL_URL}" alt="Niramay" width="72" height="72" style="display:inline-block;width:72px;height:72px;border:0;" /></div>`;
+
+function withLogo(email: Email): Email {
+  if (email.tag?.startsWith("admin-")) return email;
+  return { ...email, html: `${LOGO_HEADER}${email.html}` };
+}
+
+export async function sendEmail(original: Email): Promise<void> {
+  const email = withLogo(original);
   if (hasBrevo()) {
     try {
       return await sendViaBrevo(email);

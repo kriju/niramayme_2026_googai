@@ -21,7 +21,9 @@ function rememberSignedUp() {
   try { localStorage.setItem(STORAGE_KEY, "1"); } catch { /* ignore */ }
 }
 
-export default function NewsletterSignup({ lang, onOpenPrivacy }: { lang: Lang; onOpenPrivacy: () => void }) {
+// "post" = under a blog article; "site" = the band above the footer on every
+// other page.
+export default function NewsletterSignup({ lang, onOpenPrivacy, variant = "post" }: { lang: Lang; onOpenPrivacy: () => void; variant?: "post" | "site" }) {
   const t = TRANSLATIONS[lang].newsletter;
   const [email, setEmail] = useState("");
   // Honeypot: hidden from people (and screen readers), filled in by bots.
@@ -69,8 +71,8 @@ export default function NewsletterSignup({ lang, onOpenPrivacy }: { lang: Lang; 
           <Mail className="w-5 h-5 text-primary" />
         </div>
         <div className="flex-1 min-w-0">
-          <h2 id="newsletter-title" className="text-xl font-serif font-bold mb-1">{t.title}</h2>
-          <p className="text-stone-600 mb-4">{t.subtitle}</p>
+          <h2 id="newsletter-title" className="text-xl font-serif font-bold mb-1">{variant === "site" ? t.siteTitle : t.title}</h2>
+          <p className="text-stone-600 mb-4">{variant === "site" ? t.siteSubtitle : t.subtitle}</p>
 
           {state === "sent" ? (
             <p className="flex items-start gap-2 text-stone-700" role="status">

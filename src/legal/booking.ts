@@ -4,20 +4,26 @@ import { LEGAL_CONFIG, LEGAL_VERSION, vatPriceNote, type LegalLang } from "./con
 // (BookingLegalBlock in src/App.tsx) and the "Vertrag widerrufen" dialog.
 //
 // Two kinds of forms:
-//  - binding:     pay-first bookings (astrology, guidance, tarot, in-person
-//                 Reiki, online courses). The button is labelled
+//  - binding:     every booking (astrology, guidance, tarot, Reiki in person
+//                 and at a distance, online courses). The button is labelled
 //                 "Zahlungspflichtig buchen" (§ 312j Abs. 3 BGB) and the price
 //                 incl. the VAT note is shown directly above it (§ 312j Abs. 2).
-//  - non-binding: distance Reiki requests - the contract only comes into being
-//                 when Richa confirms, so the button says "Anfrage senden" and
-//                 no early-start request is collected.
+//                 Payment follows via Stripe Checkout (or UPI for INR).
+//  - non-binding: no longer used (distance Reiki was a free request until
+//                 all payments moved to Stripe); requestNote/requestButton
+//                 are kept for a future enquiry form.
 //
+// LEGAL-REVIEW: the English button reads "Book and pay now" (owners' choice,
+// 2026-10-15) instead of a literal "Book with obligation to pay"; the German
+// "Zahlungspflichtig buchen" is unchanged. Have a lawyer confirm the English
+// label meets § 312j Abs. 3 BGB.
 // LEGAL-REVIEW: whether the pay-first flow (details -> payment instructions ->
 // "I've paid") counts as the order button for § 312j BGB is a judgement call;
 // the "binding" button is placed on the details step, where the visitor
-// commits to the booking. For in-person Reiki the calendar slot is picked
-// AFTER that button - have a lawyer check that the essential features (date)
-// do not need to be known beforehand.
+// commits to the booking. Sessions without a fixed date (Reiki, astrology,
+// tarot, guidance, packages bought via a personal payment link) get their
+// date agreed with Richa AFTER payment - have a lawyer check that the
+// essential features (date) do not need to be known beforehand.
 // LEGAL-REVIEW: the early-start checkbox is optional. Without it nothing may
 // start before the 14 days are over (so fixed-date courses and quick
 // readings inside that window would be delivered on the customer's express
@@ -92,9 +98,9 @@ export const BOOKING_LEGAL_TEXT: Record<LegalLang, {
     earlyStart:
       "I expressly request that Niramay begins performing the service before the withdrawal period has ended. I am aware that I lose my right of withdrawal once Niramay has fully performed the service (§ 356 (4) BGB) and that, if I withdraw after performance has begun, I owe compensation for the services already provided (§ 357a BGB). (Optional)",
     earlyStartHint: `Without this box we will only begin after the withdrawal period (${LEGAL_CONFIG.withdrawalDays} days) has ended.`,
-    bindingNote: "By clicking “Book with obligation to pay” you place a binding booking and commit to paying the price shown.",
+    bindingNote: "By clicking “Book and pay now” you place a binding booking and commit to paying the price shown.",
     requestNote: "This is a non-binding request. A contract only comes into being once we confirm your booking.",
-    bindingButton: "Book with obligation to pay",
+    bindingButton: "Book and pay now",
     requestButton: "Send request",
   },
 };

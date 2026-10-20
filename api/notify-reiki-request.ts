@@ -4,6 +4,8 @@ import { sendEmail } from "./_lib/mailer.js";
 import { adminSubject, escapeHtml } from "./_lib/util.js";
 import { handleWithdrawal, withNotice } from "./_lib/withdrawal.js";
 
+// UPI (INR) payments only — EUR payments go through Stripe Checkout
+// (api/_lib/servicePayments.ts), whose webhook sends the confirmation.
 // Called by the browser right after ReikiIntakeModal (see src/App.tsx)
 // writes/updates a doc in the reikiRequests Firestore collection — once when
 // the visitor submits their details, and (in-person bookings only) again
@@ -55,10 +57,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const request = snap.data() as Record<string, any>;
     const pkgId: PackageId = request.package in PACKAGES ? request.package : "distance-single";
     const isInPerson = pkgId === "in-person";
-    // Distance requests have no payment step, so there's nothing to claim.
-    if (kind === "payment_claimed" && !isInPerson) {
-      return res.status(400).json({ error: "This request has no payment step" });
-    }
 
     // Derived the same way the client derives it (src/App.tsx) — never
     // stored separately, so the two can't drift.
@@ -79,7 +77,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       replyTo: EMAIL_RE.test(String(request.email || "")) ? request.email : undefined,
       subject: adminSubject(kind === "submitted"
         ? `New Reiki ${isInPerson ? "booking" : "request"} — ${pkg.EN.title} — ${refCode}`
-        : `Payment claimed for in-person Reiki — ${refCode}`),
+        : `UPI payment claimed for Reiki — ${refCode}`),
       text: renderAdminEmailText(adminParams),
       html: renderAdminEmailHtml(adminParams),
       tag: "admin-reiki",
@@ -95,9 +93,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         subject: customerSubject(customerParams),
         // Contract confirmation on a durable medium incl. withdrawal
         // information (§ 312f Abs. 2 BGB) - sent with the first email.
-        ...(kind === "submitted"
-          ? withNotice({ text: renderCustomerEmailText(customerParams), html: renderCustomerEmailHtml(customerParams) }, lang, request.legalAcks?.earlyStart === true)
-          : { text: renderCustomerEmailText(customerParams), html: renderCustomerEmailHtml(customerParams) }),
+        // The UPI flow now only sends "payment_claimed" (EUR goes through
+        // Stripe, servicePayments.ts), so both kinds carry it.
+        ...withNotice({ text: renderCustomerEmailText(customerParams), html: renderCustomerEmailHtml(customerParams) }, lang, request.legalAcks?.earlyStart === true),
         tag: "customer-reiki",
       });
     }
@@ -121,7 +119,7 @@ type AdminParams = {
 
 function renderAdminEmailText({ refCode, kind, request, formattedDate, pkgTitle, price, isInPerson }: AdminParams) {
   const lines = [
-    kind === "submitted" ? `New Reiki ${isInPerson ? "booking" : "request"}` : "Payment claimed for an in-person Reiki booking",
+    kind === "submitted" ? `New Reiki ${isInPerson ? "booking" : "request"}` : "UPI payment claimed for a Reiki booking",
     `Submitted ${formattedDate} (Europe/Berlin) — ref ${refCode} — language: ${request.lang}`,
     "",
     `Package: ${pkgTitle} (${price})`,
@@ -134,7 +132,7 @@ function renderAdminEmailText({ refCode, kind, request, formattedDate, pkgTitle,
     lines.push(
       `Payment claimed: ${request.paymentClaimed ? "Yes" : "No"}`,
       "",
-      `They were sent to the booking calendar to pick a slot. Look for ${refCode} in the payment note (PayPal remark or bank transfer reference) to match the payment.`,
+      `They were sent to the booking calendar to pick a slot. Look for ${refCode} in the UPI remark to match the payment.`,
     );
   } else {
     lines.push("", "They've been told you'll get in touch with them for the next steps.");
@@ -151,7 +149,7 @@ function renderAdminEmailHtml({ refCode, kind, request, formattedDate, pkgTitle,
   return `
   <div style="font-family: -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; max-width: 560px; margin: 0 auto; color: #292524;">
     <h2 style="font-size: 20px; margin-bottom: 4px;">
-      ${kind === "submitted" ? `New Reiki ${isInPerson ? "booking" : "request"}` : "Payment claimed for an in-person Reiki booking"}
+      ${kind === "submitted" ? `New Reiki ${isInPerson ? "booking" : "request"}` : "UPI payment claimed for a Reiki booking"}
     </h2>
     <p style="color: #78716c; margin-top: 0;">Submitted ${escapeHtml(formattedDate)} (Europe/Berlin) &middot; ref ${escapeHtml(refCode)} &middot; language: ${escapeHtml(request.lang)}</p>
 
@@ -166,7 +164,7 @@ function renderAdminEmailHtml({ refCode, kind, request, formattedDate, pkgTitle,
 
     <div style="background: #f5f5f4; border-radius: 12px; padding: 16px; margin-bottom: 24px;">
       ${isInPerson
-        ? `They were sent to the booking calendar to pick a slot. Look for <strong>${escapeHtml(refCode)}</strong> in the payment note (PayPal remark or bank transfer reference) to match the payment.`
+        ? `They were sent to the booking calendar to pick a slot. Look for <strong>${escapeHtml(refCode)}</strong> in the UPI remark to match the payment.`
         : "They've been told you'll get in touch with them for the next steps."}
     </div>
 
@@ -199,8 +197,8 @@ function customerParagraphs({ refCode, kind, lang, pkgTitle, price, isInPerson }
   const de = lang === "DE";
   if (kind === "payment_claimed") {
     return [de
-      ? `vielen Dank, wir haben Ihre Zahlungsmeldung für Referenz ${refCode} erhalten. Wir bestätigen Ihre Reiki-Sitzung vor Ort innerhalb von 24–48 Stunden, sobald die Zahlung auf unserer Seite verifiziert ist.`
-      : `Thank you, we've received your payment claim for reference ${refCode}. We'll confirm your in-person Reiki session within 24–48 hours once the payment is verified on our end.`];
+      ? `vielen Dank, wir haben Ihre Zahlungsmeldung für Referenz ${refCode} erhalten. Sobald die Zahlung auf unserer Seite verifiziert ist, meldet sich Richa innerhalb von 24–48 Stunden bei Ihnen.`
+      : `Thank you, we've received your payment claim for reference ${refCode}. Once the payment is verified on our end, Richa will get in touch within 24–48 hours.`];
   }
   if (isInPerson) {
     return [

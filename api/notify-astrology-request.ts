@@ -4,6 +4,8 @@ import { sendEmail } from "./_lib/mailer.js";
 import { withNotice } from "./_lib/withdrawal.js";
 import { adminSubject, escapeHtml } from "./_lib/util.js";
 
+// UPI (INR) payments only — EUR payments go through Stripe Checkout
+// (api/_lib/servicePayments.ts), whose webhook sends the confirmation.
 // Called by the browser right after AstrologyIntakeModal (see src/App.tsx)
 // writes/updates a doc in the astrologyRequests (or, for tarot readings,
 // tarotRequests) Firestore collection — once when the visitor submits their
@@ -123,7 +125,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }).format(createdAt);
 
     await sendEmail({
-      to: process.env.ADMIN_NOTIFY_EMAIL || "riju.kansal@niramay.me",
+      // Richa handles these (ADMIN_NOTIFY_EMAIL is for reviews/comments).
+      to: process.env.ASTROLOGY_NOTIFY_EMAIL || "richa@niramay.me",
       replyTo: isEmailContact ? String(request.contact).trim() : undefined,
       subject: adminSubject(kind === "submitted"
         ? `New ${svc.adminLabel} request — ${refCode}`
@@ -144,9 +147,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           ? `${lang === "DE" ? svc.receivedDE : svc.receivedEN} — ${refCode}`
           : (lang === "DE" ? `Zahlung erhalten — ${refCode}` : `Payment received — ${refCode}`),
         // Contract confirmation incl. withdrawal information (§ 312f Abs. 2 BGB).
-        ...(kind === "submitted"
-          ? withNotice({ text: renderCustomerEmailText({ refCode, kind, lang, name: request.name, svc }), html: renderCustomerEmailHtml({ refCode, kind, lang, name: request.name, svc }) }, lang, request.legalAcks?.earlyStart === true)
-          : { text: renderCustomerEmailText({ refCode, kind, lang, name: request.name, svc }), html: renderCustomerEmailHtml({ refCode, kind, lang, name: request.name, svc }) }),
+        // The UPI flow now only sends "payment_claimed" (EUR goes through
+        // Stripe, servicePayments.ts), so both kinds carry it.
+        ...withNotice({ text: renderCustomerEmailText({ refCode, kind, lang, name: request.name, svc }), html: renderCustomerEmailHtml({ refCode, kind, lang, name: request.name, svc }) }, lang, request.legalAcks?.earlyStart === true),
         tag: "customer-astrology",
       });
     }
@@ -190,7 +193,7 @@ function renderAdminEmailText(params: {
     `Contact: ${request.contact}${isEmailContact ? "" : " (not an email — reply via WhatsApp)"}`,
     `Payment claimed: ${request.paymentClaimed ? "Yes" : "No"}`,
     "",
-    `Look for ${refCode} in the payment note (PayPal/UPI remark or bank transfer reference) to match this request to the incoming payment.`,
+    `Look for ${refCode} in the UPI remark to match this request to the incoming payment (EUR payments go through Stripe and arrive as a separate \"Paid\" email).`,
   ];
   return lines.join("\n");
 }
@@ -312,7 +315,7 @@ ${request.question ? `
     </table>
 
     <div style="background: #f5f5f4; border-radius: 12px; padding: 16px; margin-bottom: 24px;">
-      Look for <strong>${escapeHtml(refCode)}</strong> in the payment note (PayPal/UPI remark or bank transfer reference) to match this request to the incoming payment.
+      Look for <strong>${escapeHtml(refCode)}</strong> in the UPI remark to match this request to the incoming payment (EUR payments go through Stripe and arrive as a separate \"Paid\" email).
     </div>
 
     <p style="color: #a8a29e; font-size: 12px; margin-top: 24px;">

@@ -4,70 +4,39 @@ import { sendEmail } from "./_lib/mailer.js";
 import { adminSubject, escapeHtml } from "./_lib/util.js";
 import { withNotice } from "./_lib/withdrawal.js";
 
-// Called by the browser right after CourseIntakeModal (see src/App.tsx)
-// writes/updates a doc in the courseBookings Firestore collection — once when
-// the visitor submits their details, and again when they claim to have paid.
-// Like notify-reiki-request.ts, it re-fetches the doc server-side by ID
-// rather than trusting whatever the client posts, so it can't be used to
-// send made-up content to anyone.
+import { COURSES, COURSE_CONTACT_EMAIL, bookedSessions, isCourseId, type CourseId, type Lang } from "./_lib/courses.js";
+import { handleCheckout, handleDailyCron, handleQuote, handleStripeWebhook, refCodeFor } from "./_lib/coursePayments.js";
+import { buildCourseIcs } from "./_lib/ics.js";
+import { handleServiceCheckout } from "./_lib/servicePayments.js";
+import { handlePaymentRequest } from "./_lib/paymentRequests.js";
+
+// Course bookings. Besides the notification emails below, this function also
+// serves the Stripe payment routes (see api/_lib/coursePayments.ts), reached
+// through vercel.json rewrites with ?op=… because the Hobby plan caps a
+// deployment at 12 functions.
+//
+// The notifications are for the manual UPI (INR) payment only: card/SEPA/
+// PayPal payments in EUR go through Stripe Checkout, whose webhook sends the
+// confirmation. The browser calls this right after CourseIntakeModal (see
+// src/App.tsx) writes a doc in the courseBookings Firestore collection and
+// the visitor picks UPI — once when they choose it, and again when they claim
+// to have paid. Like notify-reiki-request.ts, it re-fetches the doc
+// server-side by ID rather than trusting whatever the client posts, so it
+// can't be used to send made-up content to anyone.
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const CONTACT_EMAIL = "riju.kansal@niramay.me";
+const CONTACT_EMAIL = COURSE_CONTACT_EMAIL;
 
 type NotifyKind = "submitted" | "payment_claimed";
-type CourseId = "yoga-stress-immunity-sleep" | "yoga-adventure";
-type Lang = "EN" | "DE";
-
-// Kept in sync by hand with the bookable COURSES entries in src/constants.ts
-// (duplicated rather than imported, same reasoning as api/sitemap.ts).
-// `sessions` (multi-date workshops) maps the booking's chosen `session` id to
-// its schedule, overriding the course-level one; `inrPrice` adds UPI payment;
-// `contactEmail` overrides CONTACT_EMAIL for questions/replies (keep in sync
-// with the COURSES entry in src/constants.ts).
-type CourseInfo = Record<Lang, { title: string; schedule: string; price: string }> & {
-  inrPrice?: string;
-  contactEmail?: string;
-  sessions?: Record<string, Record<Lang, string>>;
-};
-const COURSES: Record<CourseId, CourseInfo> = {
-  "yoga-stress-immunity-sleep": {
-    EN: {
-      title: "Yoga for Stress, Immunity & Sleep: 8-Session Series",
-      schedule: "every Tuesday & Thursday, 8:00–9:00 pm (German time), for 4 weeks starting Tuesday, 3 November 2026",
-      price: "€79",
-    },
-    DE: {
-      title: "Yoga für Stress, Immunität & Schlaf: Serie mit 8 Einheiten",
-      schedule: "jeden Dienstag & Donnerstag, 20:00–21:00 Uhr (deutsche Zeit), 4 Wochen lang ab Dienstag, 3. November 2026",
-      price: "79 €",
-    },
-  },
-  "yoga-adventure": {
-    EN: {
-      title: "Yoga Adventure – Move • Breathe • Play • Discover! (kids 9–14)",
-      schedule: "on the date you chose",
-      price: "€15",
-    },
-    DE: {
-      title: "Yoga-Abenteuer – Bewegen • Atmen • Spielen • Entdecken! (Kinder 9–14)",
-      schedule: "am gewählten Termin",
-      price: "15 €",
-    },
-    inrPrice: "₹1500",
-    contactEmail: "richa@niramay.me",
-    sessions: {
-      "2026-10-24": {
-        EN: "on Saturday, 24 October, 12:30–2:00 pm European time (4:00–5:30 pm IST)",
-        DE: "am Samstag, 24. Oktober, 12:30–14:00 Uhr europäische Zeit (16:00–17:30 Uhr IST)",
-      },
-      "2026-10-29": {
-        EN: "on Thursday, 29 October, 11:30 am–1:00 pm European time (4:00–5:30 pm IST)",
-        DE: "am Donnerstag, 29. Oktober, 11:30–13:00 Uhr europäische Zeit (16:00–17:30 Uhr IST)",
-      },
-    },
-  },
-};
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
+  switch (req.query.op) {
+    case "quote": return handleQuote(req, res);
+    case "checkout": return handleCheckout(req, res);
+    case "webhook": return handleStripeWebhook(req, res);
+    case "cron": return handleDailyCron(req, res);
+    case "service-checkout": return handleServiceCheckout(req, res);
+    case "payment-request": return handlePaymentRequest(req, res);
+  }
   if (req.method !== "POST") {
     res.setHeader("Allow", "POST");
     return res.status(405).json({ error: "Method not allowed" });
@@ -86,19 +55,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(404).json({ error: "Course booking not found" });
     }
     const booking = snap.data() as Record<string, any>;
-    if (!(booking.course in COURSES)) {
+    if (!isCourseId(booking.course)) {
       return res.status(400).json({ error: "Unknown course" });
     }
     if (kind === "payment_claimed" && !booking.paymentClaimed) {
       return res.status(400).json({ error: "Payment has not been claimed" });
     }
     const course = COURSES[booking.course as CourseId];
+    // Only UPI (INR) payments are reported by hand; EUR goes through Stripe.
+    if (!course.inrPrice) {
+      return res.status(400).json({ error: "This course is paid via Stripe" });
+    }
 
     // Derived the same way the client derives it (src/App.tsx) — never
     // stored separately, so the two can't drift.
-    const refCode = `CRS-${requestId.slice(-6).toUpperCase()}`;
+    const refCode = refCodeFor(requestId);
     const lang: Lang = booking.lang === "DE" ? "DE" : "EN";
-    const session = course.sessions?.[booking.session];
+    const session = course.pickOne ? bookedSessions(course, booking.session)[0]?.label : undefined;
 
     const createdAt: Date = booking.createdAt?.toDate ? booking.createdAt.toDate() : new Date();
     const formattedDate = new Intl.DateTimeFormat("en-GB", {
@@ -110,7 +83,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const adminParams = {
       refCode, kind, booking, formattedDate,
       courseTitle: course.EN.title,
-      price: course.inrPrice ? `${course.EN.price} / ${course.inrPrice}` : course.EN.price,
+      price: `${course.inrPrice} via UPI`,
       session: session?.EN,
     };
     await sendEmail({
@@ -136,9 +109,25 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         replyTo: course.contactEmail ?? CONTACT_EMAIL,
         subject: customerSubject(customerParams),
         // Contract confirmation incl. withdrawal information (§ 312f Abs. 2 BGB).
-        ...(kind === "submitted"
-          ? withNotice({ text: renderCustomerEmailText(customerParams), html: renderCustomerEmailHtml(customerParams) }, lang, booking.legalAcks?.earlyStart === true)
-          : { text: renderCustomerEmailText(customerParams), html: renderCustomerEmailHtml(customerParams) }),
+        // The UPI flow only sends "payment_claimed" now, so both kinds carry it.
+        ...withNotice({ text: renderCustomerEmailText(customerParams), html: renderCustomerEmailHtml(customerParams) }, lang, booking.legalAcks?.earlyStart === true),
+        // The UPI payment is checked by hand, so this is the participant's
+        // confirmation: add the calendar file.
+        ...(kind === "payment_claimed"
+          ? {
+              attachments: [{
+                filename: "niramay-course.ics",
+                content: Buffer.from(buildCourseIcs({
+                  bookingId: requestId,
+                  course,
+                  sessions: bookedSessions(course, booking.session),
+                  lang,
+                  contactEmail: course.contactEmail ?? CONTACT_EMAIL,
+                }), "utf8"),
+                contentType: "text/calendar; charset=utf-8",
+              }],
+            }
+          : {}),
         tag: "customer-course",
       });
     }
@@ -173,7 +162,7 @@ function renderAdminEmailText({ refCode, kind, booking, formattedDate, courseTit
     `Notes: ${booking.notes || "—"}`,
     `Payment claimed: ${booking.paymentClaimed ? "Yes" : "No"}`,
     "",
-    `Look for ${refCode} in the payment note (PayPal/UPI remark or bank transfer reference) to match the payment. Remember to email them the meeting link one day before the session.`,
+    `Look for ${refCode} in the UPI remark to match the payment. They get the automatic 24-hour reminder like Stripe bookings once they've clicked "I've paid".`,
   ].join("\n");
 }
 
@@ -201,8 +190,8 @@ function renderAdminEmailHtml({ refCode, kind, booking, formattedDate, courseTit
     </table>
 
     <div style="background: #f5f5f4; border-radius: 12px; padding: 16px; margin-bottom: 24px;">
-      Look for <strong>${escapeHtml(refCode)}</strong> in the payment note (PayPal/UPI remark or bank transfer reference) to match the payment.
-      Remember to email them the meeting link one day before the session.
+      Look for <strong>${escapeHtml(refCode)}</strong> in the UPI remark to match the payment.
+      They get the automatic 24-hour reminder like Stripe bookings once they've clicked "I've paid".
     </div>
 
     <p style="color: #a8a29e; font-size: 12px; margin-top: 24px;">
@@ -242,8 +231,8 @@ function customerParagraphs({ refCode, kind, lang, title, schedule, price, inrPr
         ? `vielen Dank für Ihre Anmeldung zu „${title}“ – wir haben Ihre Zahlungsmeldung für Referenz ${refCode} erhalten. Der Kurs findet ${schedule} online statt.`
         : `Thank you for joining "${title}" — we've received your payment for reference ${refCode}. It takes place online ${schedule}.`,
       de
-        ? "Sie erhalten den Online-Meeting-Link einen Tag vor der Einheit per E-Mail an diese Adresse."
-        : "You will receive the online meeting link by email at this address one day before the session.",
+        ? "Im Anhang finden Sie eine Kalenderdatei (.ics). Den Google-Meet-Link erhalten Sie mit der Erinnerung einen Tag vor der Einheit per E-Mail an diese Adresse."
+        : "A calendar file (.ics) is attached. You'll receive the Google Meet link with the reminder one day before the session, by email at this address.",
       questions,
     ];
   }
@@ -251,8 +240,8 @@ function customerParagraphs({ refCode, kind, lang, title, schedule, price, inrPr
     de ? `vielen Dank für Ihre Reservierung: ${title}. Ihr Referenzcode ist:` : `Thank you for reserving your place: ${title}. Your reference code is:`,
     { code: refCode },
     de
-      ? `Bitte zahlen Sie ${price} per PayPal (richa@niramay.me) oder Überweisung (IBAN DE08 1001 1001 2721 9373 31, BIC NTSBDEB1XXX)${inrPrice ? ` bzw. ${inrPrice} per UPI (richa944@icici)` : ""} und geben Sie diesen Code als Verwendungszweck an. Klicken Sie danach auf unserer Website auf „Ich habe bezahlt“, um Ihren Platz zu bestätigen.`
-      : `Please pay ${price} via PayPal (richa@niramay.me) or bank transfer (IBAN DE08 1001 1001 2721 9373 31, BIC NTSBDEB1XXX)${inrPrice ? `, or ${inrPrice} via UPI (richa944@icici),` : ""} with this code as the payment note, then click "I've Paid" on our website to confirm your place.`,
+      ? `Bitte zahlen Sie ${inrPrice} per UPI (richa944@icici) und geben Sie diesen Code als Verwendungszweck an. Klicken Sie danach auf unserer Website auf „Ich habe bezahlt“, um Ihren Platz zu bestätigen.`
+      : `Please pay ${inrPrice} via UPI (richa944@icici) with this code as the payment note, then click "I've Paid" on our website to confirm your place.`,
     questions,
   ];
 }
