@@ -1,0 +1,16 @@
+{
+  "id": "sofia-vienna",
+  "name": "Sofia",
+  "age": 38,
+  "location": { "city": "Vienna", "country": "Austria" },
+  "locale": "de-AT",
+  "timezone": "Europe/Vienna",
+  "geolocation": { "latitude": 48.2082, "longitude": 16.3738 },
+  "language": "DE",
+  "device": "Galaxy S9+",
+  "network": "4g",
+  "techComfort": "medium",
+  "background": "Mother of two, practises yoga at home with videos. Switches between German and English. Saw a workshop mentioned on Instagram and wants to know about upcoming events and the book.",
+  "goal": "Find upcoming workshops or seminars, switch the site to English and back to check both versions match, and find out about the book.",
+  "startPath": "/de"
+}

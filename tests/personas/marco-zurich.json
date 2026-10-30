@@ -1,0 +1,16 @@
+{
+  "id": "marco-zurich",
+  "name": "Marco",
+  "age": 52,
+  "location": { "city": "Zurich", "country": "Switzerland" },
+  "locale": "de-CH",
+  "timezone": "Europe/Zurich",
+  "geolocation": { "latitude": 47.3769, "longitude": 8.5417 },
+  "language": "DE",
+  "device": "iPad (gen 7) landscape",
+  "network": "wifi",
+  "techComfort": "medium",
+  "background": "Finance manager with burnout symptoms and poor sleep. Browses on his iPad in the evening. Wants to understand exactly what happens in a session before he commits, and is wary of anything esoteric.",
+  "goal": "Find out whether the subconscious-healing or sleep offer could help with his sleep and stress, what a session involves, and what it costs in a currency he understands.",
+  "startPath": "/de"
+}

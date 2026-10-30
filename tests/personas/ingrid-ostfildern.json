@@ -1,0 +1,17 @@
+{
+  "id": "ingrid-ostfildern",
+  "name": "Ingrid",
+  "age": 68,
+  "location": { "city": "Ostfildern", "country": "Germany" },
+  "locale": "de-DE",
+  "timezone": "Europe/Berlin",
+  "geolocation": { "latitude": 48.7227, "longitude": 9.2634 },
+  "language": "DE",
+  "device": "Pixel 5",
+  "network": "4g",
+  "techComfort": "low",
+  "background": "Retired primary-school teacher. Has stiff knees and mild back pain. Uses her phone for WhatsApp and the weather; reads German only. Distrusts anything that looks like a sales pitch.",
+  "goal": "Find a gentle yoga class near Ostfildern that suits a 68-year-old beginner with knee problems, and work out when it is and how to sign up.",
+  "startPath": "/de",
+  "accessibilityNeeds": "Needs large, clear text and big tap targets; gets lost if menus are hidden."
+}

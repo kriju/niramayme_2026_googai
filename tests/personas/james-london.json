@@ -1,0 +1,16 @@
+{
+  "id": "james-london",
+  "name": "James",
+  "age": 41,
+  "location": { "city": "London", "country": "United Kingdom" },
+  "locale": "en-GB",
+  "timezone": "Europe/London",
+  "geolocation": { "latitude": 51.5072, "longitude": -0.1276 },
+  "language": "EN",
+  "device": "Desktop Chrome",
+  "network": "wifi",
+  "techComfort": "high",
+  "background": "Product manager and sceptic. Got here from a shared link to a blog post. Reads carefully, looks for who wrote things and whether claims are backed up. Quick to leave if something sounds like unfounded health claims.",
+  "goal": "Read one blog post, judge whether the author and site are credible, and decide whether to subscribe to the newsletter.",
+  "startPath": "/"
+}

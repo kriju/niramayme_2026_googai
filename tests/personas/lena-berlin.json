@@ -1,0 +1,17 @@
+{
+  "id": "lena-berlin",
+  "name": "Lena",
+  "age": 27,
+  "location": { "city": "Berlin", "country": "Germany" },
+  "locale": "de-DE",
+  "timezone": "Europe/Berlin",
+  "geolocation": { "latitude": 52.52, "longitude": 13.405 },
+  "language": "DE",
+  "device": "iPhone 13",
+  "network": "4g",
+  "colorScheme": "dark",
+  "techComfort": "high",
+  "background": "UX designer, uses her phone in dark mode. Interested in distance Reiki after a stressful year. Compares prices and reads the cancellation terms (Widerrufsrecht) before paying for anything online.",
+  "goal": "Compare the Reiki packages, understand what a remote session is like, and check the cancellation and privacy terms before booking.",
+  "startPath": "/de/services/reiki"
+}

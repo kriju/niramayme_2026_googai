@@ -1,0 +1,18 @@
+{
+  "id": "robert-esslingen",
+  "name": "Robert",
+  "age": 71,
+  "location": { "city": "Esslingen am Neckar", "country": "Germany" },
+  "locale": "en-US",
+  "timezone": "Europe/Berlin",
+  "geolocation": { "latitude": 48.7406, "longitude": 9.3108 },
+  "language": "EN",
+  "device": "Desktop Chrome",
+  "network": "wifi",
+  "keyboardOnly": true,
+  "techComfort": "medium",
+  "background": "Retired American engineer living near Stuttgart. Has a hand tremor, so he navigates with the keyboard only (Tab, Shift+Tab, Enter, arrow keys) and never uses the mouse. Speaks little German.",
+  "goal": "Using only the keyboard, find the answers to common questions (FAQ), find out whether the chair yoga class is in English, and find a way to contact the teacher.",
+  "startPath": "/",
+  "accessibilityNeeds": "Keyboard only. Needs visible focus outlines and a logical tab order; cannot use hover menus."
+}

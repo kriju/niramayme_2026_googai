@@ -1,0 +1,16 @@
+{
+  "id": "priya-pune",
+  "name": "Priya",
+  "age": 34,
+  "location": { "city": "Pune", "country": "India" },
+  "locale": "en-IN",
+  "timezone": "Asia/Kolkata",
+  "geolocation": { "latitude": 18.5204, "longitude": 73.8567 },
+  "language": "EN",
+  "device": "Galaxy S9+",
+  "network": "fast-3g",
+  "techComfort": "high",
+  "background": "Software tester going through a career decision. Curious about astrology and tarot but wants it to feel serious, not gimmicky. Will only pay if she can pay in INR or understands the euro price clearly.",
+  "goal": "Understand what an astrology or tarot reading involves, what it costs in rupees, and how she would receive it from India.",
+  "startPath": "/"
+}

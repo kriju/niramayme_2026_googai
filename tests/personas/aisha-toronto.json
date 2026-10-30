@@ -1,0 +1,17 @@
+{
+  "id": "aisha-toronto",
+  "name": "Aisha",
+  "age": 23,
+  "location": { "city": "Toronto", "country": "Canada" },
+  "locale": "en-CA",
+  "timezone": "America/Toronto",
+  "geolocation": { "latitude": 43.6532, "longitude": -79.3832 },
+  "language": "EN",
+  "device": "Moto G4",
+  "network": "slow-3g",
+  "reducedMotion": "reduce",
+  "techComfort": "high",
+  "background": "University student on a tight budget with an old phone and a weak data plan. Motion makes her dizzy, so she has reduced motion turned on. Looks for discounts and online options.",
+  "goal": "Find an online yoga course she can join from Canada, check whether there is a student or early-bird discount, and see the price in her head against her budget.",
+  "startPath": "/"
+}

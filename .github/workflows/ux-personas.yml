@@ -1,0 +1,77 @@
+# Persona UX suite (tests/ux): AI personas browse each successful Vercel
+# preview deployment and report what it was like, plus accessibility,
+# performance and layout checks. Setup and costs: tests/ux/README.md.
+name: Persona UX test
+
+on:
+  # Vercel reports each deployment back to GitHub as a deployment status.
+  deployment_status:
+  workflow_dispatch:
+    inputs:
+      url:
+        description: "Deployment URL to test (a Vercel preview URL)"
+        required: true
+      personas:
+        description: "Comma-separated persona ids (empty = all)"
+        required: false
+      checks_only:
+        description: "Skip the AI personas; run only the automated checks"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ux-personas-${{ github.event.deployment.ref || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ux:
+    # Previews only: production is never load- or persona-tested from CI.
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.deployment_status.state == 'success' &&
+       !contains(github.event.deployment_status.environment, 'Production'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.deployment.sha || github.sha }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Install browsers
+        run: npx playwright install --with-deps chromium webkit
+
+      - name: Run personas
+        env:
+          # Inputs go through env, never straight into the script, so a
+          # crafted URL can't inject shell commands.
+          UX_BASE_URL: ${{ inputs.url || github.event.deployment_status.environment_url || github.event.deployment_status.target_url }}
+          UX_PERSONAS: ${{ inputs.personas || vars.UX_PERSONAS }}
+          CHECKS_ONLY: ${{ inputs.checks_only && '1' || vars.UX_CHECKS_ONLY }}
+          UX_MODEL: ${{ vars.UX_MODEL }}
+          UX_EFFORT: ${{ vars.UX_EFFORT }}
+          UX_MAX_STEPS: ${{ vars.UX_MAX_STEPS }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
+        run: |
+          args=()
+          if [ "$CHECKS_ONLY" = "1" ] || [ "$CHECKS_ONLY" = "true" ]; then args+=(--checks-only); fi
+          npm run test:ux -- "${args[@]}"
+
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ux-report
+          path: ux-report/
+          retention-days: 14
+          if-no-files-found: ignore
