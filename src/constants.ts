@@ -1763,9 +1763,37 @@ export const reviewGroupOf = (category?: string) => REVIEW_GROUPS.find(g => cate
 export const ASTROLOGY_SERVICE_IDS = ["astrology", "tarot", "intuitive-guidance"];
 export const ASTROLOGY_PAGE_PATH = "/astrology-tarot";
 
+// Where a service takes place: "inPerson" (Ostfildern only), "online"
+// (live video, from anywhere) or "hybrid" (either). Drives each service
+// page's title and its structured data's areaServed, so online sessions
+// aren't presented to search engines as Ostfildern-only.
+export type ServiceDelivery = "inPerson" | "hybrid" | "online";
+
+// "<Title> — <brand>, <where>", shared by ServicePage (App.tsx) and the
+// build-time prerender so the two can't drift apart.
+export const serviceSeoTitle = (service: { delivery?: string; EN: { title: string }; DE: { title: string } }, lang: "EN" | "DE") => {
+  const where = service.delivery === "online" ? "online" : service.delivery === "hybrid" ? "online & Ostfildern" : "Ostfildern";
+  return `${service[lang].title} — ${TRANSLATIONS[lang].brand.name}, ${where}`;
+};
+
+// The homepage's <title> and meta description, shared by HomePage
+// (App.tsx) and the build-time prerender; index.html's static defaults
+// mirror the English version.
+export const HOME_SEO = {
+  EN: {
+    title: "Niramay Wellbeing — Yoga, Reiki & Holistic Therapy in Ostfildern & Online",
+    description: "Niramay Wellbeing: yoga, Reiki, NLP coaching, hypnotherapy and Vedic astrology guidance with Richa Kansal, in Ostfildern, Germany, and live online. Book a free 15-minute call.",
+  },
+  DE: {
+    title: "Niramay Wohlbefinden — Yoga, Reiki & ganzheitliches Wohlbefinden in Ostfildern & online",
+    description: "Niramay Wohlbefinden: Yoga, Reiki, NLP-Coaching, Hypnotherapie und vedische Astrologie mit Richa Kansal, in Ostfildern und live online. Kostenloses 15-Minuten-Gespräch vereinbaren.",
+  },
+};
+
 export const SERVICES = [
   {
     id: "yoga",
+    delivery: "hybrid",
     icon: Heart,
     color: "bg-stone-100",
     category: "Physical Wellness",
@@ -1792,6 +1820,7 @@ export const SERVICES = [
   },
   {
     id: "reiki",
+    delivery: "hybrid",
     icon: Sparkles,
     color: "bg-stone-100",
     category: "Spiritual Healing",
@@ -1816,6 +1845,7 @@ export const SERVICES = [
   },
   {
     id: "subconscious-healing",
+    delivery: "inPerson",
     icon: Brain,
     color: "bg-stone-100",
     category: "Mental Clarity",
@@ -1850,6 +1880,7 @@ export const SERVICES = [
   },
   {
     id: "astrology",
+    delivery: "hybrid",
     icon: Star,
     color: "bg-stone-100",
     category: "Vedic Astrology",
@@ -1870,6 +1901,7 @@ export const SERVICES = [
   },
   {
     id: "tarot",
+    delivery: "online",
     icon: WandSparkles,
     color: "bg-stone-100",
     category: "Mental Clarity",
@@ -1936,6 +1968,7 @@ export const SERVICES = [
   },
   {
     id: "intuitive-guidance",
+    delivery: "online",
     icon: Sparkles,
     color: "bg-stone-100",
     category: "Spiritual Healing",
@@ -2629,6 +2662,13 @@ export const COURSES = [
     // TRANSLATIONS key holding this course's /courses/:id page copy.
     pageKey: "yogaSeries",
     offerPrice: "79",
+    // Exact session times for the page's Course/Event structured data
+    // (see courseJsonLd in src/lib/structuredData.ts); keep in sync with
+    // EN/DE `time` below.
+    meetings: ["03", "05", "10", "12", "17", "19", "24", "26"].map(day => ({
+      start: `2026-11-${day}T20:00:00+01:00`,
+      end: `2026-11-${day}T21:00:00+01:00`,
+    })),
     blogSlug: "stress-immunity-and-sleep-how-yoga-restores-your-balance",
     EN: {
       title: "Yoga for Stress, Immunity & Sleep: 8-Session Series",
@@ -2663,11 +2703,15 @@ export const COURSES = [
     sessions: [
       {
         id: "2026-10-24",
+        start: "2026-10-24T12:30:00+02:00",
+        end: "2026-10-24T14:00:00+02:00",
         EN: "Sat 24 Oct · 12:30–2:00 pm European time (4:00–5:30 pm IST)",
         DE: "Sa, 24. Okt. · 12:30–14:00 Uhr europäische Zeit (16:00–17:30 Uhr IST)",
       },
       {
         id: "2026-10-29",
+        start: "2026-10-29T11:30:00+01:00",
+        end: "2026-10-29T13:00:00+01:00",
         EN: "Thu 29 Oct · 11:30 am–1:00 pm European time (4:00–5:30 pm IST)",
         DE: "Do, 29. Okt. · 11:30–13:00 Uhr europäische Zeit (16:00–17:30 Uhr IST)",
       },

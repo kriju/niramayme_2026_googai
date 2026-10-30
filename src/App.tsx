@@ -58,13 +58,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { NavigationMenu } from "@base-ui/react/navigation-menu";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { SERVICES, ASTROLOGY_SERVICE_IDS, ASTROLOGY_PAGE_PATH, TESTIMONIALS, type ClientStory, FAQS, HEALER_CERTIFICATIONS, HEALER_IMAGES, TRANSLATIONS, REVIEW_GROUPS, reviewGroupOf, categoryLabel, ONGOING_SESSIONS, COURSES, EVENTS, ANNOUNCEMENTS, GOOGLE_REVIEW_URL, BUSINESS_STREET_ADDRESS, BUSINESS_POSTAL_CODE, BUSINESS_CITY, GOOGLE_MAPS_URL, GOOGLE_MAPS_EMBED_URL } from "./constants";
+import { SERVICES, ASTROLOGY_SERVICE_IDS, ASTROLOGY_PAGE_PATH, TESTIMONIALS, type ClientStory, FAQS, HEALER_CERTIFICATIONS, HEALER_IMAGES, TRANSLATIONS, REVIEW_GROUPS, reviewGroupOf, categoryLabel, ONGOING_SESSIONS, COURSES, EVENTS, ANNOUNCEMENTS, GOOGLE_REVIEW_URL, BUSINESS_STREET_ADDRESS, BUSINESS_POSTAL_CODE, BUSINESS_CITY, GOOGLE_MAPS_URL, GOOGLE_MAPS_EMBED_URL, HOME_SEO, serviceSeoTitle } from "./constants";
 import { LEGAL_DOCS, LEGAL_LINK_LABELS, type LegalDocType, type LegalLink } from "./legal";
 import { BOOKING_LEGAL_TEXT, EMPTY_LEGAL_STATE, WITHDRAW_TEXT, isLegalComplete, toLegalAcks, type BookingLegalState } from "./legal/booking";
 import { LEGAL_CONFIG, vatPriceNote } from "./legal/config";
 import { getStoredConsent, grantAnalyticsConsent, denyAnalyticsConsent, initAnalyticsFromStoredConsent, trackPageview } from "./lib/analytics";
 import { SITE_URL, BUSINESS_JSONLD_ID, useJsonLd, useSeo, useNoIndex } from "./lib/seo";
-import { businessJsonLd as businessJsonLdFor, richaJsonLd as richaJsonLdFor, websiteJsonLd as websiteJsonLdFor } from "./lib/structuredData";
+import { businessJsonLd as businessJsonLdFor, richaJsonLd as richaJsonLdFor, websiteJsonLd as websiteJsonLdFor, serviceReach, courseJsonLd, courseEventsJsonLd } from "./lib/structuredData";
 import { responsiveImage } from "./lib/images";
 import { loadApprovedReviews, loadPublishedBlogs } from "./lib/publicFeed";
 
@@ -2476,7 +2476,7 @@ const ServicePage = () => {
   const deUrl = `${SITE_URL}/de/services/${id}`;
 
   useSeo({
-    title: content ? `${content.title} — ${TRANSLATIONS[lang].brand.name}, Ostfildern` : TRANSLATIONS[lang].brand.name,
+    title: service && content ? serviceSeoTitle(service, lang) : TRANSLATIONS[lang].brand.name,
     description: content?.description ?? "",
     canonical,
     lang,
@@ -2490,7 +2490,7 @@ const ServicePage = () => {
       "@type": "Service",
       name: content.title,
       description: content.description,
-      areaServed: "Ostfildern, Germany",
+      ...serviceReach(service.delivery, canonical),
       provider: { "@id": BUSINESS_JSONLD_ID },
       url: canonical,
       inLanguage: lang === "EN" ? "en" : "de",
@@ -5020,20 +5020,16 @@ const CoursePage = () => {
     alternates: { en: `${SITE_URL}/courses/${id}`, de: `${SITE_URL}/de/courses/${id}` },
   });
 
-  const courseJsonLd = useMemo(() => {
-    if (!course || !content) return null;
-    return {
-      "@context": "https://schema.org",
-      "@type": "Course",
-      name: content.title,
-      description: ys.seoDescription,
-      url: canonical,
-      inLanguage: lang === "EN" ? "en" : "de",
-      provider: { "@id": BUSINESS_JSONLD_ID },
-      offers: { "@type": "Offer", price: course.offerPrice, priceCurrency: "EUR", category: "Paid" },
-    };
-  }, [course, content, ys.seoDescription, canonical, lang]);
-  useJsonLd("ld-json-course", courseJsonLd);
+  const courseData = useMemo(
+    () => (course ? courseJsonLd(course, lang, canonical, !closed) : null),
+    [course, lang, canonical, closed]
+  );
+  useJsonLd("ld-json-course", courseData);
+  const eventsData = useMemo(
+    () => (course ? courseEventsJsonLd(course, lang, canonical, !closed) : null),
+    [course, lang, canonical, closed]
+  );
+  useJsonLd("ld-json-course-events", eventsData);
 
   if (!course || !content) return <Navigate to={prefix || "/"} replace />;
 
@@ -5141,12 +5137,8 @@ const HomePage = () => {
   const [previewTool, setPreviewTool] = useState<{ title: string; link: string } | null>(null);
 
   useSeo({
-    title: lang === "EN"
-      ? "Niramay Wellbeing — Yoga, Reiki & Holistic Therapy in Ostfildern"
-      : "Niramay Wohlbefinden — Yoga, Reiki & ganzheitliches Wohlbefinden in Ostfildern",
-    description: lang === "EN"
-      ? "Niramay Wellbeing: yoga, Reiki, NLP coaching, hypnotherapy and Vedic astrology guidance with Richa Kansal in Ostfildern, Germany. Book a free 15-minute call."
-      : "Niramay Wohlbefinden: Yoga, Reiki, NLP-Coaching, Hypnotherapie und vedische Astrologie mit Richa Kansal in Ostfildern – für Ihr ganzheitliches Wohlbefinden. Kostenloses 15-Minuten-Gespräch vereinbaren.",
+    title: HOME_SEO[lang].title,
+    description: HOME_SEO[lang].description,
     canonical: lang === "EN" ? `${SITE_URL}/` : `${SITE_URL}/de`,
     lang,
     alternates: { en: `${SITE_URL}/`, de: `${SITE_URL}/de` },
