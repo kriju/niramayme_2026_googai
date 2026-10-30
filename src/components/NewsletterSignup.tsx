@@ -110,7 +110,7 @@ export default function NewsletterSignup({ lang, onOpenPrivacy, variant = "post"
                 </Button>
               </div>
               {error && <p className="mt-2 text-sm text-red-600" role="alert">{t.errors[error]}</p>}
-              <p id="newsletter-consent" className="mt-3 text-xs text-stone-500 leading-relaxed">
+              <p id="newsletter-consent" className="mt-3 text-xs text-stone-600 leading-relaxed">
                 {t.consent}{" "}
                 <button type="button" onClick={onOpenPrivacy} className="underline hover:text-primary bg-transparent border-none p-0 cursor-pointer">
                   {t.privacyLink}

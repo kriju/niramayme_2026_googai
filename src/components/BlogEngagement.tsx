@@ -525,7 +525,7 @@ function CommentsSection({ blogId, lang }: { blogId: string; lang: Lang }) {
       <h2 id="comments-title" className="text-2xl font-serif font-bold mb-6 flex items-center gap-2">
         <MessageSquare className="w-6 h-6 text-primary" />
         {t.commentsTitle}
-        {state === "ready" && <span className="text-stone-400 font-sans text-lg font-normal">({visibleTotal})</span>}
+        {state === "ready" && <span className="text-stone-500 font-sans text-lg font-normal">({visibleTotal})</span>}
       </h2>
 
       {isAdmin && <p className="text-sm text-primary bg-primary/5 rounded-xl px-4 py-2 mb-6">{t.moderationHint}</p>}
@@ -659,7 +659,7 @@ function CommentItem({
             {t.authorBadge}
           </span>
         )}
-        <time className="text-sm text-stone-400" dateTime={new Date(comment.createdAt).toISOString()}>
+        <time className="text-sm text-stone-500" dateTime={new Date(comment.createdAt).toISOString()}>
           {date}
         </time>
         {isAdmin && comment.status !== "visible" && (
@@ -709,7 +709,7 @@ function CommentItem({
           {reported ? (
             <span className="text-xs text-stone-500">{t.reported}</span>
           ) : (
-            <button type="button" className="inline-flex items-center gap-1 text-xs text-stone-400 hover:text-stone-600 disabled:opacity-50" disabled={busy} onClick={report}>
+            <button type="button" className="inline-flex items-center gap-1 text-xs text-stone-500 hover:text-stone-700 disabled:opacity-50" disabled={busy} onClick={report}>
               <Flag className="w-3 h-3" />
               {t.report}
             </button>
@@ -728,7 +728,7 @@ function CommentItem({
 }
 
 const inputClass =
-  "w-full rounded-xl border border-stone-200 bg-white px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:bg-stone-50 disabled:text-stone-400 transition-all";
+  "w-full rounded-xl border border-stone-200 bg-white px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 disabled:bg-stone-50 disabled:text-stone-400 transition-all";
 
 function CommentForm({
   blogId,

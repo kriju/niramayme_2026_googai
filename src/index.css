@@ -87,7 +87,7 @@
     --secondary: #f5f5f4;
     --secondary-foreground: #1c1917;
     --muted: #f5f5f4;
-    --muted-foreground: #78716c;
+    --muted-foreground: #6b645f;
     --accent: #d6d3d1;
     --accent-foreground: #1c1917;
     --destructive: #ef4444;
@@ -137,9 +137,19 @@
   }
   body {
     @apply bg-background text-foreground font-sans antialiased;
+    /* Long words (German compounds, URLs) wrap instead of widening the
+       page past the screen on phones. */
+    overflow-wrap: break-word;
   }
   h1, h2, h3, h4, h5, h6 {
     @apply font-serif;
+  }
+  /* Large headings on small phones: hyphenate long words such as
+     "Ergebnisorientierte" (uses the page's lang attribute). */
+  @media (max-width: 639px) {
+    h1, h2, h3 {
+      hyphens: auto;
+    }
   }
 }
 @import "tw-animate-css";

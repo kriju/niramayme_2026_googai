@@ -118,39 +118,45 @@ export const AuthDialog = ({ lang, open, onOpenChange, initialMode = "login" }: 
           <form onSubmit={handleSubmit} className="grid gap-4 py-2">
             {mode === "signup" && (
               <div className="grid gap-2">
-                <label className="text-sm font-medium">{t.fields.name}</label>
-                <input
-                  required
-                  autoComplete="name"
-                  className={inputClass}
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                />
+                <label className="grid gap-2">
+                  <span className="text-sm font-medium">{t.fields.name}</span>
+                  <input
+                    required
+                    autoComplete="name"
+                    className={inputClass}
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                  />
+                </label>
               </div>
             )}
             <div className="grid gap-2">
-              <label className="text-sm font-medium">{t.fields.email}</label>
-              <input
-                required
-                type="email"
-                autoComplete="email"
-                className={inputClass}
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
+              <label className="grid gap-2">
+                <span className="text-sm font-medium">{t.fields.email}</span>
+                <input
+                  required
+                  type="email"
+                  autoComplete="email"
+                  className={inputClass}
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
+              </label>
             </div>
             {mode !== "reset" && (
               <div className="grid gap-2">
-                <label className="text-sm font-medium">{t.fields.password}</label>
-                <input
-                  required
-                  type="password"
-                  minLength={8}
-                  autoComplete={mode === "signup" ? "new-password" : "current-password"}
-                  className={inputClass}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                />
+                <label className="grid gap-2">
+                  <span className="text-sm font-medium">{t.fields.password}</span>
+                  <input
+                    required
+                    type="password"
+                    minLength={8}
+                    autoComplete={mode === "signup" ? "new-password" : "current-password"}
+                    className={inputClass}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                  />
+                </label>
                 {mode === "signup" && <p className="text-xs text-muted-foreground">{t.passwordHint}</p>}
               </div>
             )}

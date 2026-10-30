@@ -88,43 +88,47 @@ const LoginForm = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-stone-50 px-6">
+    <main className="min-h-screen flex items-center justify-center bg-stone-50 px-6">
       <div className="w-full max-w-sm bg-white rounded-2xl border border-stone-100 shadow-sm p-8">
         <div className="flex items-center gap-2 mb-8 justify-center">
           <img src="/logo.svg" alt="Niramay Wellbeing" className="w-8 h-8" referrerPolicy="no-referrer" />
-          <span className="font-serif text-xl font-bold">{wt.pageTitle}</span>
+          <h1 className="font-serif text-xl font-bold">{wt.pageTitle}</h1>
         </div>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <label className="text-sm font-medium text-stone-600">{wt.usernameLabel}</label>
-            <input
-              required
-              autoFocus
-              autoComplete="username"
-              className="w-full px-4 py-3 rounded-xl border border-stone-200 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
-              value={username}
-              onChange={e => setUsername(e.target.value)}
-            />
+            <label className="grid gap-2">
+              <span className="text-sm font-medium text-stone-600">{wt.usernameLabel}</span>
+              <input
+                required
+                autoFocus
+                autoComplete="username"
+                className="w-full px-4 py-3 rounded-xl border border-stone-200 focus:outline-none focus:ring-2 focus:ring-primary/40 transition-all"
+                value={username}
+                onChange={e => setUsername(e.target.value)}
+              />
+            </label>
           </div>
           <div className="space-y-2">
-            <label className="text-sm font-medium text-stone-600">{wt.passwordLabel}</label>
-            <input
-              required
-              type="password"
-              autoComplete="current-password"
-              className="w-full px-4 py-3 rounded-xl border border-stone-200 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-            />
+            <label className="grid gap-2">
+              <span className="text-sm font-medium text-stone-600">{wt.passwordLabel}</span>
+              <input
+                required
+                type="password"
+                autoComplete="current-password"
+                className="w-full px-4 py-3 rounded-xl border border-stone-200 focus:outline-none focus:ring-2 focus:ring-primary/40 transition-all"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+              />
+            </label>
           </div>
-          {error && <p className="text-sm text-red-600">{error}</p>}
+          {error && <p role="alert" className="text-sm text-red-600">{error}</p>}
           <Button type="submit" className="w-full rounded-full gap-2" disabled={submitting}>
             <Lock className="w-4 h-4" />
             {submitting ? wt.signingIn : wt.signIn}
           </Button>
         </form>
       </div>
-    </div>
+    </main>
   );
 };
 
@@ -907,45 +911,53 @@ const WriteDashboard = ({ user }: { user: User }) => {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <label className="text-sm font-medium text-stone-600">{et.titleLabel}</label>
-            <input
-              className="w-full px-4 py-3 rounded-xl border border-stone-200 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all font-serif italic text-lg"
-              value={form.title}
-              onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
-            />
+            <label className="grid gap-2">
+              <span className="text-sm font-medium text-stone-600">{et.titleLabel}</span>
+              <input
+                className="w-full px-4 py-3 rounded-xl border border-stone-200 focus:outline-none focus:ring-2 focus:ring-primary/40 transition-all font-serif italic text-lg"
+                value={form.title}
+                onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
+              />
+            </label>
           </div>
 
           <div className="grid sm:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium text-stone-600">{et.categoryLabel}</label>
-              <select
-                className="w-full px-4 py-3 rounded-xl border border-stone-200 bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
-                value={form.category}
-                // Health categories switch the disclaimer on; it can still be
-                // unticked, which the checks then flag.
-                onChange={e => { const category = e.target.value; setForm(f => ({ ...f, category, disclaimer: f.disclaimer || needsDisclaimer(category) })); }}
-              >
-                {BLOG_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
-              </select>
+              <label className="grid gap-2">
+                <span className="text-sm font-medium text-stone-600">{et.categoryLabel}</span>
+                <select
+                  className="w-full px-4 py-3 rounded-xl border border-stone-200 bg-white focus:outline-none focus:ring-2 focus:ring-primary/40 transition-all"
+                  value={form.category}
+                  // Health categories switch the disclaimer on; it can still be
+                  // unticked, which the checks then flag.
+                  onChange={e => { const category = e.target.value; setForm(f => ({ ...f, category, disclaimer: f.disclaimer || needsDisclaimer(category) })); }}
+                >
+                  {BLOG_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                </select>
+              </label>
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium text-stone-600">Language</label>
-              <select
-                className="w-full px-4 py-3 rounded-xl border border-stone-200 bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
-                value={form.lang}
-                onChange={e => setForm(f => ({ ...f, lang: e.target.value as "EN" | "DE" }))}
-              >
-                <option value="EN">English</option>
-                <option value="DE">Deutsch</option>
-              </select>
+              <label className="grid gap-2">
+                <span className="text-sm font-medium text-stone-600">Language</span>
+                <select
+                  className="w-full px-4 py-3 rounded-xl border border-stone-200 bg-white focus:outline-none focus:ring-2 focus:ring-primary/40 transition-all"
+                  value={form.lang}
+                  onChange={e => setForm(f => ({ ...f, lang: e.target.value as "EN" | "DE" }))}
+                >
+                  <option value="EN">English</option>
+                  <option value="DE">Deutsch</option>
+                </select>
+              </label>
             </div>
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium text-stone-600">{et.translationOfLabel}</label>
-            <p className="text-xs text-muted-foreground">{et.translationOfHint}</p>
+            <label htmlFor="post-translation-of" className="text-sm font-medium text-stone-600">{et.translationOfLabel}</label>
+            <p id="post-translation-of-hint" className="text-xs text-muted-foreground">{et.translationOfHint}</p>
             <select
-              className="w-full px-4 py-3 rounded-xl border border-stone-200 bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
+              id="post-translation-of"
+              aria-describedby="post-translation-of-hint"
+              className="w-full px-4 py-3 rounded-xl border border-stone-200 bg-white focus:outline-none focus:ring-2 focus:ring-primary/40 transition-all"
               value={translationCandidates.some(p => p.id === form.translationOf) ? form.translationOf : ""}
               onChange={e => setForm(f => ({ ...f, translationOf: e.target.value }))}
             >
@@ -959,17 +971,19 @@ const WriteDashboard = ({ user }: { user: User }) => {
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium text-stone-600">{et.excerptLabel}</label>
-            <textarea
-              className="w-full px-4 py-3 rounded-xl border border-stone-200 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all h-20 resize-none"
-              value={form.excerpt}
-              onChange={e => setForm(f => ({ ...f, excerpt: e.target.value }))}
-            />
+            <label className="grid gap-2">
+              <span className="text-sm font-medium text-stone-600">{et.excerptLabel}</span>
+              <textarea
+                className="w-full px-4 py-3 rounded-xl border border-stone-200 focus:outline-none focus:ring-2 focus:ring-primary/40 transition-all h-20 resize-none"
+                value={form.excerpt}
+                onChange={e => setForm(f => ({ ...f, excerpt: e.target.value }))}
+              />
+            </label>
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium text-stone-600">{et.contentLabel}</label>
-            <p className="text-xs text-muted-foreground">{et.contentHint}</p>
+            <label htmlFor="post-content" className="text-sm font-medium text-stone-600">{et.contentLabel}</label>
+            <p id="post-content-hint" className="text-xs text-muted-foreground">{et.contentHint}</p>
             <details open className="rounded-xl border border-stone-200 bg-stone-50 px-4 py-2 text-xs text-stone-600">
               <summary className="cursor-pointer font-medium text-stone-700">{et.formattingGuideTitle}</summary>
               <table className="mt-2 mb-1 w-full">
@@ -984,7 +998,9 @@ const WriteDashboard = ({ user }: { user: User }) => {
               </table>
             </details>
             <textarea
-              className="w-full px-4 py-3 rounded-xl border border-stone-200 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all h-64"
+              id="post-content"
+              aria-describedby="post-content-hint"
+              className="w-full px-4 py-3 rounded-xl border border-stone-200 focus:outline-none focus:ring-2 focus:ring-primary/40 transition-all h-64"
               value={form.content}
               onChange={e => setForm(f => ({ ...f, content: e.target.value }))}
             />
@@ -1005,26 +1021,27 @@ const WriteDashboard = ({ user }: { user: User }) => {
 
           <div className="grid sm:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium text-stone-600">{et.imageLabel}</label>
+              <p className="text-sm font-medium text-stone-600">{et.imageLabel}</p>
               {form.image ? (
                 <div className="relative w-fit">
-                  <img src={form.image} className="h-28 rounded-lg object-cover" referrerPolicy="no-referrer" />
+                  <img src={form.image} alt="" className="h-28 rounded-lg object-cover" referrerPolicy="no-referrer" />
                   <button
                     type="button"
                     className="absolute -top-2 -right-2 bg-white rounded-full p-1.5 border border-stone-200 shadow-sm hover:text-red-600"
                     onClick={() => setForm(f => ({ ...f, image: "", imageCredit: "" }))}
+                    aria-label="Remove image"
                   >
-                    <Trash2 className="w-3.5 h-3.5" />
+                    <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
                   </button>
                 </div>
               ) : (
-                <label className="flex items-center gap-2 px-4 py-3 rounded-xl border border-dashed border-stone-300 text-sm text-muted-foreground cursor-pointer hover:border-primary/40 hover:text-primary transition-colors w-fit">
+                <label className="flex items-center gap-2 px-4 py-3 rounded-xl border border-dashed border-stone-300 text-sm text-muted-foreground cursor-pointer hover:border-primary/40 hover:text-primary focus-within:ring-2 focus-within:ring-primary/30 transition-colors w-fit">
                   <Upload className="w-4 h-4" />
                   {uploadingImage ? et.uploading : et.uploadImage}
                   <input
                     type="file"
                     accept="image/*"
-                    className="hidden"
+                    className="sr-only"
                     disabled={uploadingImage}
                     onChange={e => { const file = e.target.files?.[0]; if (file) handleUpload(file, "image"); e.target.value = ""; }}
                   />
@@ -1032,15 +1049,16 @@ const WriteDashboard = ({ user }: { user: User }) => {
               )}
               {form.image && (
                 <input
-                  className="w-full px-3 py-2 rounded-lg border border-stone-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                  className="w-full px-3 py-2 rounded-lg border border-stone-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
                   placeholder={'Image source / licence, e.g. "Own photo" or "Unsplash, Jane Doe"'}
+                  aria-label="Image source / licence"
                   value={form.imageCredit}
                   onChange={e => setForm(f => ({ ...f, imageCredit: e.target.value }))}
                 />
               )}
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium text-stone-600">{et.audioLabel}</label>
+              <p className="text-sm font-medium text-stone-600">{et.audioLabel}</p>
               {form.audioUrl ? (
                 <div className="flex items-center gap-2">
                   <audio controls src={form.audioUrl} className="h-10 max-w-[220px]" />
@@ -1048,18 +1066,19 @@ const WriteDashboard = ({ user }: { user: User }) => {
                     type="button"
                     className="p-1.5 rounded-full border border-stone-200 hover:text-red-600"
                     onClick={() => setForm(f => ({ ...f, audioUrl: "" }))}
+                    aria-label="Remove audio"
                   >
-                    <Trash2 className="w-3.5 h-3.5" />
+                    <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
                   </button>
                 </div>
               ) : (
-                <label className="flex items-center gap-2 px-4 py-3 rounded-xl border border-dashed border-stone-300 text-sm text-muted-foreground cursor-pointer hover:border-primary/40 hover:text-primary transition-colors w-fit">
+                <label className="flex items-center gap-2 px-4 py-3 rounded-xl border border-dashed border-stone-300 text-sm text-muted-foreground cursor-pointer hover:border-primary/40 hover:text-primary focus-within:ring-2 focus-within:ring-primary/30 transition-colors w-fit">
                   <Upload className="w-4 h-4" />
                   {uploadingAudio ? et.uploading : et.uploadAudio}
                   <input
                     type="file"
                     accept={AUDIO_ACCEPT}
-                    className="hidden"
+                    className="sr-only"
                     disabled={uploadingAudio}
                     onChange={e => { const file = e.target.files?.[0]; if (file) handleUpload(file, "audio"); e.target.value = ""; }}
                   />
@@ -1258,13 +1277,15 @@ const ReviewPanel = ({
         </div>
 
         <div className="space-y-2">
-          <label className="text-sm font-medium text-stone-700">Note for {authorName} (needed to request changes)</label>
-          <textarea
-            className="w-full px-4 py-3 rounded-xl border border-stone-200 focus:outline-none focus:ring-2 focus:ring-primary/20 h-24 resize-none"
-            maxLength={2000}
-            value={note}
-            onChange={e => setNote(e.target.value)}
-          />
+          <label className="grid gap-2">
+            <span className="text-sm font-medium text-stone-700">Note for {authorName} (needed to request changes)</span>
+            <textarea
+              className="w-full px-4 py-3 rounded-xl border border-stone-200 focus:outline-none focus:ring-2 focus:ring-primary/40 h-24 resize-none"
+              maxLength={2000}
+              value={note}
+              onChange={e => setNote(e.target.value)}
+            />
+          </label>
         </div>
 
         {error && <p className="text-sm text-red-600">{error}</p>}

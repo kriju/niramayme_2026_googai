@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback, lazy, Suspense } from "react";
 import { BrowserRouter, Routes, Route, Link, Navigate, Outlet, useParams, useOutletContext, useLocation, useNavigate, matchRoutes } from "react-router-dom";
 import { SpeedInsights } from "@vercel/speed-insights/react";
-import { motion, AnimatePresence } from "motion/react";
+import { motion, AnimatePresence, MotionConfig } from "motion/react";
 import {
   Menu,
   X,
@@ -193,7 +193,7 @@ const ConsentEmbed = ({ kind, lang, children, className = "" }: { kind: "calenda
   if (loaded) return <>{children}</>;
   return (
     <div className={`flex flex-col items-center justify-center gap-3 text-center p-6 bg-stone-50 ${className}`}>
-      {kind === "calendar" ? <Calendar className="w-8 h-8 text-primary/60" /> : <MapPin className="w-6 h-6 text-primary/60" />}
+      {kind === "calendar" ? <Calendar className="w-8 h-8 text-muted-foreground" /> : <MapPin className="w-6 h-6 text-muted-foreground" />}
       <p className="text-sm text-muted-foreground max-w-sm">{t.notice}</p>
       <Button size="sm" className="rounded-full" onClick={() => { loadedEmbeds.add(kind); setLoaded(true); }}>{t.load}</Button>
     </div>
@@ -298,7 +298,7 @@ const BookingLegalBlock = ({ lang, binding, price, value, onChange, onOpenLegal 
   const linkClass = "underline underline-offset-2 hover:text-primary";
   return (
     <div className="grid gap-3 rounded-xl border border-stone-200 bg-stone-50/60 p-4" data-testid="booking-legal">
-      <p className="text-xs font-bold uppercase tracking-wider text-primary/60">{t.heading}</p>
+      <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{t.heading}</p>
       <div className="text-sm">
         <span className="text-muted-foreground">{t.priceLabel}: </span>
         <span className="font-semibold">{price}</span>
@@ -327,21 +327,29 @@ type BirthDetails = { name: string; placeOfBirth: string; dateOfBirth: string; t
 const BirthDetailsFields = ({ t, nameLabel, values, onChange }: { t: typeof TRANSLATIONS["EN"]["astrologyIntake"], nameLabel: string, values: BirthDetails, onChange: (v: Partial<BirthDetails>) => void }) => (
   <>
     <div className="grid gap-2">
-      <label className="text-sm font-medium">{nameLabel}</label>
-      <input required className={INPUT_CLASS} value={values.name} onChange={e => onChange({ name: e.target.value })} />
+      <label className="grid gap-2">
+        <span className="text-sm font-medium">{nameLabel}</span>
+        <input required className={INPUT_CLASS} value={values.name} onChange={e => onChange({ name: e.target.value })} />
+      </label>
     </div>
     <div className="grid gap-2">
-      <label className="text-sm font-medium">{t.fields.placeOfBirth}</label>
-      <input required placeholder={t.fields.placeOfBirthPlaceholder} className={INPUT_CLASS} value={values.placeOfBirth} onChange={e => onChange({ placeOfBirth: e.target.value })} />
+      <label className="grid gap-2">
+        <span className="text-sm font-medium">{t.fields.placeOfBirth}</span>
+        <input required placeholder={t.fields.placeOfBirthPlaceholder} className={INPUT_CLASS} value={values.placeOfBirth} onChange={e => onChange({ placeOfBirth: e.target.value })} />
+      </label>
     </div>
     <div className="grid grid-cols-2 gap-4">
       <div className="grid gap-2">
-        <label className="text-sm font-medium">{t.fields.dateOfBirth}</label>
-        <input required type="date" className={INPUT_CLASS} value={values.dateOfBirth} onChange={e => onChange({ dateOfBirth: e.target.value })} />
+        <label className="grid gap-2">
+          <span className="text-sm font-medium">{t.fields.dateOfBirth}</span>
+          <input required type="date" className={INPUT_CLASS} value={values.dateOfBirth} onChange={e => onChange({ dateOfBirth: e.target.value })} />
+        </label>
       </div>
       <div className="grid gap-2">
-        <label className="text-sm font-medium">{t.fields.timeOfBirth}</label>
-        <input required type="time" className={INPUT_CLASS} value={values.timeOfBirth} onChange={e => onChange({ timeOfBirth: e.target.value })} />
+        <label className="grid gap-2">
+          <span className="text-sm font-medium">{t.fields.timeOfBirth}</span>
+          <input required type="time" className={INPUT_CLASS} value={values.timeOfBirth} onChange={e => onChange({ timeOfBirth: e.target.value })} />
+        </label>
       </div>
     </div>
     <p className="text-xs text-muted-foreground -mt-2">{t.fields.timeOfBirthHint}</p>
@@ -551,20 +559,24 @@ const AstrologyIntakeModal = ({ lang, open, onOpenChange, onOpenPrivacy, onOpenL
               {isTarot ? (
                 <>
                   <div className="grid gap-2">
-                    <label className="text-sm font-medium">{t.fields.name}</label>
-                    <input required className={INPUT_CLASS} value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} />
+                    <label className="grid gap-2">
+                      <span className="text-sm font-medium">{t.fields.name}</span>
+                      <input required className={INPUT_CLASS} value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} />
+                    </label>
                   </div>
                   <div className="grid gap-2">
-                    <label className="text-sm font-medium">{tt.fields.question}</label>
-                    <textarea
-                      required
-                      rows={4}
-                      maxLength={1000}
-                      placeholder={tt.fields.questionPlaceholder}
-                      className={`${INPUT_CLASS} h-auto min-h-[80px]`}
-                      value={form.question}
-                      onChange={e => setForm({ ...form, question: e.target.value })}
-                    />
+                    <label className="grid gap-2">
+                      <span className="text-sm font-medium">{tt.fields.question}</span>
+                      <textarea
+                        required
+                        rows={4}
+                        maxLength={1000}
+                        placeholder={tt.fields.questionPlaceholder}
+                        className={`${INPUT_CLASS} h-auto min-h-[80px]`}
+                        value={form.question}
+                        onChange={e => setForm({ ...form, question: e.target.value })}
+                      />
+                    </label>
                     <p className="text-xs text-muted-foreground">{tt.fields.questionHint}</p>
                   </div>
                 </>
@@ -594,13 +606,15 @@ const AstrologyIntakeModal = ({ lang, open, onOpenChange, onOpenPrivacy, onOpenL
                 </>
               )}
               <div className="grid gap-2">
-                <label className="text-sm font-medium">{t.fields.contact}</label>
-                <input
-                  required
-                  className={INPUT_CLASS}
-                  value={form.contact}
-                  onChange={e => setForm({ ...form, contact: e.target.value })}
-                />
+                <label className="grid gap-2">
+                  <span className="text-sm font-medium">{t.fields.contact}</span>
+                  <input
+                    required
+                    className={INPUT_CLASS}
+                    value={form.contact}
+                    onChange={e => setForm({ ...form, contact: e.target.value })}
+                  />
+                </label>
                 <p className="text-xs text-muted-foreground">{t.fields.contactHint}</p>
               </div>
               <label className="flex items-start gap-2 text-sm">
@@ -637,7 +651,7 @@ const AstrologyIntakeModal = ({ lang, open, onOpenChange, onOpenPrivacy, onOpenL
             </DialogHeader>
             <div className="space-y-5 py-2">
               <div>
-                <p className="text-xs font-bold uppercase tracking-wider text-primary/50 mb-1">{t.priceLabel}</p>
+                <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1">{t.priceLabel}</p>
                 {isGuidance && <p className="text-sm text-muted-foreground">{tg.packages[pkg].title}</p>}
                 <p className="text-lg font-semibold">{priceValue}</p>
               </div>
@@ -845,28 +859,36 @@ const ReikiIntakeModal = ({ lang, pkg, onClose, onOpenPrivacy, onOpenLegal }: { 
             <form onSubmit={handleSubmitDetails} className="grid gap-4 py-2">
               {summary}
               <div className="grid gap-2">
-                <label className="text-sm font-medium">{t.fields.name}</label>
-                <input required maxLength={100} className={inputClass} value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} />
+                <label className="grid gap-2">
+                  <span className="text-sm font-medium">{t.fields.name}</span>
+                  <input required maxLength={100} className={inputClass} value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} />
+                </label>
               </div>
               <div className="grid gap-2">
-                <label className="text-sm font-medium">{t.fields.email}</label>
-                <input required type="email" maxLength={200} className={inputClass} value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} />
+                <label className="grid gap-2">
+                  <span className="text-sm font-medium">{t.fields.email}</span>
+                  <input required type="email" maxLength={200} className={inputClass} value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} />
+                </label>
               </div>
               <div className="grid gap-2">
-                <label className="text-sm font-medium">{t.fields.whatsapp}</label>
-                <input required type="tel" maxLength={40} placeholder={t.fields.whatsappPlaceholder} className={inputClass} value={form.whatsapp} onChange={e => setForm({ ...form, whatsapp: e.target.value })} />
+                <label className="grid gap-2">
+                  <span className="text-sm font-medium">{t.fields.whatsapp}</span>
+                  <input required type="tel" maxLength={40} placeholder={t.fields.whatsappPlaceholder} className={inputClass} value={form.whatsapp} onChange={e => setForm({ ...form, whatsapp: e.target.value })} />
+                </label>
               </div>
               <div className="grid gap-2">
-                <label className="text-sm font-medium">{t.fields.reason}</label>
-                <textarea
-                  required
-                  maxLength={2000}
-                  rows={3}
-                  placeholder={t.fields.reasonPlaceholder}
-                  className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                  value={form.reason}
-                  onChange={e => setForm({ ...form, reason: e.target.value })}
-                />
+                <label className="grid gap-2">
+                  <span className="text-sm font-medium">{t.fields.reason}</span>
+                  <textarea
+                    required
+                    maxLength={2000}
+                    rows={3}
+                    placeholder={t.fields.reasonPlaceholder}
+                    className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                    value={form.reason}
+                    onChange={e => setForm({ ...form, reason: e.target.value })}
+                  />
+                </label>
               </div>
               <label className="flex items-start gap-2 text-sm">
                 <input type="checkbox" required className="mt-1 h-4 w-4 shrink-0" checked={form.consent} onChange={e => setForm({ ...form, consent: e.target.checked })} />
@@ -1218,27 +1240,35 @@ const CourseIntakeModal = ({ lang, courseId, onClose, onOpenPrivacy, onOpenLegal
                 </fieldset>
               )}
               <div className="grid gap-2">
-                <label className="text-sm font-medium">{content.nameLabel ?? t.fields.name}</label>
-                <input required maxLength={100} className={inputClass} value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} />
+                <label className="grid gap-2">
+                  <span className="text-sm font-medium">{content.nameLabel ?? t.fields.name}</span>
+                  <input required maxLength={100} className={inputClass} value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} />
+                </label>
               </div>
               <div className="grid gap-2">
-                <label className="text-sm font-medium">{t.fields.email}</label>
-                <input required type="email" maxLength={200} className={inputClass} value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} />
+                <label className="grid gap-2">
+                  <span className="text-sm font-medium">{t.fields.email}</span>
+                  <input required type="email" maxLength={200} className={inputClass} value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} />
+                </label>
               </div>
               <div className="grid gap-2">
-                <label className="text-sm font-medium">{t.fields.whatsapp}</label>
-                <input required type="tel" maxLength={40} placeholder={t.fields.whatsappPlaceholder} className={inputClass} value={form.whatsapp} onChange={e => setForm({ ...form, whatsapp: e.target.value })} />
+                <label className="grid gap-2">
+                  <span className="text-sm font-medium">{t.fields.whatsapp}</span>
+                  <input required type="tel" maxLength={40} placeholder={t.fields.whatsappPlaceholder} className={inputClass} value={form.whatsapp} onChange={e => setForm({ ...form, whatsapp: e.target.value })} />
+                </label>
               </div>
               <div className="grid gap-2">
-                <label className="text-sm font-medium">{t.fields.notes}</label>
-                <textarea
-                  maxLength={2000}
-                  rows={3}
-                  placeholder={content.notesPlaceholder ?? t.fields.notesPlaceholder}
-                  className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                  value={form.notes}
-                  onChange={e => setForm({ ...form, notes: e.target.value })}
-                />
+                <label className="grid gap-2">
+                  <span className="text-sm font-medium">{t.fields.notes}</span>
+                  <textarea
+                    maxLength={2000}
+                    rows={3}
+                    placeholder={content.notesPlaceholder ?? t.fields.notesPlaceholder}
+                    className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                    value={form.notes}
+                    onChange={e => setForm({ ...form, notes: e.target.value })}
+                  />
+                </label>
               </div>
               <label className="flex items-start gap-2 text-sm">
                 <input type="checkbox" required className="mt-1 h-4 w-4 shrink-0" checked={form.consent} onChange={e => setForm({ ...form, consent: e.target.checked })} />
@@ -1396,58 +1426,75 @@ const LeaveReviewModal = ({ lang }: { lang: "EN" | "DE" }) => {
         </DialogHeader>
         <form onSubmit={handleSubmit} className="grid gap-4 py-4">
           <div className="grid gap-2">
-            <label className="text-sm font-medium">{t.form.name}</label>
-            <input 
-              required
-              pattern="^(?!.*\S@\S+\.\S).*$"
-              title={t.form.nameNoEmail}
-              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-              value={formData.name}
-              onChange={e => setFormData({ ...formData, name: e.target.value })}
-            />
+            <label className="grid gap-2">
+              <span className="text-sm font-medium">{t.form.name}</span>
+              <input 
+                required
+                pattern="^(?!.*\S@\S+\.\S).*$"
+                title={t.form.nameNoEmail}
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                value={formData.name}
+                onChange={e => setFormData({ ...formData, name: e.target.value })}
+              />
+            </label>
           </div>
-          <div className="grid gap-2">
-            <label className="text-sm font-medium">{t.form.rating}</label>
+          {/* Real radio buttons under the stars, so the rating can be chosen
+              with the keyboard and is announced by screen readers. */}
+          <fieldset className="grid gap-2">
+            <legend className="text-sm font-medium mb-2">{t.form.rating}</legend>
             <div className="flex gap-1">
               {[1,2,3,4,5].map(i => (
-                <Star 
-                  key={i} 
-                  className={`w-6 h-6 cursor-pointer ${i <= formData.rating ? 'text-yellow-500 fill-yellow-500' : 'text-stone-300'}`}
-                  onClick={() => setFormData({ ...formData, rating: i })}
-                />
+                <label key={i} className="cursor-pointer rounded-md p-0.5 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring">
+                  <input
+                    type="radio"
+                    name="review-rating"
+                    value={i}
+                    className="sr-only"
+                    checked={formData.rating === i}
+                    onChange={() => setFormData({ ...formData, rating: i })}
+                  />
+                  <span className="sr-only">{i}/5</span>
+                  <Star aria-hidden="true" className={`w-7 h-7 ${i <= formData.rating ? 'text-yellow-500 fill-yellow-500' : 'text-stone-400'}`} />
+                </label>
               ))}
             </div>
+          </fieldset>
+          <div className="grid gap-2">
+            <label className="grid gap-2">
+              <span className="text-sm font-medium">{t.form.category}</span>
+              <select 
+                required
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                value={formData.category}
+                onChange={e => setFormData({ ...formData, category: e.target.value })}
+              >
+                <option value="" disabled>{t.chooseCategory}</option>
+                {REVIEW_GROUPS.map(g => <option key={g.key} value={g.categories[0]}>{g[lang]}</option>)}
+              </select>
+            </label>
           </div>
           <div className="grid gap-2">
-            <label className="text-sm font-medium">{t.form.category}</label>
-            <select 
-              required
-              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-              value={formData.category}
-              onChange={e => setFormData({ ...formData, category: e.target.value })}
-            >
-              <option value="" disabled>{t.chooseCategory}</option>
-              {REVIEW_GROUPS.map(g => <option key={g.key} value={g.categories[0]}>{g[lang]}</option>)}
-            </select>
+            <label className="grid gap-2">
+              <span className="text-sm font-medium">{t.form.role}</span>
+              <input 
+                placeholder="e.g. Burnout Recovery"
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                value={formData.role}
+                onChange={e => setFormData({ ...formData, role: e.target.value })}
+              />
+            </label>
           </div>
           <div className="grid gap-2">
-            <label className="text-sm font-medium">{t.form.role}</label>
-            <input 
-              placeholder="e.g. Burnout Recovery"
-              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-              value={formData.role}
-              onChange={e => setFormData({ ...formData, role: e.target.value })}
-            />
-          </div>
-          <div className="grid gap-2">
-            <label className="text-sm font-medium">{t.form.content}</label>
-            <textarea 
-              required
-              rows={4}
-              className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-              value={formData.content}
-              onChange={e => setFormData({ ...formData, content: e.target.value })}
-            />
+            <label className="grid gap-2">
+              <span className="text-sm font-medium">{t.form.content}</span>
+              <textarea 
+                required
+                rows={4}
+                className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                value={formData.content}
+                onChange={e => setFormData({ ...formData, content: e.target.value })}
+              />
+            </label>
           </div>
           <div className="flex justify-end gap-3 mt-4">
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>{t.form.cancel}</Button>
@@ -1603,7 +1650,7 @@ const BlogSection = ({ lang }: { lang: "EN" | "DE" }) => {
         </div>
 
         {filtered.length === 0 ? (
-          <p className="text-center text-stone-400 py-12">
+          <p className="text-center text-stone-500 py-12">
             {blogs.length === 0 ? t.emptyState : t.emptyStateFiltered}
           </p>
         ) : (
@@ -1633,7 +1680,7 @@ const BlogSection = ({ lang }: { lang: "EN" | "DE" }) => {
             ) : filtered.length > 3 && (
               <Button 
                 variant="ghost" 
-                className="text-stone-400"
+                className="text-stone-500"
                 onClick={() => setVisibleCount(3)}
               >
                 {t.showLess}
@@ -1668,7 +1715,7 @@ const NavFlatLink = ({ to, children }: { to: string, children: React.ReactNode }
     <NavigationMenu.Link
       render={<Link to={to} />}
       closeOnClick
-      className="flex h-full items-center text-sm font-medium hover:text-primary transition-colors outline-none"
+      className="flex h-full items-center text-sm font-medium hover:text-primary transition-colors outline-none rounded-sm focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-4"
     >
       {children}
     </NavigationMenu.Link>
@@ -1790,7 +1837,7 @@ const BrandLockup = ({ lang, size = "md" }: { lang: "EN" | "DE", size?: "md" | "
       />
       <span className="flex flex-col leading-none">
         <span className={`font-serif font-bold tracking-tight text-[#0B3A6B] ${size === "lg" ? "text-3xl" : "text-xl min-[380px]:text-2xl"}`}>{b.wordmark}</span>
-        <span className={`mt-1 font-semibold uppercase text-[#2F9A0A] ${size === "lg" ? "text-xs tracking-[0.32em]" : "text-[0.6rem] min-[380px]:text-[0.65rem] tracking-[0.24em]"}`}>{b.descriptor}</span>
+        <span className={`mt-1 font-semibold uppercase text-[#247A08] ${size === "lg" ? "text-xs tracking-[0.32em]" : "text-[0.6rem] min-[380px]:text-[0.65rem] tracking-[0.24em]"}`}>{b.descriptor}</span>
       </span>
     </span>
   );
@@ -1837,7 +1884,7 @@ const Navbar = ({ lang, altPath, onBook, belowAnnouncement = false }: { lang: "E
           <NavigationMenu.Root render={<div />} className="min-w-0">
             <NavigationMenu.List className="flex items-center gap-6">
               <NavigationMenu.Item>
-                <NavigationMenu.Trigger className="flex items-center gap-1 text-sm font-medium hover:text-primary transition-colors outline-none data-popup-open:text-primary">
+                <NavigationMenu.Trigger className="flex items-center gap-1 text-sm font-medium hover:text-primary transition-colors outline-none rounded-sm focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-4 data-popup-open:text-primary">
                   {t.aboutGroup}
                   <NavigationMenu.Icon className="transition-transform duration-200 data-popup-open:rotate-180">
                     <ChevronDown className="w-3.5 h-3.5" />
@@ -1851,7 +1898,7 @@ const Navbar = ({ lang, altPath, onBook, belowAnnouncement = false }: { lang: "E
               </NavigationMenu.Item>
 
               <NavigationMenu.Item>
-                <NavigationMenu.Trigger className="flex items-center gap-1 text-sm font-medium hover:text-primary transition-colors outline-none data-popup-open:text-primary">
+                <NavigationMenu.Trigger className="flex items-center gap-1 text-sm font-medium hover:text-primary transition-colors outline-none rounded-sm focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-4 data-popup-open:text-primary">
                   {t.offerings}
                   <NavigationMenu.Icon className="transition-transform duration-200 data-popup-open:rotate-180">
                     <ChevronDown className="w-3.5 h-3.5" />
@@ -1866,7 +1913,7 @@ const Navbar = ({ lang, altPath, onBook, belowAnnouncement = false }: { lang: "E
               </NavigationMenu.Item>
 
               <NavigationMenu.Item>
-                <NavigationMenu.Trigger className="flex items-center gap-1 text-sm font-medium hover:text-primary transition-colors outline-none data-popup-open:text-primary">
+                <NavigationMenu.Trigger className="flex items-center gap-1 text-sm font-medium hover:text-primary transition-colors outline-none rounded-sm focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-4 data-popup-open:text-primary">
                   {t.read}
                   <NavigationMenu.Icon className="transition-transform duration-200 data-popup-open:rotate-180">
                     <ChevronDown className="w-3.5 h-3.5" />
@@ -2070,9 +2117,11 @@ const reviewSourceLine = (r: DisplayReview, lang: "EN" | "DE") => {
   return [r.source && `${t.via} ${r.source}`, date].filter(Boolean).join(" · ");
 };
 
+// role="img" so the rating has an accessible name — aria-label isn't
+// allowed on a plain <div>, and the star icons alone say nothing.
 const ReviewStars = ({ rating, className }: { rating: number, className: string }) => (
-  <div className="flex gap-0.5" aria-label={`${rating}/5`}>
-    {[1,2,3,4,5].map(i => <Star key={i} className={`w-4 h-4 ${i <= rating ? className : "opacity-25"}`} />)}
+  <div className="flex gap-0.5" role="img" aria-label={`${rating}/5`}>
+    {[1,2,3,4,5].map(i => <Star key={i} aria-hidden="true" className={`w-4 h-4 ${i <= rating ? className : "opacity-25"}`} />)}
   </div>
 );
 
@@ -2225,7 +2274,7 @@ const Hero = ({ lang, onBook }: { lang: "EN" | "DE", onBook: (ctx?: BookingConte
         {/* Left: promise + actions */}
         <div className="min-w-0">
           <motion.div {...reveal(0)}>
-            <Badge variant="secondary" className="mb-5 px-4 py-1 rounded-full bg-white/70 backdrop-blur text-primary font-medium ring-1 ring-stone-200/70">
+            <Badge variant="secondary" className="mb-5 px-4 py-1 h-auto max-w-full whitespace-normal text-left rounded-full bg-white/70 backdrop-blur text-primary font-medium ring-1 ring-stone-200/70">
               <MapPin className="w-3.5 h-3.5 mr-1.5" />{t.badge}
             </Badge>
           </motion.div>
@@ -2250,13 +2299,11 @@ const Hero = ({ lang, onBook }: { lang: "EN" | "DE", onBook: (ctx?: BookingConte
             </span>
           </motion.a>
           <motion.div {...reveal(0.24)} className="flex flex-wrap gap-3">
-            <Button size="lg" className="rounded-full px-6 md:px-8 gap-2 h-12 md:h-14 text-base md:text-lg shadow-lg shadow-stone-900/10" onClick={() => onBook({ title: t.ctaPrimary })}>
+            <Button size="lg" className="rounded-full px-6 md:px-8 gap-2 h-auto min-h-12 md:min-h-14 py-2 max-w-full whitespace-normal text-base md:text-lg shadow-lg shadow-stone-900/10" onClick={() => onBook({ title: t.ctaPrimary })}>
               {t.ctaPrimary} <ArrowRight className="w-5 h-5" />
             </Button>
-            <a href="#services">
-              <Button size="lg" variant="outline" className="rounded-full px-6 md:px-8 h-12 md:h-14 text-base md:text-lg bg-white/60 backdrop-blur">
-                {t.ctaSecondary}
-              </Button>
+            <a href="#services" className={buttonVariants({ size: "lg", variant: "outline", className: "rounded-full px-6 md:px-8 h-auto min-h-12 md:min-h-14 py-2 max-w-full whitespace-normal text-base md:text-lg bg-white/60 backdrop-blur" })}>
+              {t.ctaSecondary}
             </a>
           </motion.div>
           {upcoming.length > 0 && (
@@ -2394,17 +2441,17 @@ const ServiceCard = ({ service, index, lang, onLearnMore }: { service: any, inde
             <service.icon className="w-6 h-6 text-primary" />
           </div>
           <CardTitle className="text-2xl font-serif">{content.title}</CardTitle>
-          <CardDescription className="font-medium text-primary/70">{categoryLabel(service.category, lang)}</CardDescription>
+          <CardDescription className="font-medium text-muted-foreground">{categoryLabel(service.category, lang)}</CardDescription>
         </CardHeader>
         <CardContent>
           <p className="text-muted-foreground mb-6 leading-relaxed">{content.description}</p>
           <div className="bg-stone-50 p-4 rounded-xl border border-stone-100">
-            <p className="text-xs font-bold uppercase tracking-wider text-primary/50 mb-2">{t.outcomeLabel}</p>
+            <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">{t.outcomeLabel}</p>
             <p className="text-sm font-medium">{content.outcome}</p>
           </div>
           {content.price && (
             <p className="mt-4 text-sm">
-              <span className="text-xs font-bold uppercase tracking-wider text-primary/50 mr-2">{t.priceLabel}</span>
+              <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground mr-2">{t.priceLabel}</span>
               {content.originalPrice && (
                 <span className="line-through text-muted-foreground mr-2">{content.originalPrice}</span>
               )}
@@ -2414,22 +2461,18 @@ const ServiceCard = ({ service, index, lang, onLearnMore }: { service: any, inde
           {service.link && service.openInModal ? (
             <Button
               variant="link"
-              className="mt-6 p-0 h-auto font-bold text-primary group-hover:translate-x-1 transition-transform"
+              className="mt-6 p-0 h-auto min-h-6 whitespace-normal text-left font-bold text-primary group-hover:translate-x-1 transition-transform"
               onClick={() => onLearnMore?.(service)}
             >
               {content.linkLabel || t.learnMore} <ArrowRight className="w-4 h-4 ml-2" />
             </Button>
           ) : service.link ? (
-            <a href={service.link} target="_blank" rel="noopener noreferrer" className="inline-block mt-6">
-              <Button variant="link" className="p-0 h-auto font-bold text-primary group-hover:translate-x-1 transition-transform">
-                {content.linkLabel || t.learnMore} <ArrowRight className="w-4 h-4 ml-2" />
-              </Button>
+            <a href={service.link} target="_blank" rel="noopener noreferrer" className={buttonVariants({ variant: "link", className: "mt-6 p-0 h-auto min-h-6 whitespace-normal text-left font-bold text-primary group-hover:translate-x-1 transition-transform" })}>
+              {content.linkLabel || t.learnMore} <ArrowRight className="w-4 h-4 ml-2" />
             </a>
           ) : (
-            <Link to={`${prefix}/services/${service.id}`} className="inline-block mt-6">
-              <Button variant="link" className="p-0 h-auto font-bold text-primary group-hover:translate-x-1 transition-transform">
-                {content.linkLabel || t.learnMore} <ArrowRight className="w-4 h-4 ml-2" />
-              </Button>
+            <Link to={`${prefix}/services/${service.id}`} className={buttonVariants({ variant: "link", className: "mt-6 p-0 h-auto min-h-6 whitespace-normal text-left font-bold text-primary group-hover:translate-x-1 transition-transform" })}>
+              {content.linkLabel || t.learnMore} <ArrowRight className="w-4 h-4 ml-2" />
             </Link>
           )}
         </CardContent>
@@ -2545,7 +2588,7 @@ const ServicePage = () => {
   };
 
   return (
-    <main className="pt-32 pb-24">
+    <main id="main-content" tabIndex={-1} className="pt-32 pb-24 outline-none">
       <div className="container mx-auto px-6 max-w-3xl">
         <nav className="flex items-center gap-2 text-sm text-muted-foreground mb-10" aria-label="Breadcrumb">
           <Link to={prefix || "/"} className="hover:text-primary transition-colors">{sp.home}</Link>
@@ -2560,9 +2603,9 @@ const ServicePage = () => {
         <div className={`w-14 h-14 ${service.color} rounded-xl flex items-center justify-center mb-6`}>
           <service.icon className="w-7 h-7 text-primary" />
         </div>
-        <p className="font-medium text-primary/70 mb-2">{categoryLabel(service.category, lang)}</p>
+        <p className="font-medium text-muted-foreground mb-2">{categoryLabel(service.category, lang)}</p>
         <h1 className="text-4xl md:text-5xl font-serif font-bold mb-6 leading-tight">{content.title}</h1>
-        {isReiki && <p className="text-xl font-serif text-primary/80 -mt-3 mb-6">{tr.badge}</p>}
+        {isReiki && <p className="text-xl font-serif text-muted-foreground -mt-3 mb-6">{tr.badge}</p>}
         <p className="text-lg text-muted-foreground leading-relaxed mb-8">{content.description}</p>
 
         {"details" in content && content.details && (
@@ -2620,7 +2663,7 @@ const ServicePage = () => {
                       <dd className="inline text-primary font-semibold">{offer.price}</dd>
                     </div>
                   </dl>
-                  <p className="text-xs font-bold uppercase tracking-wider text-primary/50 mb-2">{sp.inclusionsLabel}</p>
+                  <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">{sp.inclusionsLabel}</p>
                   <ul className="space-y-2">
                     {offer.inclusions.map((inc, i) => (
                       <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground leading-relaxed">
@@ -2643,7 +2686,7 @@ const ServicePage = () => {
         )}
 
         <div className="bg-stone-50 p-6 rounded-2xl border border-stone-100 mb-10">
-          <p className="text-xs font-bold uppercase tracking-wider text-primary/50 mb-2">{t.outcomeLabel}</p>
+          <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">{t.outcomeLabel}</p>
           <p className="text-lg font-medium">{content.outcome}</p>
         </div>
 
@@ -2651,7 +2694,7 @@ const ServicePage = () => {
           <div className="grid sm:grid-cols-2 gap-4 mb-10">
             {content.facts.map((fact, idx) => (
               <div key={idx} className="bg-stone-50 p-4 rounded-xl border border-stone-100">
-                <p className="text-xs font-bold uppercase tracking-wider text-primary/50 mb-1">{fact.label}</p>
+                <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1">{fact.label}</p>
                 <p className="font-semibold">{fact.value}</p>
               </div>
             ))}
@@ -2660,7 +2703,7 @@ const ServicePage = () => {
 
         {isAstrology && (
           <div className="space-y-10 mb-10 pt-4 border-t border-stone-100">
-            <p className="text-sm font-medium uppercase tracking-wider text-primary/60">{ta.traditionNote}</p>
+            <p className="text-sm font-medium uppercase tracking-wider text-muted-foreground">{ta.traditionNote}</p>
             <p className="text-muted-foreground leading-relaxed">{ta.intro1}</p>
             <p className="text-muted-foreground leading-relaxed">{ta.intro2}</p>
 
@@ -2752,7 +2795,7 @@ const ServicePage = () => {
                       </div>
                       <div className="sm:text-right shrink-0 space-y-3">
                         <div>
-                          <p className="text-xs font-bold uppercase tracking-wider text-primary/50">{tr.investmentLabel}</p>
+                          <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{tr.investmentLabel}</p>
                           <p className="text-2xl font-bold">{p.investment}</p>
                         </div>
                         <Button className="rounded-full gap-2" onClick={() => onBookReiki(pkgId)}>
@@ -2799,7 +2842,7 @@ const ServicePage = () => {
             paid via a personal payment link (PayPage). */}
         {!isReiki && "priceNote" in content && content.priceNote && (
           <div className="mb-8 rounded-2xl border border-stone-100 bg-stone-50 p-5">
-            <p className="text-xs font-bold uppercase tracking-wider text-primary/50 mb-1">{sp.priceLabel}</p>
+            <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1">{sp.priceLabel}</p>
             <p className="text-lg font-semibold">{content.price}</p>
             <p className="text-sm text-muted-foreground mt-1">{content.priceNote}</p>
           </div>
@@ -3041,7 +3084,7 @@ const BlogPostOtherLanguageOnly = ({ lang, post }: { lang: "EN" | "DE", post: an
   const target = otherLang(lang);
   const targetUrl = `${langPrefix(target)}/blog/${post.slug}`;
   return (
-    <main className="pt-32 pb-24">
+    <main id="main-content" tabIndex={-1} className="pt-32 pb-24 outline-none">
       <div className="container mx-auto px-6 max-w-2xl text-center">
         <Globe className="w-10 h-10 text-primary mx-auto mb-6" />
         <p className="text-xl font-serif mb-3">{bp.onlyInOther}</p>
@@ -3212,7 +3255,7 @@ const BlogPostPage = () => {
     : "";
 
   return (
-    <main className="pt-32 pb-24">
+    <main id="main-content" tabIndex={-1} className="pt-32 pb-24 outline-none">
       <div className="container mx-auto px-6 max-w-3xl">
         <nav className="flex items-center gap-2 text-sm text-muted-foreground mb-10" aria-label="Breadcrumb">
           <Link to={prefix || "/"} className="hover:text-primary transition-colors">{bp.home}</Link>
@@ -3224,7 +3267,7 @@ const BlogPostPage = () => {
 
         <div className="flex items-center gap-3 mb-4">
           {post.category && <Badge variant="outline">{categoryLabel(post.category, lang)}</Badge>}
-          {dateStr && <span className="text-sm text-stone-400">{dateStr}</span>}
+          {dateStr && <span className="text-sm text-stone-500">{dateStr}</span>}
         </div>
         <h1 className="text-4xl md:text-5xl font-serif font-bold mb-4 leading-tight">{post.title}</h1>
         <p className="text-base text-stone-500 mb-4">
@@ -3246,7 +3289,7 @@ const BlogPostPage = () => {
               className="w-full h-auto aspect-video object-cover rounded-2xl"
               referrerPolicy="no-referrer"
             />
-            {post.imageCredit && <figcaption className="mt-2 text-xs text-stone-400">{bp.imageCredit} {post.imageCredit}</figcaption>}
+            {post.imageCredit && <figcaption className="mt-2 text-xs text-stone-500">{bp.imageCredit} {post.imageCredit}</figcaption>}
           </figure>
         )}
 
@@ -3388,7 +3431,7 @@ const AstrologyTarotPage = () => {
   useJsonLd("ld-json-breadcrumb", breadcrumbJsonLd);
 
   return (
-    <main className="pt-32 pb-24">
+    <main id="main-content" tabIndex={-1} className="pt-32 pb-24 outline-none">
       <div className="container mx-auto px-6 max-w-5xl">
         <nav className="flex items-center gap-2 text-sm text-muted-foreground mb-10" aria-label="Breadcrumb">
           <Link to={prefix || "/"} className="hover:text-primary transition-colors">{sp.home}</Link>
@@ -3602,23 +3645,19 @@ const CoursesSection = ({ lang, onBookCourse }: { lang: "EN" | "DE", onBookCours
                               {ys.bookBtn}
                             </Button>
                           )}
-                          <Link to={`${prefix}/courses/${course.id}`} className="block">
-                            <Button size="sm" variant="outline" className="rounded-full w-full gap-1.5">
-                              {ys.moreInfoBtn}
-                              <ArrowRight className="w-3.5 h-3.5" />
-                            </Button>
+                          <Link to={`${prefix}/courses/${course.id}`} className={buttonVariants({ size: "sm", variant: "outline", className: "rounded-full w-full gap-1.5" })}>
+                            {ys.moreInfoBtn}
+                            <ArrowRight className="w-3.5 h-3.5" />
                           </Link>
                         </>
                       ) : course.provider && course.registrationUrl ? (
                         <>
-                          <a href={course.registrationUrl} target="_blank" rel="noopener noreferrer">
-                            <Button size="sm" variant="outline" className="rounded-full w-full gap-1.5">
-                              {t.registerVia} {course.provider}
-                              <ExternalLink className="w-3.5 h-3.5" />
-                            </Button>
+                          <a href={course.registrationUrl} target="_blank" rel="noopener noreferrer" className={buttonVariants({ size: "sm", variant: "outline", className: "rounded-full w-full gap-1.5" })}>
+                            {t.registerVia} {course.provider}
+                            <ExternalLink className="w-3.5 h-3.5" />
                           </a>
                           {course.kursnr && (
-                            <p className="text-center text-stone-400 text-xs">
+                            <p className="text-center text-stone-500 text-xs">
                               {t.courseNo} {course.kursnr}
                             </p>
                           )}
@@ -3742,7 +3781,7 @@ const EventsSection = ({ lang }: { lang: "EN" | "DE" }) => {
                   </Badge>
                 )}
                 <div className="p-5">
-                  <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-primary/60 mb-2">
+                  <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">
                     <Calendar className="w-3.5 h-3.5" /> {event.year}
                   </div>
                   <h3 className="font-serif text-lg font-bold mb-1 leading-snug line-clamp-2">{content.title}</h3>
@@ -3805,7 +3844,7 @@ const HealerProfile = ({
         viewport={{ once: true }}
         transition={{ duration: 0.6, delay: 0.1 }}
       >
-        <p className="text-sm font-bold uppercase tracking-wider text-primary/70 mb-2">{content.title}</p>
+        <p className="text-sm font-bold uppercase tracking-wider text-muted-foreground mb-2">{content.title}</p>
         <h3 className="text-3xl md:text-4xl font-serif font-bold mb-6">{content.name}</h3>
         <p className="text-lg text-muted-foreground mb-5 leading-relaxed">{content.p1}</p>
         <p className="text-lg text-muted-foreground mb-8 leading-relaxed">{content.p2}</p>
@@ -3840,12 +3879,12 @@ const BrandStory = ({ lang }: { lang: "EN" | "DE" }) => {
     >
       <img src="/logo.svg" alt="" aria-hidden="true" loading="lazy" className="w-28 h-28 md:w-40 md:h-40 mx-auto" />
       <div>
-        <p className="text-sm font-bold uppercase tracking-wider text-primary/70 mb-2">{b.storyEyebrow}</p>
+        <p className="text-sm font-bold uppercase tracking-wider text-muted-foreground mb-2">{b.storyEyebrow}</p>
         <h3 className="text-3xl md:text-4xl font-serif font-bold mb-6">{b.storyTitle}</h3>
         <p className="text-lg text-muted-foreground mb-4 leading-relaxed">{b.storyMeaning}</p>
         <p className="text-lg text-muted-foreground mb-4 leading-relaxed">{b.storyPurpose}</p>
         <p className="text-lg text-muted-foreground mb-6 leading-relaxed">{b.storyOrganisation}</p>
-        <p className="text-sm text-muted-foreground/80 leading-relaxed">{b.storyLegal}</p>
+        <p className="text-sm text-muted-foreground leading-relaxed">{b.storyLegal}</p>
       </div>
     </motion.div>
   );
@@ -4021,10 +4060,8 @@ const TestimonialsSection = ({ lang }: { lang: "EN" | "DE" }) => {
             <span>{t.storiesSummary(allReviews.length)}</span>
           </p>
           <div className="flex flex-wrap gap-4">
-            <a href={GOOGLE_REVIEW_URL} target="_blank" rel="noopener noreferrer">
-              <Button className="rounded-full bg-white text-primary hover:bg-stone-100 gap-2">
-                <Globe className="w-4 h-4" /> {t.googleReview}
-              </Button>
+            <a href={GOOGLE_REVIEW_URL} target="_blank" rel="noopener noreferrer" className={buttonVariants({ className: "rounded-full bg-white text-primary hover:bg-stone-100 gap-2" })}>
+              <Globe className="w-4 h-4" /> {t.googleReview}
             </a>
             <LeaveReviewModal lang={lang} />
           </div>
@@ -4081,14 +4118,14 @@ const TestimonialsSection = ({ lang }: { lang: "EN" | "DE" }) => {
                         {test.rating ? (
                           <ReviewStars rating={test.rating} className="text-yellow-400 fill-yellow-400" />
                         ) : (
-                          <p className="text-xs uppercase tracking-[0.18em] text-white/50">{test.role}</p>
+                          <p className="text-xs uppercase tracking-[0.18em] text-white/75">{test.role}</p>
                         )}
                         {isNew && (
                           <Badge className="bg-yellow-400 text-stone-900 hover:bg-yellow-400 shrink-0">{t.newBadge}</Badge>
                         )}
                       </div>
                       <div className="flex-grow mb-6 text-lg">
-                        <ReviewQuote review={test} lang={lang} clampClass="line-clamp-6" muted="text-white/60" />
+                        <ReviewQuote review={test} lang={lang} clampClass="line-clamp-6" muted="text-white/80" />
                       </div>
                       <Separator className="bg-white/10 mb-6" />
                       <div className="flex items-center gap-4">
@@ -4097,7 +4134,7 @@ const TestimonialsSection = ({ lang }: { lang: "EN" | "DE" }) => {
                         </div>
                         <div className="min-w-0">
                           <p className="font-bold text-lg leading-none mb-1 truncate">{test.name}</p>
-                          <p className="text-sm text-white/60 truncate">{test.rating ? [test.role, sourceLine].filter(Boolean).join(" · ") : sourceLine}</p>
+                          <p className="text-sm text-white/80 truncate">{test.rating ? [test.role, sourceLine].filter(Boolean).join(" · ") : sourceLine}</p>
                         </div>
                       </div>
                       {test.screenshot && (
@@ -4123,10 +4160,8 @@ const TestimonialsSection = ({ lang }: { lang: "EN" | "DE" }) => {
               {t.showMore} <span className="opacity-60">({sorted.length - visibleCount})</span> <ChevronDown className="w-4 h-4" />
             </Button>
           )}
-          <a href={GOOGLE_REVIEW_URL} target="_blank" rel="noopener noreferrer">
-            <Button variant="outline" className="rounded-full border-white/20 bg-transparent text-white hover:bg-white hover:text-primary gap-2">
-              {t.googleReview} <Globe className="w-4 h-4" />
-            </Button>
+          <a href={GOOGLE_REVIEW_URL} target="_blank" rel="noopener noreferrer" className={buttonVariants({ variant: "outline", className: "rounded-full border-white/20 bg-transparent text-white hover:bg-white hover:text-primary gap-2" })}>
+            {t.googleReview} <Globe className="w-4 h-4" />
           </a>
         </div>
       </div>
@@ -4174,10 +4209,8 @@ const FAQSection = ({ lang }: { lang: "EN" | "DE" }) => {
         <FAQList faqs={FAQS.filter(faq => faq.featured)} lang={lang} />
 
         <div className="flex justify-center mt-10">
-          <Link to={`${prefix}/faq`}>
-            <Button variant="ghost" className="font-bold text-primary group">
-              {t.seeAll} <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
-            </Button>
+          <Link to={`${prefix}/faq`} className={buttonVariants({ variant: "ghost", className: "font-bold text-primary group" })}>
+            {t.seeAll} <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
           </Link>
         </div>
       </div>
@@ -4232,7 +4265,7 @@ const FAQPage = () => {
   useJsonLd("ld-json-breadcrumb", breadcrumbJsonLd);
 
   return (
-    <main className="pt-32 pb-24">
+    <main id="main-content" tabIndex={-1} className="pt-32 pb-24 outline-none">
       <div className="container mx-auto px-6 max-w-3xl">
         <nav className="flex items-center gap-2 text-sm text-muted-foreground mb-10" aria-label="Breadcrumb">
           <Link to={prefix || "/"} className="hover:text-primary transition-colors">{sp.home}</Link>
@@ -4273,34 +4306,35 @@ const Footer = ({ lang, onOpenLegal, onOpenCookieSettings, onOpenWithdraw }: { l
     <footer className="bg-stone-50 pt-24 pb-12 border-t">
       <div className="container mx-auto px-6">
         <div className="grid md:grid-cols-4 gap-12 mb-16">
-          <div className="col-span-2">
+          <div className="md:col-span-2">
             <div className="mb-6" role="img" aria-label={TRANSLATIONS[lang].brand.name}>
               <BrandLockup lang={lang} size="lg" />
             </div>
             <p className="text-muted-foreground text-lg max-w-md mb-8">
               {t.description}
             </p>
-            <div className="flex gap-4">
-              <a href="https://www.instagram.com/niramay.me/" target="_blank" rel="noopener noreferrer">
-                <Button variant="ghost" size="icon" className="rounded-full hover:bg-primary hover:text-primary-foreground transition-all">
-                  <Instagram className="w-5 h-5" />
-                </Button>
-              </a>
-              <a href="https://www.facebook.com/niramayme/" target="_blank" rel="noopener noreferrer">
-                <Button variant="ghost" size="icon" className="rounded-full hover:bg-primary hover:text-primary-foreground transition-all">
-                  <Facebook className="w-5 h-5" />
-                </Button>
-              </a>
-              <a href="https://www.youtube.com/@richaniramayme" target="_blank" rel="noopener noreferrer">
-                <Button variant="ghost" size="icon" className="rounded-full hover:bg-primary hover:text-primary-foreground transition-all">
-                  <Youtube className="w-5 h-5" />
-                </Button>
-              </a>
+            <div className="flex gap-2">
+              {[
+                { href: "https://www.instagram.com/niramay.me/", label: "Instagram", Icon: Instagram },
+                { href: "https://www.facebook.com/niramayme/", label: "Facebook", Icon: Facebook },
+                { href: "https://www.youtube.com/@richaniramayme", label: "YouTube", Icon: Youtube },
+              ].map(({ href, label, Icon }) => (
+                <a
+                  key={label}
+                  href={href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={`${label} (${t.opensInNewTab})`}
+                  className={buttonVariants({ variant: "ghost", size: "icon", className: "size-11 rounded-full hover:bg-primary hover:text-primary-foreground transition-all" })}
+                >
+                  <Icon className="w-5 h-5" aria-hidden="true" />
+                </a>
+              ))}
             </div>
           </div>
 
           <div>
-            <h4 className="font-bold mb-6">{t.quickLinks}</h4>
+            <h2 className="text-base font-bold mb-6">{t.quickLinks}</h2>
             <ul className="space-y-4">
               <li><Link to={`${prefix}/#services`} className="text-muted-foreground hover:text-primary transition-colors">{nav.services}</Link></li>
               <li><Link to={`${prefix}${ASTROLOGY_PAGE_PATH}`} className="text-muted-foreground hover:text-primary transition-colors">{nav.astrology}</Link></li>
@@ -4314,7 +4348,7 @@ const Footer = ({ lang, onOpenLegal, onOpenCookieSettings, onOpenWithdraw }: { l
           </div>
 
           <div>
-            <h4 className="font-bold mb-6">{t.contact}</h4>
+            <h2 className="text-base font-bold mb-6">{t.contact}</h2>
             <ul className="space-y-4 mb-6">
               <li className="flex items-start gap-3 text-muted-foreground">
                 <MapPin className="w-5 h-5 text-primary shrink-0" />
@@ -4402,7 +4436,7 @@ const CookieConsent = ({ lang, reopen, onClose, onOpenPrivacy }: { lang: "EN" | 
 
   return (
     <div className="fixed bottom-0 inset-x-0 z-[100] p-3 sm:p-4" role="region" aria-label={TRANSLATIONS[lang].footer.cookieSettings}>
-      <div className="max-w-2xl mx-auto bg-background/95 backdrop-blur border border-stone-200 shadow-lg rounded-2xl px-4 py-3 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+      <div className="max-w-2xl mx-auto bg-background border border-stone-200 shadow-lg rounded-2xl px-4 py-3 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
         <div className="flex-1 text-xs sm:text-sm text-muted-foreground">
           <p>
             {t.message}{" "}
@@ -4519,20 +4553,28 @@ const WithdrawalModal = ({ lang, open, onOpenChange, onOpenWiderruf }: { lang: "
               <button type="button" onClick={onOpenWiderruf} className="underline underline-offset-2 hover:text-primary">{t.infoLink}</button>
             </p>
             <div className="grid gap-2">
-              <label className="text-sm font-medium">{t.name}</label>
-              <input required maxLength={100} className={INPUT_CLASS} value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} />
+              <label className="grid gap-2">
+                <span className="text-sm font-medium">{t.name}</span>
+                <input required maxLength={100} className={INPUT_CLASS} value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} />
+              </label>
             </div>
             <div className="grid gap-2">
-              <label className="text-sm font-medium">{t.email}</label>
-              <input required type="email" maxLength={200} className={INPUT_CLASS} value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} />
+              <label className="grid gap-2">
+                <span className="text-sm font-medium">{t.email}</span>
+                <input required type="email" maxLength={200} className={INPUT_CLASS} value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} />
+              </label>
             </div>
             <div className="grid gap-2">
-              <label className="text-sm font-medium">{t.contract}</label>
-              <textarea required maxLength={500} rows={3} placeholder={t.contractPlaceholder} className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2" value={form.contract} onChange={e => setForm({ ...form, contract: e.target.value })} />
+              <label className="grid gap-2">
+                <span className="text-sm font-medium">{t.contract}</span>
+                <textarea required maxLength={500} rows={3} placeholder={t.contractPlaceholder} className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2" value={form.contract} onChange={e => setForm({ ...form, contract: e.target.value })} />
+              </label>
             </div>
             <div className="grid gap-2">
-              <label className="text-sm font-medium">{t.address}</label>
-              <input maxLength={300} className={INPUT_CLASS} value={form.address} onChange={e => setForm({ ...form, address: e.target.value })} />
+              <label className="grid gap-2">
+                <span className="text-sm font-medium">{t.address}</span>
+                <input maxLength={300} className={INPUT_CLASS} value={form.address} onChange={e => setForm({ ...form, address: e.target.value })} />
+              </label>
             </div>
             <Button type="submit" size="lg" className="rounded-full w-full" disabled={!valid}>{t.reviewBtn}</Button>
           </form>
@@ -4821,7 +4863,17 @@ const AppLayout = () => {
   useJsonLd("ld-json-website", websiteJsonLd);
 
   return (
+    <MotionConfig reducedMotion="user">
     <div className="min-h-screen selection:bg-primary/20">
+      {/* First thing keyboard users reach: jumps past the navigation. Handled
+          in JS so it moves focus without adding #main-content to the URL. */}
+      <a
+        href="#main-content"
+        onClick={e => { e.preventDefault(); const main = document.getElementById("main-content"); main?.focus(); main?.scrollIntoView(); }}
+        className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[200] focus:rounded-full focus:bg-primary focus:px-5 focus:py-3 focus:text-sm focus:font-semibold focus:text-primary-foreground focus:shadow-lg"
+      >
+        {TRANSLATIONS[lang].nav.skipToContent}
+      </a>
       <ScrollManager />
       <AnnouncementBar lang={lang} items={announcements} onDismiss={dismissAnnouncements} />
       <Navbar lang={lang} altPath={altPath} onBook={openBooking} belowAnnouncement={announcements.length > 0} />
@@ -4900,6 +4952,7 @@ const AppLayout = () => {
 
       <CookieConsent lang={lang} reopen={cookieSettingsOpen} onClose={() => setCookieSettingsOpen(false)} onOpenPrivacy={() => { setCookieSettingsOpen(false); setLegalModal("privacy"); }} />
     </div>
+    </MotionConfig>
   );
 };
 
@@ -4941,7 +4994,7 @@ const PayPage = () => {
   };
 
   return (
-    <main className="pt-32 pb-24">
+    <main id="main-content" tabIndex={-1} className="pt-32 pb-24 outline-none">
       <div className="container mx-auto px-6 max-w-lg">
         <h1 className="text-3xl md:text-4xl font-serif font-bold mb-6">{t.title}</h1>
         {state === "loading" && <p className="text-muted-foreground">…</p>}
@@ -5045,7 +5098,7 @@ const CoursePage = () => {
   ];
 
   return (
-    <main className="pt-32 pb-24">
+    <main id="main-content" tabIndex={-1} className="pt-32 pb-24 outline-none">
       <div className="container mx-auto px-6 max-w-3xl">
         <nav className="flex items-center gap-2 text-sm text-muted-foreground mb-10" aria-label="Breadcrumb">
           <Link to={prefix || "/"} className="hover:text-primary transition-colors">{sp.home}</Link>
@@ -5064,7 +5117,7 @@ const CoursePage = () => {
             <div key={label} className="flex items-start gap-3 p-4 rounded-xl border border-stone-100 bg-white">
               <Icon className="w-5 h-5 text-primary shrink-0 mt-0.5" />
               <div>
-                <p className="text-xs font-bold uppercase tracking-wider text-primary/50 mb-1">{label}</p>
+                <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1">{label}</p>
                 <p className="text-sm">{value}</p>
               </div>
             </div>
@@ -5160,7 +5213,7 @@ const HomePage = () => {
   };
 
   return (
-    <main>
+    <main id="main-content" tabIndex={-1} className="outline-none">
       <Hero lang={lang} onBook={onBook} />
       <ServicesSection lang={lang} onLearnMore={handleServiceToolPreview} />
       {/* Reviews straight after the offer: trust before the details. */}

@@ -59,6 +59,7 @@ export const TRANSLATIONS = {
       langNameEN: "English",
       langNameDE: "German",
       openMenu: "Open menu",
+      skipToContent: "Skip to main content",
       closeMenu: "Close menu",
     },
     // Brand name and the story behind it (header/footer lockup, "Our name"
@@ -244,6 +245,7 @@ export const TRANSLATIONS = {
     footer: {
       description: "Empowering your journey towards holistic wellness through a unique blend of ancient wisdom and modern therapy.",
       quickLinks: "Quick Links",
+      opensInNewTab: "opens in a new tab",
       contact: "Contact",
       whatsapp: "Chat with Richa",
       viewOnGoogleMaps: "View on Google Maps",
@@ -912,6 +914,7 @@ export const TRANSLATIONS = {
       langNameEN: "Englisch",
       langNameDE: "Deutsch",
       openMenu: "Menü öffnen",
+      skipToContent: "Zum Hauptinhalt springen",
       closeMenu: "Menü schließen",
     },
     brand: {
@@ -1091,6 +1094,7 @@ export const TRANSLATIONS = {
     footer: {
       description: "Stärken Sie Ihre Reise zu ganzheitlichem Wohlbefinden durch eine einzigartige Mischung aus altem Wissen und moderner Therapie.",
       quickLinks: "Schnelllinks",
+      opensInNewTab: "öffnet in neuem Tab",
       contact: "Kontakt",
       whatsapp: "Chat mit Richa",
       viewOnGoogleMaps: "Auf Google Maps ansehen",
