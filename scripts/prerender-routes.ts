@@ -29,7 +29,7 @@
 
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
-import { ASTROLOGY_PAGE_PATH, BUSINESS_CITY, BUSINESS_POSTAL_CODE, BUSINESS_STREET_ADDRESS, COURSES, SERVICES, TRANSLATIONS } from "../src/constants";
+import { ASTROLOGY_PAGE_PATH, BUSINESS_CITY, BUSINESS_POSTAL_CODE, BUSINESS_STREET_ADDRESS, COURSES, HOME_SEO, SERVICES, TRANSLATIONS, serviceSeoTitle } from "../src/constants";
 import { SITE_JSONLD } from "../src/lib/structuredData";
 import { escapeHtml } from "../api/_lib/util";
 
@@ -49,14 +49,8 @@ type Route = {
 const routes: Route[] = [
   {
     path: "",
-    title: {
-      EN: "Niramay Wellbeing — Yoga, Reiki & Holistic Therapy in Ostfildern",
-      DE: "Niramay Wohlbefinden — Yoga, Reiki & ganzheitliches Wohlbefinden in Ostfildern",
-    },
-    description: {
-      EN: "Niramay Wellbeing: yoga, Reiki, NLP coaching, hypnotherapy and Vedic astrology guidance with Richa Kansal in Ostfildern, Germany. Book a free 15-minute call.",
-      DE: "Niramay Wohlbefinden: Yoga, Reiki, NLP-Coaching, Hypnotherapie und vedische Astrologie mit Richa Kansal in Ostfildern – für Ihr ganzheitliches Wohlbefinden. Kostenloses 15-Minuten-Gespräch vereinbaren.",
-    },
+    title: { EN: HOME_SEO.EN.title, DE: HOME_SEO.DE.title },
+    description: { EN: HOME_SEO.EN.description, DE: HOME_SEO.DE.description },
   },
   {
     path: "/faq",
@@ -70,7 +64,7 @@ const routes: Route[] = [
   },
   ...SERVICES.filter((s) => !s.openInModal).map((s) => ({
     path: `/services/${s.id}`,
-    title: { EN: `${s.EN.title} — Niramay Wellbeing, Ostfildern`, DE: `${s.DE.title} — ${TRANSLATIONS.DE.brand.name}, Ostfildern` },
+    title: { EN: serviceSeoTitle(s, "EN"), DE: serviceSeoTitle(s, "DE") },
     description: { EN: s.EN.description, DE: s.DE.description },
   })),
   ...COURSES.filter((c) => c.bookable && c.pageKey).map((c) => {
