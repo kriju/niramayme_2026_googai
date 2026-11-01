@@ -5178,7 +5178,7 @@ const HomePage = () => {
 // client, the editor UI) is split into its own chunk and only fetched
 // when a signed-in editor actually navigates there — visitors browsing
 // the marketing site never pay for its bytes.
-const WritePage = lazy(() => import("./pages/WritePage"));
+const AdminApp = lazy(() => import("./pages/admin/AdminApp"));
 
 // Route patterns reported to Vercel Speed Insights so the dashboard groups
 // visits by page type (e.g. /blog/:slug) instead of "Unknown". Keep in sync
@@ -5233,13 +5233,15 @@ export default function App() {
           {/* Outside AppLayout: no marketing nav/footer/WhatsApp button on the
               admin tool. */}
           <Route
-            path="write"
+            path="admin/*"
             element={
               <Suspense fallback={null}>
-                <WritePage />
+                <AdminApp />
               </Suspense>
             }
           />
+          {/* Old address of the blog editor; vercel.json redirects it too. */}
+          <Route path="write" element={<Navigate to="/admin/blog" replace />} />
         </Routes>
         <RouteAwareSpeedInsights />
       </BrowserRouter>

@@ -30,9 +30,13 @@ service cloud.firestore {
     function blogAdminEmails() {
       return ['rijuk@niramay.me', 'richak@niramay.me'];
     }
+    // The admin role is a custom claim (role: "owner", set by
+    // scripts/set-admin-claims.ts); the email list keeps working until the
+    // claims are set on both projects (see api/_lib/adminAuth.ts).
     function isBlogAdmin() {
       return request.auth != null
-          && request.auth.token.email in blogAdminEmails();
+          && (request.auth.token.get('role', '') == 'owner'
+              || request.auth.token.email in blogAdminEmails());
     }
 
     // Blog helper
