@@ -6,7 +6,9 @@ import { withNotice } from "./_lib/withdrawal.js";
 import { HttpError } from "./_lib/engagement.js";
 import { claimNotification, enforceNotifyRateLimit } from "./_lib/notifyGuard.js";
 
-import { COURSES, COURSE_CONTACT_EMAIL, bookedSessions, isCourseId, type CourseId, type Lang } from "./_lib/courses.js";
+import { COURSE_CONTACT_EMAIL, bookedSessions, type Lang } from "./_lib/courses.js";
+import { getCourse } from "./_lib/courseStore.js";
+import { handleCourseBooking } from "./_lib/courseBooking.js";
 import { handleCheckout, handleDailyCron, handleQuote, handleStripeWebhook, refCodeFor } from "./_lib/coursePayments.js";
 import { buildCourseIcs } from "./_lib/ics.js";
 import { handleServiceCheckout } from "./_lib/servicePayments.js";
@@ -33,6 +35,7 @@ type NotifyKind = "submitted" | "payment_claimed";
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   switch (req.query.op) {
     case "quote": return handleQuote(req, res);
+    case "book": return handleCourseBooking(req, res);
     case "checkout": return handleCheckout(req, res);
     case "webhook": return handleStripeWebhook(req, res);
     case "cron": return handleDailyCron(req, res);
@@ -58,13 +61,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(404).json({ error: "Course booking not found" });
     }
     const booking = snap.data() as Record<string, any>;
-    if (!isCourseId(booking.course)) {
+    const course = await getCourse(db, booking.course);
+    if (!course) {
       return res.status(400).json({ error: "Unknown course" });
     }
     if (kind === "payment_claimed" && !booking.paymentClaimed) {
       return res.status(400).json({ error: "Payment has not been claimed" });
     }
-    const course = COURSES[booking.course as CourseId];
     // Only UPI (INR) payments are reported by hand; EUR goes through Stripe.
     if (!course.inrPrice) {
       return res.status(400).json({ error: "This course is paid via Stripe" });

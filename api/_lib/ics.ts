@@ -60,9 +60,11 @@ export function buildCourseIcs(params: {
       ? `${course[lang].title} (${session.label[lang]})`
       : course[lang].title;
     const description = [
-      meetUrl
-        ? `${de ? "Google-Meet-Link" : "Google Meet link"}: ${meetUrl}`
-        : de ? "Den Google-Meet-Link senden wir Ihnen vor der Einheit per E-Mail." : "We'll email you the Google Meet link before the session.",
+      course.format === "inPerson" && course.venue
+        ? `${de ? "Ort" : "Venue"}: ${course.venue}`
+        : meetUrl
+          ? `${de ? "Google-Meet-Link" : "Google Meet link"}: ${meetUrl}`
+          : de ? "Den Google-Meet-Link senden wir Ihnen vor der Einheit per E-Mail." : "We'll email you the Google Meet link before the session.",
       de ? `Fragen: ${contactEmail}` : `Questions: ${contactEmail}`,
     ].join("\n");
     lines.push(
@@ -73,7 +75,7 @@ export function buildCourseIcs(params: {
       `DTEND:${icsDate(session.end)}`,
       `SUMMARY:${icsText(title)}`,
       `DESCRIPTION:${icsText(description)}`,
-      `LOCATION:${icsText(meetUrl || "Online")}`,
+      `LOCATION:${icsText(course.format === "inPerson" && course.venue ? course.venue : meetUrl || "Online")}`,
       ...(meetUrl ? [`URL:${meetUrl}`] : []),
       "BEGIN:VALARM",
       "ACTION:DISPLAY",

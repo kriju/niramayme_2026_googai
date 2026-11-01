@@ -32,6 +32,8 @@ import path from "node:path";
 import { ASTROLOGY_PAGE_PATH, BUSINESS_CITY, BUSINESS_POSTAL_CODE, BUSINESS_STREET_ADDRESS, COURSES, HOME_SEO, SERVICES, TRANSLATIONS, serviceSeoTitle } from "../src/constants";
 import { SITE_JSONLD } from "../src/lib/structuredData";
 import { escapeHtml } from "../api/_lib/util";
+import productionConfig from "../firebase-applet-config.json";
+import previewConfig from "../firebase-preview-config.json";
 
 const SITE_URL = "https://www.niramay.me";
 const DIST = "dist";
@@ -189,6 +191,37 @@ function write(file: string, html: string) {
   mkdirSync(path.dirname(target), { recursive: true });
   writeFileSync(target, html);
 }
+
+// Courses created in the admin section live in Firestore (courses/{id},
+// publicly readable), so they're read here through the public REST API, as
+// the browser reads them, from the project this build serves (preview builds
+// use the preview project, as in src/lib/firebase.ts). A failure only means
+// those pages fall back to the plain app shell, never a failed build.
+async function storedCourseRoutes(): Promise<Route[]> {
+  const config = process.env.VERCEL_ENV === "preview" && previewConfig.apiKey ? previewConfig : productionConfig;
+  const database = (config as { firestoreDatabaseId?: string }).firestoreDatabaseId || "(default)";
+  const url = `https://firestore.googleapis.com/v1/projects/${config.projectId}/databases/${database}/documents/courses?pageSize=300&key=${config.apiKey}`;
+  try {
+    const response = await fetch(url);
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const data = (await response.json()) as { documents?: { name: string; fields?: Record<string, any> }[] };
+    const text = (fields: Record<string, any> | undefined, lang: Lang, key: string): string =>
+      fields?.page?.mapValue?.fields?.[lang]?.mapValue?.fields?.[key]?.stringValue ?? "";
+    const existing = new Set(routes.map((r) => r.path));
+    return (data.documents ?? [])
+      .filter((doc) => doc.fields?.archived?.booleanValue !== true)
+      .map((doc) => ({
+        path: `/courses/${doc.name.split("/").pop()}`,
+        title: { EN: text(doc.fields, "EN", "seoTitle"), DE: text(doc.fields, "DE", "seoTitle") },
+        description: { EN: text(doc.fields, "EN", "seoDescription"), DE: text(doc.fields, "DE", "seoDescription") },
+      }))
+      .filter((r) => r.title.EN && r.title.DE && !existing.has(r.path));
+  } catch (error) {
+    console.warn("prerender-routes: courses from Firestore unavailable, skipped:", error);
+    return [];
+  }
+}
+routes.push(...(await storedCourseRoutes()));
 
 let shell = readFileSync(path.join(DIST, "index.html"), "utf8");
 const verification = process.env.GOOGLE_SITE_VERIFICATION?.trim();

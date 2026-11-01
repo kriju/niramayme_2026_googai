@@ -58,7 +58,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { NavigationMenu } from "@base-ui/react/navigation-menu";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { SERVICES, ASTROLOGY_SERVICE_IDS, ASTROLOGY_PAGE_PATH, TESTIMONIALS, type ClientStory, FAQS, HEALER_CERTIFICATIONS, HEALER_IMAGES, TRANSLATIONS, REVIEW_GROUPS, reviewGroupOf, categoryLabel, ONGOING_SESSIONS, COURSES, EVENTS, ANNOUNCEMENTS, GOOGLE_REVIEW_URL, BUSINESS_STREET_ADDRESS, BUSINESS_POSTAL_CODE, BUSINESS_CITY, GOOGLE_MAPS_URL, GOOGLE_MAPS_EMBED_URL, HOME_SEO, serviceSeoTitle } from "./constants";
+import { SERVICES, ASTROLOGY_SERVICE_IDS, ASTROLOGY_PAGE_PATH, TESTIMONIALS, type ClientStory, FAQS, HEALER_CERTIFICATIONS, HEALER_IMAGES, TRANSLATIONS, REVIEW_GROUPS, reviewGroupOf, categoryLabel, ONGOING_SESSIONS, EVENTS, ANNOUNCEMENTS, GOOGLE_REVIEW_URL, BUSINESS_STREET_ADDRESS, BUSINESS_POSTAL_CODE, BUSINESS_CITY, GOOGLE_MAPS_URL, GOOGLE_MAPS_EMBED_URL, HOME_SEO, serviceSeoTitle } from "./constants";
 import { LEGAL_DOCS, LEGAL_LINK_LABELS, type LegalDocType, type LegalLink } from "./legal";
 import { BOOKING_LEGAL_TEXT, EMPTY_LEGAL_STATE, WITHDRAW_TEXT, isLegalComplete, toLegalAcks, type BookingLegalState } from "./legal/booking";
 import { LEGAL_CONFIG, vatPriceNote } from "./legal/config";
@@ -67,6 +67,7 @@ import { SITE_URL, BUSINESS_JSONLD_ID, useJsonLd, useSeo, useNoIndex } from "./l
 import { businessJsonLd as businessJsonLdFor, richaJsonLd as richaJsonLdFor, websiteJsonLd as websiteJsonLdFor, serviceReach, courseJsonLd, courseEventsJsonLd } from "./lib/structuredData";
 import { responsiveImage } from "./lib/images";
 import { loadApprovedReviews, loadPublishedBlogs } from "./lib/publicFeed";
+import { GENERIC_COURSE_LABELS, STATIC_COURSES, isCourseBookingClosed, isCoursePast, loadCoursePreview, storedAnnouncements, useCourses, type PublicCourse } from "./lib/publicCourses";
 
 // A single booking dialog, controlled from the App root (see the other
 // ...DetailModal components below for the same lift-state-up pattern).
@@ -950,17 +951,10 @@ type CourseForm = { name: string; email: string; whatsapp: string; notes: string
 const EMPTY_COURSE_FORM: CourseForm = { name: "", email: "", whatsapp: "", notes: "", session: "", consent: false };
 // Default address for course questions; a course may set its own `contactEmail`.
 const COURSE_CONTACT_EMAIL = "riju.kansal@niramay.me";
-type Course = (typeof COURSES)[number];
-
-// Courses with a `bookingClosesAt` stop taking bookings after that moment.
-// A dated course (`lastDay`, YYYY-MM-DD) disappears the day after it ran,
-// German time.
-const isCoursePast = (course: Course) =>
-  "lastDay" in course && !!course.lastDay
-  && new Date().toLocaleDateString("sv-SE", { timeZone: "Europe/Berlin" }) > course.lastDay;
-
-const isCourseBookingClosed = (course: Course) =>
-  Boolean(course.bookingClosesAt && Date.now() > new Date(course.bookingClosesAt).getTime());
+// Courses defined in code plus those created in the admin section
+// (src/lib/publicCourses.ts, which also has isCoursePast and
+// isCourseBookingClosed).
+type Course = PublicCourse;
 
 // Price from api/_lib/discounts.ts (POST /api/course-quote).
 type CourseQuote = {
@@ -969,7 +963,9 @@ type CourseQuote = {
   totalCents: number;
   discount: { kind: "early_bird" | "alumni" | "newsletter"; percent: number; code?: string } | null;
 };
-const fetchCourseQuote = async (course: string, email: string, code: string): Promise<{ quote: CourseQuote; codeProblem: string | null } | null> => {
+// seatsLeft: null = no limit; a number for a series; per date id for pick-one.
+type SeatsLeft = number | Record<string, number> | null;
+const fetchCourseQuote = async (course: string, email: string, code: string): Promise<{ quote: CourseQuote; codeProblem: string | null; seatsLeft?: SeatsLeft } | null> => {
   const response = await fetch("/api/course-quote", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -997,7 +993,9 @@ const CourseIntakeModal = ({ lang, courseId, onClose, onOpenPrivacy, onOpenLegal
   const [codeError, setCodeError] = useState<string | null>(null);
   const [checkingCode, setCheckingCode] = useState(false);
   const [price, setPrice] = useState<CourseQuote | null>(null);
+  const [seatsLeft, setSeatsLeft] = useState<SeatsLeft>(null);
   const [redirecting, setRedirecting] = useState(false);
+  const { courses } = useCourses();
   const open = courseId !== null;
 
   // Server-side price incl. any early-bird discount, shown before booking.
@@ -1005,8 +1003,9 @@ const CourseIntakeModal = ({ lang, courseId, onClose, onOpenPrivacy, onOpenLegal
     if (!open || !shownCourseId) return;
     let cancelled = false;
     setPrice(null);
+    setSeatsLeft(null);
     fetchCourseQuote(shownCourseId, "", "")
-      .then(r => { if (!cancelled && r) setPrice(r.quote); })
+      .then(r => { if (!cancelled && r) { setPrice(r.quote); setSeatsLeft(r.seatsLeft ?? null); } })
       .catch(() => { /* falls back to the listed price */ });
     return () => { cancelled = true; };
   }, [open, shownCourseId]);
@@ -1024,8 +1023,12 @@ const CourseIntakeModal = ({ lang, courseId, onClose, onOpenPrivacy, onOpenLegal
     }));
   }, [open, profile]);
 
-  const course = COURSES.find(c => c.id === shownCourseId);
-  const content = course?.[lang];
+  const course = courses.find(c => c.id === shownCourseId);
+  // Admin-created kids courses use the parent/guardian wording of the kids workshop.
+  const kidsText = STATIC_COURSES.find(c => c.id === "yoga-adventure")?.[lang];
+  const content = course?.forChildren && kidsText
+    ? { ...course[lang], nameLabel: kidsText.nameLabel, consentPrefix: kidsText.consentPrefix, notesPlaceholder: kidsText.notesPlaceholder }
+    : course?.[lang];
   // Derived from the Firestore doc ID, the same way api/notify-course-booking.ts
   // derives it — never stored separately, so the two can't drift.
   const refCode = requestId ? `CRS-${requestId.slice(-6).toUpperCase()}` : "";
@@ -1033,7 +1036,11 @@ const CourseIntakeModal = ({ lang, courseId, onClose, onOpenPrivacy, onOpenLegal
   const sessions = course?.sessions;
   const chosenSession = sessions?.find(s => s.id === form.session);
   const contactEmail = course?.contactEmail ?? COURSE_CONTACT_EMAIL;
-  const isValid = Boolean(form.name.trim() && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim()) && form.whatsapp.trim() && form.consent && isLegalComplete(legal) && (!sessions || chosenSession));
+  const seatsFor = (sessionId?: string) =>
+    seatsLeft === null ? null : typeof seatsLeft === "number" ? seatsLeft : sessionId ? seatsLeft[sessionId] ?? null : null;
+  const courseFull = typeof seatsLeft === "number" && seatsLeft <= 0;
+  const chosenFull = chosenSession ? seatsFor(chosenSession.id) === 0 : false;
+  const isValid = Boolean(form.name.trim() && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim()) && form.whatsapp.trim() && form.consent && isLegalComplete(legal) && (!sessions || chosenSession) && !courseFull && !chosenFull);
 
   const resetAndClose = () => {
     onClose();
@@ -1094,6 +1101,16 @@ const CourseIntakeModal = ({ lang, courseId, onClose, onOpenPrivacy, onOpenLegal
       if (!response.ok || typeof data.url !== "string") {
         // A code that stopped applying (e.g. the email was changed after
         // applying an alumni code): back to the form, with a fresh booking.
+        if (data.error === "course_full") {
+          setError(t.courseFullError.replace("{email}", contactEmail));
+          setRedirecting(false);
+          return;
+        }
+        if (data.error === "course_closed" || data.error === "course_over") {
+          setError(t.registrationClosed);
+          setRedirecting(false);
+          return;
+        }
         if (typeof data.error === "string" && data.error in discountErrors) {
           setCodeError(discountErrors[data.error]);
           setRequestId(null);
@@ -1129,7 +1146,7 @@ const CourseIntakeModal = ({ lang, courseId, onClose, onOpenPrivacy, onOpenLegal
       return;
     }
     try {
-      const docRef = await addDoc(collection(db, "courseBookings"), {
+      const details = {
         course: course.id,
         name: form.name.trim(),
         email: form.email.trim(),
@@ -1138,14 +1155,37 @@ const CourseIntakeModal = ({ lang, courseId, onClose, onOpenPrivacy, onOpenLegal
         ...(chosenSession ? { session: chosenSession.id } : {}),
         consentAccepted: true,
         lang,
-        createdAt: serverTimestamp(),
         paymentClaimed: false,
         legalAcks: toLegalAcks(legal),
-      });
-      setRequestId(docRef.id);
+      };
+      let bookingId: string;
+      if (course.dynamic) {
+        // Courses created in the admin: the server checks the course is open
+        // and has a seat, then stores the booking (api/_lib/courseBooking.ts).
+        const response = await fetch("/api/course-booking", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(details),
+        });
+        const data = await response.json().catch(() => ({}));
+        if (data.error === "course_full") {
+          setError(t.courseFullError.replace("{email}", contactEmail));
+          return;
+        }
+        if (data.error === "course_closed") {
+          setError(t.registrationClosed);
+          return;
+        }
+        if (!response.ok || typeof data.requestId !== "string") throw new Error(data.error || `HTTP ${response.status}`);
+        bookingId = data.requestId;
+      } else {
+        const docRef = await addDoc(collection(db, "courseBookings"), { ...details, createdAt: serverTimestamp() });
+        bookingId = docRef.id;
+      }
+      setRequestId(bookingId);
       // EUR-only courses go straight to Stripe; INR courses offer UPI too.
       if (course.acceptsINR) setStep("payment");
-      else await startCheckout(docRef.id);
+      else await startCheckout(bookingId);
     } catch (err) {
       console.error("Error submitting course booking:", err);
       setError(t.submitError);
@@ -1209,12 +1249,15 @@ const CourseIntakeModal = ({ lang, courseId, onClose, onOpenPrivacy, onOpenLegal
               {sessions && (
                 <fieldset className="grid gap-2">
                   <legend className="text-sm font-medium mb-2">{t.sessionLabel}</legend>
-                  {sessions.map(s => (
-                    <label key={s.id} className={`flex items-start gap-2 text-sm p-3 rounded-lg border cursor-pointer ${form.session === s.id ? "border-primary bg-primary/5" : "border-input"}`}>
-                      <input type="radio" name="course-session" required className="mt-0.5 h-4 w-4 shrink-0" checked={form.session === s.id} onChange={() => setForm({ ...form, session: s.id })} />
-                      <span>{s[lang]}</span>
-                    </label>
-                  ))}
+                  {sessions.map(s => {
+                    const full = seatsFor(s.id) === 0 || (course.dynamic && new Date(s.start).getTime() <= Date.now());
+                    return (
+                      <label key={s.id} className={`flex items-start gap-2 text-sm p-3 rounded-lg border ${full ? "opacity-50 cursor-not-allowed" : "cursor-pointer"} ${form.session === s.id ? "border-primary bg-primary/5" : "border-input"}`}>
+                        <input type="radio" name="course-session" required disabled={full} className="mt-0.5 h-4 w-4 shrink-0" checked={form.session === s.id} onChange={() => setForm({ ...form, session: s.id })} />
+                        <span>{s[lang]}{seatsFor(s.id) === 0 ? ` · ${t.sessionFull}` : ""}</span>
+                      </label>
+                    );
+                  })}
                 </fieldset>
               )}
               <div className="grid gap-2">
@@ -1275,7 +1318,7 @@ const CourseIntakeModal = ({ lang, courseId, onClose, onOpenPrivacy, onOpenLegal
               <p className="text-xs text-muted-foreground">{t.alumniNotice}</p>
               {error && <p className="text-sm text-red-600">{error}</p>}
               <Button type="submit" size="lg" className="rounded-full w-full" disabled={!isValid || submitting || redirecting}>
-                {redirecting ? t.redirecting : submitting ? t.submitting : BOOKING_LEGAL_TEXT[lang].bindingButton}
+                {courseFull ? t.fullyBooked : redirecting ? t.redirecting : submitting ? t.submitting : BOOKING_LEGAL_TEXT[lang].bindingButton}
               </Button>
             </form>
           </>
@@ -1685,13 +1728,15 @@ const ANNOUNCEMENT_DISMISS_KEY = "niramay-announcement-dismissed";
 const ANNOUNCEMENT_BAR_HEIGHT = "2.5rem";
 
 // Compare calendar days in German time, matching how dates are listed.
-const activeAnnouncements = () => {
+// Includes the banners of courses created in the admin section.
+const activeAnnouncements = (courses: PublicCourse[] = []) => {
   const today = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Berlin" }).format(new Date());
-  return ANNOUNCEMENTS.filter(a => a.until >= today);
+  return [...ANNOUNCEMENTS, ...storedAnnouncements(courses)].filter(a => a.until >= today);
 };
 
 const useActiveAnnouncements = () => {
-  const active = activeAnnouncements();
+  const { courses } = useCourses();
+  const active = activeAnnouncements(courses);
   const signature = active.map(a => a.id).join("|");
   const [dismissed, setDismissed] = useState(() => {
     try {
@@ -2145,7 +2190,8 @@ const Hero = ({ lang, onBook }: { lang: "EN" | "DE", onBook: (ctx?: BookingConte
   const tBook = TRANSLATIONS[lang].newBook;
   const prefix = langPrefix(lang);
   const tAbout = TRANSLATIONS[lang].about;
-  const upcoming = activeAnnouncements();
+  const { courses } = useCourses();
+  const upcoming = activeAnnouncements(courses);
   const [approvedReviews, setApprovedReviews] = useState<any[]>([]);
   const [reviewIndex, setReviewIndex] = useState(0);
   const [reviewsPaused, setReviewsPaused] = useState(false);
@@ -3542,6 +3588,7 @@ const CoursesSection = ({ lang, onBookCourse }: { lang: "EN" | "DE", onBookCours
   const sessionsT = TRANSLATIONS[lang].sessions;
   const ys = TRANSLATIONS[lang].yogaSeries;
   const prefix = langPrefix(lang);
+  const { courses } = useCourses();
   return (
     <section id="courses" className="py-24 bg-stone-50/50">
       <div className="container mx-auto px-6">
@@ -3553,7 +3600,7 @@ const CoursesSection = ({ lang, onBookCourse }: { lang: "EN" | "DE", onBookCours
         </div>
 
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-          {COURSES.filter(course => !isCoursePast(course)).map((course, idx) => {
+          {courses.filter(course => !isCoursePast(course)).map((course, idx) => {
             const content = course[lang];
             return (
               <motion.div
@@ -4997,16 +5044,42 @@ const CheckoutResultDialog = ({ lang }: { lang: "EN" | "DE" }) => {
   );
 };
 
-// Details page for a `bookable` course, whose copy lives in
-// TRANSLATIONS[lang][course.pageKey] (e.g. yogaSeries, yogaAdventure).
-// The Courses tile stays short and links here for the full picture.
+// Details page for a `bookable` course. Courses defined in code keep their
+// copy in TRANSLATIONS[lang][course.pageKey] (e.g. yogaSeries,
+// yogaAdventure); courses created in the admin section carry it in
+// `page`, with generic labels (src/lib/publicCourses.ts). The Courses tile
+// stays short and links here for the full picture.
+//
+// ?preview=<token> (from the admin course editor) shows a draft as it will
+// look once published, with booking disabled and kept out of search.
 const CoursePage = () => {
   const { id } = useParams<{ id: string }>();
   const { lang, onBookCourse } = useOutletContext<LayoutContext>();
-  const course = COURSES.find(c => c.id === id && c.bookable);
+  const location = useLocation();
+  const previewToken = new URLSearchParams(location.search).get("preview");
+  const { courses, loaded } = useCourses();
+  const [preview, setPreview] = useState<PublicCourse | null | undefined>(previewToken ? undefined : null);
+  useEffect(() => {
+    if (!previewToken || !id) return;
+    let cancelled = false;
+    loadCoursePreview(id, previewToken).then(c => { if (!cancelled) setPreview(c); });
+    return () => { cancelled = true; };
+  }, [id, previewToken]);
+
+  const course = preview ?? courses.find(c => c.id === id && c.bookable);
   const content = course?.[lang];
-  const ys = TRANSLATIONS[lang][course?.pageKey ?? "yogaSeries"];
-  const closed = course ? isCourseBookingClosed(course) : false;
+  const generic = GENERIC_COURSE_LABELS[lang];
+  const ys = course?.page
+    ? {
+        ...generic,
+        ...course.page[lang],
+        learnTitle: course.page[lang].learnTitle || generic.learnTitle,
+        benefitsTitle: course.page[lang].benefitsTitle || generic.benefitsTitle,
+        scheduleLabel: course.sessions ? generic.scheduleLabelPickOne : generic.scheduleLabel,
+      }
+    : TRANSLATIONS[lang][(course?.pageKey ?? "yogaSeries") as "yogaSeries"];
+  const isPreview = Boolean(preview);
+  const closed = course ? isPreview || isCourseBookingClosed(course) : false;
   const closedLabel = TRANSLATIONS[lang].courseIntake.registrationClosed;
   const sp = TRANSLATIONS[lang].servicePage;
   const prefix = langPrefix(lang);
@@ -5019,18 +5092,23 @@ const CoursePage = () => {
     lang,
     alternates: { en: `${SITE_URL}/courses/${id}`, de: `${SITE_URL}/de/courses/${id}` },
   });
+  useNoIndex(isPreview);
 
   const courseData = useMemo(
-    () => (course ? courseJsonLd(course, lang, canonical, !closed) : null),
-    [course, lang, canonical, closed]
+    () => (course && !isPreview ? courseJsonLd(course, lang, canonical, !closed) : null),
+    [course, lang, canonical, closed, isPreview]
   );
   useJsonLd("ld-json-course", courseData);
   const eventsData = useMemo(
-    () => (course ? courseEventsJsonLd(course, lang, canonical, !closed) : null),
-    [course, lang, canonical, closed]
+    () => (course && !isPreview ? courseEventsJsonLd(course, lang, canonical, !closed) : null),
+    [course, lang, canonical, closed, isPreview]
   );
   useJsonLd("ld-json-course-events", eventsData);
 
+  // A stored course (or a preview) is still loading: wait, don't redirect.
+  if (!course && ((previewToken && preview === undefined) || (!previewToken && !loaded))) {
+    return <main className="pt-32 pb-24 min-h-[60vh]" />;
+  }
   if (!course || !content) return <Navigate to={prefix || "/"} replace />;
 
   const facts = [
@@ -5043,6 +5121,9 @@ const CoursePage = () => {
   return (
     <main className="pt-32 pb-24">
       <div className="container mx-auto px-6 max-w-3xl">
+        {isPreview && (
+          <p className="mb-8 rounded-lg border border-orange-200 bg-orange-50 p-3 text-sm text-orange-900">{GENERIC_COURSE_LABELS[lang].previewBanner}</p>
+        )}
         <nav className="flex items-center gap-2 text-sm text-muted-foreground mb-10" aria-label="Breadcrumb">
           <Link to={prefix || "/"} className="hover:text-primary transition-colors">{sp.home}</Link>
           <ChevronRight className="w-3.5 h-3.5" />

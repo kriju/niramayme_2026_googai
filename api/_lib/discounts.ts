@@ -34,7 +34,7 @@ export type Quote = {
   discount: { kind: DiscountKind; percent: number; code?: string } | null;
 };
 
-export type CodeProblem = "code_not_found" | "code_expired" | "code_used" | "code_wrong_email";
+export type CodeProblem = "code_not_found" | "code_expired" | "code_used" | "code_wrong_email" | "code_not_valid_here";
 
 type CodeDoc = {
   kind: "alumni" | "newsletter";
@@ -95,12 +95,14 @@ export async function quote(
 ): Promise<{ quote: Quote; codeProblem: CodeProblem | null }> {
   const code = normalizeCode(rawCode);
   const candidates: NonNullable<Quote["discount"]>[] = [];
-  if (earlyBirdActive(course, now)) candidates.push({ kind: "early_bird", percent: EARLY_BIRD_PERCENT });
+  if (earlyBirdActive(course, now)) candidates.push({ kind: "early_bird", percent: course.earlyBirdPercent ?? EARLY_BIRD_PERCENT });
   let codeProblem: CodeProblem | null = null;
   if (code) {
     const result = await lookupCode(db, code, courseId, email, now);
-    if (result.ok) candidates.push({ kind: result.kind, percent: result.percent, code });
-    else codeProblem = result.problem;
+    // A course can turn off alumni or welcome codes (admin course editor).
+    const allowed = result.ok && (result.kind === "alumni" ? course.alumniCodes !== false : course.welcomeCodes !== false);
+    if (result.ok && allowed) candidates.push({ kind: result.kind, percent: result.percent, code });
+    else codeProblem = result.ok ? "code_not_valid_here" : result.problem;
   }
   const best = candidates.reduce<Quote["discount"]>((a, b) => (!a || b.percent > a.percent ? b : a), null);
   const discountCents = best ? Math.round((course.amountCents * best.percent) / 100) : 0;

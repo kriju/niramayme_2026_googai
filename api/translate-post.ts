@@ -30,16 +30,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       throw new Error("Translation is not configured (missing DEEPL_API_KEY).");
     }
 
+    // Courses (admin course editor) send a list of texts instead: every
+    // field of the course page in one request, translated in place.
+    const list = Array.isArray(req.body?.texts)
+      ? (req.body.texts as unknown[]).slice(0, 100).map((t) => (typeof t === "string" ? t.slice(0, 5000) : ""))
+      : null;
     const title = typeof req.body?.title === "string" ? req.body.title : "";
     const excerpt = typeof req.body?.excerpt === "string" ? req.body.excerpt : "";
     const content = typeof req.body?.content === "string" ? req.body.content : "";
-    if (!title.trim() && !content.trim()) {
+    if (list ? !list.some((t) => t.trim()) : !title.trim() && !content.trim()) {
       return res.status(400).json({ error: "Nothing to translate" });
     }
 
     // DeepL keeps each array entry as its own translation unit, so title,
     // excerpt and content go over in one request rather than three.
-    const texts = [title, excerpt, content];
+    const texts = list ?? [title, excerpt, content];
     const response = await fetch(`${deeplApiBase(apiKey)}/v2/translate`, {
       method: "POST",
       headers: {
@@ -65,6 +70,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     const data = (await response.json()) as DeeplResponse;
+    if (list) return res.status(200).json({ texts: data.translations.map(t => t.text) });
     const [translatedTitle, translatedExcerpt, translatedContent] = data.translations.map(t => t.text);
 
     return res.status(200).json({

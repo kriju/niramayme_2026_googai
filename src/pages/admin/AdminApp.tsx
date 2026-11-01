@@ -11,6 +11,9 @@ import AdminLogin from "./AdminLogin";
 import DashboardPage from "./DashboardPage";
 import AuditLogPage from "./AuditLogPage";
 import SecurityPage from "./SecurityPage";
+import CoursesListPage from "./CoursesListPage";
+import CourseEditorPage from "./CourseEditorPage";
+import CourseOverviewPage from "./CourseOverviewPage";
 import { AdminApiError, adminFetch, describeError, type WhoAmI } from "./adminApi";
 
 // The admin section (docs/admin-section-design.md). Mounted at /admin/* in
@@ -20,7 +23,7 @@ import { AdminApiError, adminFetch, describeError, type WhoAmI } from "./adminAp
 
 const NAV: { to: string; label: string; icon: React.ElementType; soon?: string }[] = [
   { to: "/admin", label: "Dashboard", icon: Home },
-  { to: "/admin/courses", label: "Courses", icon: CalendarDays, soon: "step 2" },
+  { to: "/admin/courses", label: "Courses", icon: CalendarDays },
   { to: "/admin/bookings", label: "Bookings", icon: Inbox, soon: "step 3" },
   { to: "/admin/payments", label: "Payments", icon: CreditCard, soon: "step 4" },
   { to: "/admin/payments/links", label: "Payment links", icon: Link2 },
@@ -72,7 +75,7 @@ function Shell({ user, who }: { user: User; who: WhoAmI }) {
               <NavLink
                 key={item.to}
                 to={item.to}
-                end
+                end={item.to === "/admin" || item.to === "/admin/payments"}
                 className={({ isActive }) => `whitespace-nowrap rounded-full px-3 py-1.5 text-sm ${isActive ? "bg-primary text-primary-foreground" : "text-stone-700"}`}
               >
                 {item.label}
@@ -88,7 +91,7 @@ function Shell({ user, who }: { user: User; who: WhoAmI }) {
               <li key={item.to}>
                 <NavLink
                   to={item.to}
-                  end
+                  end={item.to === "/admin" || item.to === "/admin/payments"}
                   className={({ isActive }) => `flex items-center gap-2 rounded-lg px-3 py-2 text-sm ${isActive ? "bg-white border border-stone-200 font-medium" : "text-stone-700 hover:bg-white"}`}
                 >
                   <item.icon className="w-4 h-4" />
@@ -108,7 +111,9 @@ function Shell({ user, who }: { user: User; who: WhoAmI }) {
           ) : (
             <Routes>
               <Route index element={<DashboardPage user={user} />} />
-              <Route path="courses/*" element={<ComingSoon title="Courses" step="step 2" what="create, translate, publish, reschedule and cancel courses without a code change." />} />
+              <Route path="courses" element={<CoursesListPage user={user} />} />
+              <Route path="courses/:id" element={<CourseOverviewPage user={user} />} />
+              <Route path="courses/:id/edit" element={<CourseEditorPage user={user} />} />
               <Route path="bookings/*" element={<ComingSoon title="Bookings" step="step 3" what="one inbox for every booking, UPI verification and 1:1 appointment scheduling." />} />
               <Route path="payments" element={<ComingSoon title="Payments & invoices" step="step 4" what="refunds, credit notes, the invoice ledger and CSV export for the tax adviser." />} />
               <Route path="payments/links" element={<PaymentLinksPanel user={user} />} />
