@@ -225,6 +225,19 @@ Only Draft → Published, Reopen and Cancel are your clicks. Closing, Running an
 - **SEO depends on the rebuild.** If the deploy hook fails, the pre-rendered page goes stale while the live view is current. The admin shows the rebuild status and offers **Retry**.
 - **Once-a-day cron on Hobby.** Reminders are coarse (12–36 h ahead). On Pro an hourly cron gives exact 24 h reminders and the Meet-link warnings.
 
+### Managing courses through Claude: the Niramay connector
+
+You can run courses either from the admin pages or by asking Claude in chat. Both use the same course records and the same `/api/admin` checks, so it never matters which of you made the last change. *(Decision, Nov 1: build this as part of Priority 1.)*
+
+- **How it works.** The site gets one small endpoint that Claude can call (`/api/admin?op=mcp`, served by the same function, so no extra function slot). You add it once as a connector in Claude's settings, and then any chat can use it, including on your phone. No code change or deploy is needed per course.
+- **What Claude can do:** list courses; create or update a **draft**; get a preview link; send for approval, publish or close booking (only when you ask); read booking counts and payment status.
+- **What Claude can't do:** refunds, cancelling a course with paid participants, deleting anything, reading birth details or health notes, or changing settings. Those stay in the admin, behind your login and two-factor code. Anything Claude reads, such as a review or comment, could contain text meant to steer it, so the connector never gets power over money or sensitive data.
+- **Approval still applies.** A course Claude drafts at Riju's request still needs Richa's approval to publish, and the other way round. Claude acts as the founder who asked.
+- **Accountability.** Every change made through the connector is logged as "Claude, at Riju's request" (or Richa's).
+- **Access.** A separate connector login per founder (OAuth), revocable at any time; rate limited; works only on the live site, with the preview badge rule applying to previews.
+
+Typical use: "New course: yoga for back pain, 6 weeks from January, Tuesdays 19:00, €69, max 12." Claude drafts both languages, runs the checklist, saves the draft and sends the preview link. Then the other founder approves and publishes, in the admin or by telling Claude.
+
 ## Priority 2: Bookings & Payments
 
 Every booking and order, from all 5 collections, appears in one inbox with one shared status. UPI checks, refunds, withdrawals and invoices are each one button with a record behind it, instead of an email you have to remember.
@@ -349,7 +362,7 @@ Each module below reuses the shell, the endpoint and the audit log, so it can be
 Ship in five steps. Each one goes through your usual flow: a pull request, the Vercel preview to check, your approval, then merge. Each step works on its own.
 
 1. **Foundations.** On Hobby for now: merge blog-upload and blog-delete-blob to free a function slot for /api/admin, so nothing has to be undone when you move to Pro. Then custom claims and two-factor login, the `/admin` shell with environment badge, `/api/admin`, audit log, a dashboard with Needs action, and `/write` moved under it.
-2. **Courses.** The `courses` collection; the migration script for the two current courses; server-side booking creation with closing date and seat checks; the new rules; list, editor, preview and publish with rebuild.
+2. **Courses.** The `courses` collection; the migration script for the two current courses; server-side booking creation with closing date and seat checks; the new rules; list, editor, preview and publish with rebuild; the Niramay connector for Claude.
 3. **Bookings inbox.** Read-only list and detail across all 5 collections, UPI verification, scheduling of 1:1 appointments, and the cron fix (reminders only for paid or verified bookings).
 4. **Money.** Refunds, credit notes, withdrawal tracking, invoice ledger and CSV, reconciliation, and the payment-link upgrades.
 5. **Later modules,** one pull request each, in the order you choose from the table above.
