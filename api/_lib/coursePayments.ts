@@ -1,23 +1,22 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { FieldValue } from "firebase-admin/firestore";
+import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import { getAdminDb } from "./firebaseAdmin.js";
 import { sendEmail } from "./mailer.js";
 import { HttpError, clientKey, enforceRateLimit, safeEqual } from "./engagement.js";
 import { adminSubject, escapeHtml, getSiteUrl } from "./util.js";
 import { withNotice } from "./withdrawal.js";
 import {
-  COURSES,
   COURSE_CONTACT_EMAIL,
   bookedSessions,
   formatEuro,
   formatSessionDate,
-  isCourseId,
   meetUrlFor,
   type CourseId,
   type CourseInfo,
   type CourseSession,
   type Lang,
 } from "./courses.js";
+import { SEAT_HOLD_MS, assertBookable, getCourse, listCourses, seatsTaken } from "./courseStore.js";
 import { emailKey, ensureAlumniCode, normalizeCode, quote, redeemCode, type Quote } from "./discounts.js";
 import { buildCourseIcs } from "./ics.js";
 import { renderInvoicePdf, reserveInvoiceNumber, type InvoiceData } from "./invoice.js";
@@ -62,8 +61,19 @@ function discountLabel(discount: Quote["discount"], lang: Lang): string | null {
   return `${name} ${discount.percent}%`;
 }
 
-function upcoming(sessions: CourseSession[], now = Date.now()): boolean {
-  return sessions.some((s) => new Date(s.start).getTime() > now);
+// Where the course happens, for the confirmation and reminder emails.
+function whereText(course: CourseInfo, meetUrl: string, lang: Lang): string {
+  const de = lang === "DE";
+  if (course.format === "inPerson" && course.venue) {
+    return de ? `Ort: ${course.venue}` : `Venue: ${course.venue}`;
+  }
+  const online = meetUrl
+    ? de ? `Der Kurs findet online über Google Meet statt: ${meetUrl}` : `The course takes place online via Google Meet: ${meetUrl}`
+    : de ? "Der Kurs findet online über Google Meet statt. Den Link senden wir Ihnen einen Tag vor der Einheit per E-Mail." : "The course takes place online via Google Meet. We'll email you the link one day before the session.";
+  return course.format === "hybrid" && course.venue
+    ? `${online}
+${de ? `Vor Ort: ${course.venue}` : `In person: ${course.venue}`}`
+    : online;
 }
 
 export async function readJson(req: VercelRequest): Promise<Record<string, unknown>> {
@@ -85,13 +95,27 @@ export async function handleQuote(req: VercelRequest, res: VercelResponse) {
   }
   try {
     const body = await readJson(req);
-    if (!isCourseId(body.course)) throw new HttpError(400, "unknown_course");
-    const email = typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
     const db = getAdminDb();
+    const course = await getCourse(db, body.course);
+    if (!course) throw new HttpError(400, "unknown_course");
+    const courseId = body.course as CourseId;
+    const email = typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
     // Code lookups are cheap to brute-force otherwise.
     await enforceRateLimit(db, "course_quote", clientKey(req), 30, 3600);
-    const result = await quote(db, body.course, COURSES[body.course], body.code, email);
-    return res.status(200).json(result);
+    const result = await quote(db, courseId, course, body.code, email);
+    // Seats left, so the booking form can say "fully booked" up front: per
+    // course for a series, per date (keyed by session id) for pick-one.
+    let seatsLeft: number | Record<string, number> | null = null;
+    if (course.seatLimit) {
+      const limit = course.seatLimit;
+      if (course.pickOne) {
+        const entries = await Promise.all(course.sessions.map(async (s) => [s.id, Math.max(0, limit - await seatsTaken(db, courseId, course, s.id))] as const));
+        seatsLeft = Object.fromEntries(entries);
+      } else {
+        seatsLeft = Math.max(0, limit - await seatsTaken(db, courseId, course, undefined));
+      }
+    }
+    return res.status(200).json({ ...result, seatsLeft });
   } catch (error) {
     if (error instanceof HttpError) return res.status(error.status).json({ error: error.code });
     console.error("course quote failed:", error);
@@ -118,12 +142,23 @@ export async function handleCheckout(req: VercelRequest, res: VercelResponse) {
     const snap = await ref.get();
     if (!snap.exists) throw new HttpError(404, "booking_not_found");
     const booking = snap.data() as Record<string, any>;
-    if (!isCourseId(booking.course)) throw new HttpError(400, "unknown_course");
+    const course = await getCourse(db, booking.course);
+    if (!course) throw new HttpError(400, "unknown_course");
     if (booking.paid) throw new HttpError(409, "already_paid");
     const courseId: CourseId = booking.course;
-    const course = COURSES[courseId];
     const sessions = bookedSessions(course, booking.session);
-    if (sessions.length === 0 || !upcoming(sessions)) throw new HttpError(410, "course_over");
+    assertBookable(course, booking.session);
+
+    // Hold a seat for the length of the Checkout, in a transaction, so two
+    // people can't both pay for the last one.
+    if (course.seatLimit) {
+      const limit = course.seatLimit;
+      await db.runTransaction(async (tx) => {
+        const taken = await seatsTaken(db, courseId, course, booking.session, { tx, excludeBookingId: requestId });
+        if (taken >= limit) throw new HttpError(409, "course_full");
+        tx.update(ref, { seatHeldUntil: Timestamp.fromMillis(Date.now() + SEAT_HOLD_MS) });
+      });
+    }
 
     const lang: Lang = booking.lang === "DE" ? "DE" : "EN";
     const email = String(booking.email || "").trim();
@@ -260,16 +295,16 @@ async function fulfil(session: CheckoutSession): Promise<void> {
     const snap = await tx.get(ref);
     if (!snap.exists) throw new Error(`booking ${bookingId} not found`);
     const booking = snap.data() as Record<string, any>;
-    if (!isCourseId(booking.course)) throw new Error(`booking ${bookingId} has unknown course`);
     if (booking.paid) return { booking, invoice: booking.invoice as InvoiceData };
 
     // All reads before any write.
     const courseId: CourseId = booking.course;
+    const course = await getCourse(db, courseId);
+    if (!course) throw new Error(`booking ${bookingId} has unknown course`);
     const code = session.metadata?.discountCode || "";
     const codeSnap = code ? await tx.get(db.collection("discountCodes").doc(code)) : null;
     const reserved = await reserveInvoiceNumber(tx, db, paidAt);
 
-    const course = COURSES[courseId];
     const lang: Lang = booking.lang === "DE" ? "DE" : "EN";
     const totalCents = session.amount_total ?? course.amountCents;
     const percent = Number(session.metadata?.discountPercent) || 0;
@@ -319,7 +354,8 @@ async function fulfil(session: CheckoutSession): Promise<void> {
 
   const { booking, invoice } = outcome;
   if (booking.confirmationSentAt) return;
-  const course = COURSES[booking.course as CourseId];
+  const course = await getCourse(db, booking.course);
+  if (!course) throw new Error(`booking ${bookingId} has unknown course`);
 
   // Join the alumni list now; the code itself is emailed after the course.
   if (EMAIL_RE.test(String(booking.email || "").trim())) {
@@ -361,9 +397,7 @@ async function sendPaidEmails(bookingId: string, booking: Record<string, any>, c
         ? `vielen Dank für Ihre Anmeldung zu „${course.DE.title}“. Ihre Zahlung über ${formatEuro(invoice.totalCents, lang)} ist eingegangen – Ihr Platz ist bestätigt (Referenz ${refCode}).`
         : `Thank you for booking "${course.EN.title}". We've received your payment of ${formatEuro(invoice.totalCents, lang)} — your place is confirmed (reference ${refCode}).`,
       `${de ? "Termine" : "Dates"}:\n${sessionListText(course, sessions, lang).join("\n")}`,
-      meetUrl
-        ? de ? `Der Kurs findet online über Google Meet statt: ${meetUrl}` : `The course takes place online via Google Meet: ${meetUrl}`
-        : de ? "Der Kurs findet online über Google Meet statt. Den Link senden wir Ihnen einen Tag vor der Einheit per E-Mail." : "The course takes place online via Google Meet. We'll email you the link one day before the session.",
+      whereText(course, meetUrl, lang),
       de
         ? "Im Anhang finden Sie Ihre Rechnung und eine Kalenderdatei (.ics) mit allen Terminen – einfach öffnen, um sie in Ihren Kalender zu übernehmen. Zusätzlich erinnern wir Sie 24 Stunden vor jeder Einheit per E-Mail."
         : "Attached are your invoice and a calendar file (.ics) with all dates — open it to add them to your calendar. We'll also remind you by email 24 hours before each session.",
@@ -396,7 +430,7 @@ async function sendPaidEmails(bookingId: string, booking: Record<string, any>, c
     `WhatsApp: ${booking.whatsapp}`,
     `Notes: ${booking.notes || "—"}`,
     `Early start requested: ${booking.legalAcks?.earlyStart ? "yes" : "no"}`,
-    ...(meetUrl ? [] : ["", "No Google Meet link is set for this course yet (api/_lib/courses.ts) — send it to the participant yourself."]),
+    ...(meetUrl || course.format === "inPerson" ? [] : ["", "No Google Meet link is set for this course yet — add it in the admin (Courses → the course), or send it to the participant yourself."]),
   ];
   await sendEmail({
     to: adminRecipients(),
@@ -429,7 +463,8 @@ export async function handleDailyCron(req: VercelRequest, res: VercelResponse) {
   const report = { reminders: 0, alumniMails: 0, errors: 0 };
   const now = Date.now();
 
-  for (const [courseId, course] of Object.entries(COURSES) as [CourseId, CourseInfo][]) {
+  const courses = await listCourses(db);
+  for (const [courseId, course] of courses) {
     for (const session of course.sessions) {
       const startsIn = new Date(session.start).getTime() - now;
       if (startsIn < WINDOW_START_MS || startsIn >= WINDOW_END_MS) continue;
@@ -459,8 +494,8 @@ export async function handleDailyCron(req: VercelRequest, res: VercelResponse) {
   const pending = await db.collection("courseBookings").where("alumniMailPending", "==", true).limit(100).get();
   for (const doc of pending.docs) {
     const booking = doc.data();
-    if (!isCourseId(booking.course)) continue;
-    const course = COURSES[booking.course];
+    const course = courses.find(([id]) => id === booking.course)?.[1];
+    if (!course) continue;
     const sessions = bookedSessions(course, booking.session);
     const lastEnd = Math.max(...sessions.map((s) => new Date(s.end).getTime()));
     if (!(lastEnd < now)) continue;
@@ -496,9 +531,11 @@ async function sendReminder(booking: Record<string, any>, course: CourseInfo, se
     de ? `Hallo ${booking.name},` : `Hi ${booking.name},`,
     de ? `eine kurze Erinnerung: „${course.DE.title}“ findet morgen statt.` : `A quick reminder: "${course.EN.title}" is on tomorrow.`,
     `${de ? "Wann" : "When"}: ${when}`,
-    meetUrl
-      ? `${de ? "Google-Meet-Link" : "Google Meet link"}: ${meetUrl}`
-      : de ? `Den Google-Meet-Link senden wir Ihnen in Kürze. Falls er nicht ankommt, schreiben Sie uns an ${contact}.` : `We'll send you the Google Meet link shortly. If it doesn't arrive, email us at ${contact}.`,
+    course.format === "inPerson" && course.venue
+      ? `${de ? "Ort" : "Venue"}: ${course.venue}`
+      : meetUrl
+        ? `${de ? "Google-Meet-Link" : "Google Meet link"}: ${meetUrl}`
+        : de ? `Den Google-Meet-Link senden wir Ihnen in Kürze. Falls er nicht ankommt, schreiben Sie uns an ${contact}.` : `We'll send you the Google Meet link shortly. If it doesn't arrive, email us at ${contact}.`,
     de
       ? "Bitte halten Sie eine Matte, bequeme Kleidung und etwas Wasser bereit und wählen Sie sich ein paar Minuten früher ein."
       : "Please have a mat, comfortable clothes and some water ready, and join a few minutes early.",

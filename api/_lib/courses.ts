@@ -14,7 +14,12 @@
 // the link follows by email.
 
 export type Lang = "EN" | "DE";
-export type CourseId = "yoga-stress-immunity-sleep" | "yoga-adventure";
+// Courses defined in code (below) before the admin section existed. New
+// courses live in Firestore (courseModel.ts / courseStore.ts); these two stay
+// here until they're over, so in-flight bookings keep working unchanged.
+export type LegacyCourseId = "yoga-stress-immunity-sleep" | "yoga-adventure";
+/** Any course id: a legacy one above or a course created in the admin. */
+export type CourseId = string;
 
 export type CourseSession = {
   id: string;
@@ -35,6 +40,21 @@ export type CourseInfo = Record<Lang, { title: string; schedule: string; price: 
   sessions: CourseSession[];
   /** true = the booker picks one of `sessions`; false = the booking covers all of them. */
   pickOne: boolean;
+  // Set for courses created in the admin section (courseModel.ts toCourseInfo).
+  /** Early-bird percentage; legacy courses use EARLY_BIRD_PERCENT. */
+  earlyBirdPercent?: number;
+  /** false = alumni / welcome codes can't be used for this course. */
+  alumniCodes?: boolean;
+  welcomeCodes?: boolean;
+  format?: "online" | "inPerson" | "hybrid";
+  venue?: string;
+  /** Per course (series) or per date (pick one); null/absent = unlimited. */
+  seatLimit?: number | null;
+  /** ISO instant after which no new bookings or checkouts are accepted. */
+  closesAt?: string | null;
+  closedManually?: boolean;
+  archived?: boolean;
+  dynamic?: boolean;
 };
 
 export const COURSE_CONTACT_EMAIL = "riju.kansal@niramay.me";
@@ -42,7 +62,7 @@ export const COURSE_CONTACT_EMAIL = "riju.kansal@niramay.me";
 // Tuesdays and Thursdays 3–26 Nov 2026, 20:00–21:00 CET.
 const SERIES_DAYS = ["03", "05", "10", "12", "17", "19", "24", "26"];
 
-export const COURSES: Record<CourseId, CourseInfo> = {
+export const COURSES: Record<LegacyCourseId, CourseInfo> = {
   "yoga-stress-immunity-sleep": {
     EN: {
       title: "Yoga for Stress, Immunity & Sleep: 8-Session Series",
@@ -109,8 +129,8 @@ export const COURSES: Record<CourseId, CourseInfo> = {
   },
 };
 
-export function isCourseId(value: unknown): value is CourseId {
-  return typeof value === "string" && value in COURSES;
+export function isLegacyCourseId(value: unknown): value is LegacyCourseId {
+  return typeof value === "string" && Object.prototype.hasOwnProperty.call(COURSES, value);
 }
 
 /** The sessions a booking covers: the chosen one, or all of them. */

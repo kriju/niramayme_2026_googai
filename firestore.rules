@@ -485,6 +485,15 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    // Courses created in the admin section: the published version visitors
+    // see. Written only by api/admin.ts (admin SDK); drafts (courseDrafts)
+    // and the private copy with Meet links (coursePrivate) stay closed to
+    // every client under the default deny.
+    match /courses/{courseId} {
+      allow get, list: if true;
+      allow write: if false;
+    }
+
     match /users/{userId} {
       // A visitor's own account profile — created on signup, readable only
       // by that same signed-in uid. Nothing server-side needs it yet, so

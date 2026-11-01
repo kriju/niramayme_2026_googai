@@ -1,6 +1,7 @@
 import type { Firestore, QueryDocumentSnapshot, Timestamp } from "firebase-admin/firestore";
 import type { AdminUser } from "./adminAuth.js";
-import { COURSES, berlinToday, bookedSessions, meetUrlFor, type CourseId } from "./courses.js";
+import { berlinToday, bookedSessions, meetUrlFor } from "./courses.js";
+import { listCourses } from "./courseStore.js";
 import { berlinWallTime } from "./berlinTime.js";
 
 // The admin dashboard's "Needs attention" list and the small summary under
@@ -13,7 +14,7 @@ import { berlinWallTime } from "./berlinTime.js";
 // notes stay on the server.
 
 export type AttentionItem = {
-  kind: "upi_claim" | "review_pending" | "post_awaiting_you" | "comment_pending" | "meet_link_missing";
+  kind: "upi_claim" | "review_pending" | "post_awaiting_you" | "course_awaiting_you" | "comment_pending" | "meet_link_missing";
   title: string;
   detail: string;
   /** ISO date of what the item is about, for sorting oldest first. */
@@ -113,6 +114,19 @@ export async function loadDashboard(db: Firestore, admin: AdminUser, now = new D
     }));
   }, [] as AttentionItem[]);
 
+  const courseApprovals = section("course_reviews", sections, async () => {
+    const snap = await db.collection("courseDrafts").where("review.status", "==", "in_review").limit(50).get();
+    return snap.docs
+      .filter((doc) => doc.get("review.submittedBy") !== admin.email)
+      .map((doc): AttentionItem => ({
+        kind: "course_awaiting_you",
+        title: "Course waiting for your approval",
+        detail: String(doc.get("data.EN.title") || doc.id).slice(0, 120),
+        at: iso(doc.get("review.submittedAt")),
+        href: `/admin/courses/${doc.id}/edit`,
+      }));
+  }, [] as AttentionItem[]);
+
   // Collection-group query; its index is declared in firestore.indexes.json.
   const comments = section("comments", sections, async () => {
     const snap = await db.collectionGroup("comments").where("status", "==", "pending").orderBy("createdAt", "desc").limit(50).get();
@@ -131,7 +145,8 @@ export async function loadDashboard(db: Firestore, admin: AdminUser, now = new D
     const horizon = now.getTime() + 7 * 24 * 60 * 60 * 1000;
     const rows: Dashboard["upcoming"] = [];
     const missing: AttentionItem[] = [];
-    for (const [id, course] of Object.entries(COURSES) as [CourseId, (typeof COURSES)[CourseId]][]) {
+    for (const [id, course] of await listCourses(db)) {
+      if (course.archived) continue;
       const next = course.sessions.filter((s) => {
         const start = new Date(s.start).getTime();
         return start > now.getTime() && start < horizon;
@@ -152,7 +167,7 @@ export async function loadDashboard(db: Firestore, admin: AdminUser, now = new D
             title: "Session without a Meet link",
             detail: `${course.EN.title} · ${session.label.EN}`,
             at: session.start,
-            href: null,
+            href: course.dynamic ? `/admin/courses/${id}` : null,
           });
         }
       }
@@ -169,10 +184,10 @@ export async function loadDashboard(db: Firestore, admin: AdminUser, now = new D
     return snap.docs.reduce((sum, doc) => sum + (Number(doc.get("totalCents")) || 0), 0);
   }, null as number | null);
 
-  const [upiItems, reviewItems, postItems, commentItems, upcomingResult, monthPaidCents] = await Promise.all([
-    upi, reviews, posts, comments, upcoming, monthTotal,
+  const [upiItems, reviewItems, postItems, courseItems, commentItems, upcomingResult, monthPaidCents] = await Promise.all([
+    upi, reviews, posts, courseApprovals, comments, upcoming, monthTotal,
   ]);
-  items.push(...upiItems, ...postItems, ...upcomingResult.missing, ...reviewItems, ...commentItems);
+  items.push(...upiItems, ...postItems, ...courseItems, ...upcomingResult.missing, ...reviewItems, ...commentItems);
   // Oldest first, so nothing sits at the bottom forever.
   items.sort((a, b) => (a.at ?? "").localeCompare(b.at ?? ""));
 

@@ -18,6 +18,7 @@ const SECTION_NAMES: Record<string, string> = {
   upi_claims: "UPI payment claims",
   reviews: "pending reviews",
   blog_reviews: "posts awaiting approval",
+  course_reviews: "courses awaiting approval",
   comments: "pending comments",
   upcoming: "upcoming sessions",
   month_total: "this month's total",

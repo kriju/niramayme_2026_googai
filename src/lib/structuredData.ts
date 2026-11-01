@@ -7,7 +7,7 @@
 //
 // Imports only plain data — no React — so the Node build script can use it.
 
-import { COURSES, SERVICES, TRANSLATIONS, BUSINESS_STREET_ADDRESS, BUSINESS_POSTAL_CODE, BUSINESS_CITY, GOOGLE_MAPS_URL } from "../constants";
+import { SERVICES, TRANSLATIONS, BUSINESS_STREET_ADDRESS, BUSINESS_POSTAL_CODE, BUSINESS_CITY, GOOGLE_MAPS_URL } from "../constants";
 
 type Lang = "EN" | "DE";
 
@@ -128,7 +128,9 @@ export function websiteJsonLd(_lang: Lang) {
   };
 }
 
-type Course = (typeof COURSES)[number];
+// Type-only import: this file is also used by the build scripts, which must
+// not load the Firebase client that publicCourses.ts uses.
+type Course = import("./publicCourses").PublicCourse;
 type Meeting = { start: string; end: string };
 
 // Each run of a course as its list of meetings: a course with `sessions`
@@ -176,7 +178,7 @@ export function courseJsonLd(course: Course, lang: Lang, url: string, bookable: 
     "@context": "https://schema.org",
     "@type": "Course",
     name: content.title,
-    description: TRANSLATIONS[lang][course.pageKey as "yogaSeries"].seoDescription,
+    description: course.page?.[lang].seoDescription ?? TRANSLATIONS[lang][course.pageKey as "yogaSeries"].seoDescription,
     url,
     inLanguage: lang === "EN" ? "en" : "de",
     provider: ORGANIZER,
@@ -187,7 +189,7 @@ export function courseJsonLd(course: Course, lang: Lang, url: string, bookable: 
         const total = run.reduce((sum, m) => sum + (new Date(m.end).getTime() - new Date(m.start).getTime()), 0);
         return {
           "@type": "CourseInstance",
-          courseMode: "Online",
+          courseMode: course.format === "inPerson" ? "Onsite" : course.format === "hybrid" ? "Blended" : "Online",
           ...(instructor && { instructor }),
           courseWorkload: isoDuration(total),
           courseSchedule: {
@@ -223,8 +225,9 @@ export function courseEventsJsonLd(course: Course, lang: Lang, url: string, book
       startDate: run[0].start,
       endDate: run[run.length - 1].end,
       eventStatus: "https://schema.org/EventScheduled",
-      eventAttendanceMode: "https://schema.org/OnlineEventAttendanceMode",
-      location: { "@type": "VirtualLocation", url },
+      ...(course.format === "inPerson" && course.venue
+        ? { eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode", location: { "@type": "Place", name: course.venue, address: course.venue } }
+        : { eventAttendanceMode: "https://schema.org/OnlineEventAttendanceMode", location: { "@type": "VirtualLocation", url } }),
       image: [`${SITE_URL}/og-default.jpg`],
       organizer: ORGANIZER,
       ...(instructor && { performer: instructor }),

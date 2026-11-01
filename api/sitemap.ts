@@ -83,6 +83,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     })),
   ];
 
+  // Courses created in the admin section (published, not archived).
+  try {
+    const courses = await getAdminDb().collection("courses").get();
+    for (const doc of courses.docs) {
+      if (doc.get("archived") === true || COURSE_IDS.includes(doc.id)) continue;
+      pairs.push({ en: `${SITE_URL}/courses/${doc.id}`, de: `${SITE_URL}/de/courses/${doc.id}`, changefreq: "weekly", priority: "0.8" });
+    }
+  } catch (error) {
+    console.error("sitemap: courses unavailable:", error);
+  }
+
   const blogEntries: BlogEntry[] = [];
   try {
     const db = getAdminDb();
