@@ -204,9 +204,11 @@ for (const route of routes) {
     count++;
   }
 }
-write("write.html", renderNoIndex(shell));
+// The admin section (/admin and, through a vercel.json rewrite, /admin/*):
+// private, never indexed. /write redirects there.
+write("admin.html", renderNoIndex(shell));
 // Personal payment links (/pay/:id, rewritten here in vercel.json): private, never indexed.
 write("pay.html", renderNoIndex(shell));
 write("de/pay.html", renderNoIndex(shell));
 write("404.html", renderNoIndex(shell));
-console.log(`prerender-routes: wrote ${count} route pages, write.html, pay.html and 404.html`);
+console.log(`prerender-routes: wrote ${count} route pages, admin.html, pay.html and 404.html`);

@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { Upload, Trash2, LogOut, Lock, Pencil, Languages, AlertTriangle, ClipboardCheck, Globe, MessageSquare, Send, ShieldCheck } from "lucide-react";
+import { Upload, Trash2, LogOut, Pencil, Languages, AlertTriangle, ClipboardCheck, Globe, MessageSquare, Send, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import PaymentLinksPanel from "../components/PaymentLinksPanel";
 import { db } from "../lib/firebase";
 import { auth } from "../lib/firebase-auth";
 import {
@@ -19,12 +18,7 @@ import {
   Timestamp,
   where
 } from "firebase/firestore";
-import {
-  onAuthStateChanged,
-  signInWithEmailAndPassword,
-  signOut,
-  type User
-} from "firebase/auth";
+import { signOut, type User } from "firebase/auth";
 import { upload as uploadBlob } from "@vercel/blob/client";
 import {
   Card,
@@ -33,8 +27,7 @@ import {
   CardTitle
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { TRANSLATIONS, BLOG_ADMIN_USERNAMES, usernameToLoginEmail } from "../constants";
-import { SITE_URL, useSeo, useNoIndex } from "../lib/seo";
+import { TRANSLATIONS } from "../constants";
 import { checkPost, needsDisclaimer, REVIEW_CHECKLIST, type CheckWarning, type ChecklistId } from "../../api/_lib/claimsCheck";
 
 // Only used by the /write dashboard to greet whoever's signed in and to
@@ -61,72 +54,6 @@ async function uniqueSlug(base: string, excludeId?: string): Promise<string> {
     candidate = `${base}-${n}`;
   }
 }
-
-const LoginForm = () => {
-  const wt = TRANSLATIONS.EN.write;
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [submitting, setSubmitting] = useState(false);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    const normalized = username.trim().toLowerCase();
-    if (!(BLOG_ADMIN_USERNAMES as readonly string[]).includes(normalized)) {
-      setError(wt.invalidCredentials);
-      return;
-    }
-    setSubmitting(true);
-    try {
-      await signInWithEmailAndPassword(auth, usernameToLoginEmail(normalized), password);
-    } catch {
-      setError(wt.invalidCredentials);
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-stone-50 px-6">
-      <div className="w-full max-w-sm bg-white rounded-2xl border border-stone-100 shadow-sm p-8">
-        <div className="flex items-center gap-2 mb-8 justify-center">
-          <img src="/logo.svg" alt="Niramay Wellbeing" className="w-8 h-8" referrerPolicy="no-referrer" />
-          <span className="font-serif text-xl font-bold">{wt.pageTitle}</span>
-        </div>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-stone-600">{wt.usernameLabel}</label>
-            <input
-              required
-              autoFocus
-              autoComplete="username"
-              className="w-full px-4 py-3 rounded-xl border border-stone-200 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
-              value={username}
-              onChange={e => setUsername(e.target.value)}
-            />
-          </div>
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-stone-600">{wt.passwordLabel}</label>
-            <input
-              required
-              type="password"
-              autoComplete="current-password"
-              className="w-full px-4 py-3 rounded-xl border border-stone-200 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-            />
-          </div>
-          {error && <p className="text-sm text-red-600">{error}</p>}
-          <Button type="submit" className="w-full rounded-full gap-2" disabled={submitting}>
-            <Lock className="w-4 h-4" />
-            {submitting ? wt.signingIn : wt.signIn}
-          </Button>
-        </form>
-      </div>
-    </div>
-  );
-};
 
 type BlogPostDoc = {
   id: string;
@@ -349,7 +276,10 @@ const WarningList = ({ warnings, empty }: { warnings: CheckWarning[]; empty?: st
   );
 };
 
-const WriteDashboard = ({ user }: { user: User }) => {
+// The blog editor. Shown at /admin/blog inside the admin section
+// (src/pages/admin/AdminApp.tsx), which handles sign-in and the page frame;
+// `embedded` hides this component's own logo and sign-out row there.
+export const WriteDashboard = ({ user, embedded = false }: { user: User; embedded?: boolean }) => {
   const wt = TRANSLATIONS.EN.write;
   const et = TRANSLATIONS.EN.blog.editor;
   const me = user.email ?? "";
@@ -818,7 +748,10 @@ const WriteDashboard = ({ user }: { user: User }) => {
   const saveDisabled = saving || uploadingImage || uploadingAudio || !form.title.trim() || !form.content.trim();
 
   return (
-    <div className="max-w-3xl mx-auto px-6 py-12">
+    <div className={embedded ? "max-w-3xl" : "max-w-3xl mx-auto px-6 py-12"}>
+      {embedded ? (
+        <h1 className="font-serif text-2xl font-bold mb-8">Blog</h1>
+      ) : (
       <div className="flex items-center justify-between mb-10">
         <div className="flex items-center gap-2">
           <img src="/logo.svg" alt="Niramay Wellbeing" className="w-8 h-8" referrerPolicy="no-referrer" />
@@ -829,6 +762,7 @@ const WriteDashboard = ({ user }: { user: User }) => {
           <LogOut className="w-4 h-4" /> {wt.signOut}
         </Button>
       </div>
+      )}
 
       {(waitingForMe.length > 0 || backToMe.length > 0 || liveApproved.length < livePosts.length) ? (
         <Card className="border-amber-200 bg-amber-50/40 mb-8">
@@ -1283,34 +1217,3 @@ const ReviewPanel = ({
     </Card>
   );
 };
-
-// Outside AppLayout: no marketing nav/footer/WhatsApp button on the admin
-// tool. Lazy-loaded from App.tsx since it pulls in Firebase Auth, the
-// Vercel Blob upload client and the whole editor UI that visitors never
-// need.
-export default function WritePage() {
-  const [user, setUser] = useState<User | null>(null);
-  const [authLoading, setAuthLoading] = useState(true);
-
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, u => {
-      setUser(u);
-      setAuthLoading(false);
-    });
-    return unsubscribe;
-  }, []);
-
-  useSeo({ title: "Niramay Blog Admin", description: "", canonical: `${SITE_URL}/write`, lang: "EN" });
-
-  // Not content for visitors — keep it out of the index entirely rather
-  // than relying on nobody linking to it.
-  useNoIndex();
-
-  if (authLoading) return null;
-
-  return (
-    <div className="min-h-screen bg-stone-50">
-      {user ? <><WriteDashboard user={user} /><PaymentLinksPanel user={user} /></> : <LoginForm />}
-    </div>
-  );
-}

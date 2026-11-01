@@ -1,9 +1,5 @@
 import { getAdminAuth } from "./firebaseAdmin.js";
-
-// Kept in sync by hand with BLOG_ADMIN_USERNAMES/BLOG_ADMIN_EMAIL_DOMAIN in
-// src/constants.ts and the isBlogAdmin() allowlist in firestore.rules — all
-// three need to agree on exactly these two accounts.
-const BLOG_ADMIN_EMAILS = ["rijuk@niramay.me", "richak@niramay.me"];
+import { isOwnerToken } from "./adminAuth.js";
 
 // Verifies a Firebase ID token really belongs to one of the two blog admin
 // accounts, throwing otherwise. This — not the client-side username check
@@ -14,7 +10,9 @@ export async function requireBlogAdmin(bearerHeader: string | string[] | undefin
   const token = header?.replace(/^Bearer\s+/i, "");
   if (!token) throw new Error("Missing Authorization header");
   const decoded = await getAdminAuth().verifyIdToken(token);
-  if (!decoded.email || !BLOG_ADMIN_EMAILS.includes(decoded.email)) {
+  // Same check as the admin section: the role: "owner" custom claim, or one
+  // of the two founder emails until the claims are set (adminAuth.ts).
+  if (!decoded.email || !isOwnerToken(decoded)) {
     throw new Error("Not authorized");
   }
   return decoded.email;
