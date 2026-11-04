@@ -19,3 +19,4 @@ Grow qualified traffic and bookings for online offerings from clients worldwide 
 ## Run log
 - 2026-11-01: Journal created from seed.
 - 2026-11-03 (Tue, daily): All normal. Vercel 11-02: 6 visitors (5 non-DE; IN 4, PK 1) vs 7 (3 non-DE) on 10-26. GSC latest day 10-31: 0 clicks, 3 impressions (prior-week same day n/a; 7-day avg ~8/day, low, n too small). Home, /services/reiki, /courses/yoga-adventure all 200. One /api/admin RangeError, no spike. E1 too early.
+- 2026-11-04 (Wed, daily): All normal. Vercel 11-03: 12 visitors (3 non-DE: IN, US, IE) vs 4 (1 non-DE) on 10-27. GSC latest day 11-01: 0 clicks, 5 impressions (10-25..11-01 range 3–15/day; n too small). Home, /services/reiki, /courses/yoga-adventure 200. Runtime errors: only recurring url.parse deprecation warning (harmless). E1 too early.
