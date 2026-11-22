@@ -1781,12 +1781,12 @@ export const serviceSeoTitle = (service: { delivery?: string; EN: { title: strin
 // mirror the English version.
 export const HOME_SEO = {
   EN: {
-    title: "Niramay Wellbeing — Yoga, Reiki & Holistic Therapy in Ostfildern & Online",
-    description: "Niramay Wellbeing: yoga, Reiki, NLP coaching, hypnotherapy and Vedic astrology guidance with Richa Kansal, in Ostfildern, Germany, and live online. Book a free 15-minute call.",
+    title: "Niramay Wellbeing — Yoga, Meditation & Reiki in Ostfildern & Online",
+    description: "Niramay Wellbeing: yoga, meditation, Reiki, NLP coaching, hypnotherapy and Vedic astrology guidance with Richa Kansal, in Ostfildern, Germany, and live online. Book a free 15-minute call.",
   },
   DE: {
-    title: "Niramay Wohlbefinden — Yoga, Reiki & ganzheitliches Wohlbefinden in Ostfildern & online",
-    description: "Niramay Wohlbefinden: Yoga, Reiki, NLP-Coaching, Hypnotherapie und vedische Astrologie mit Richa Kansal, in Ostfildern und live online. Kostenloses 15-Minuten-Gespräch vereinbaren.",
+    title: "Niramay Wohlbefinden — Yoga, Meditation & Reiki in Ostfildern & online",
+    description: "Niramay Wohlbefinden: Yoga, Meditation, Reiki, NLP-Coaching, Hypnotherapie und vedische Astrologie mit Richa Kansal, in Ostfildern und live online. Kostenloses 15-Minuten-Gespräch vereinbaren.",
   },
 };
 
