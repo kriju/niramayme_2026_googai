@@ -2887,141 +2887,36 @@ export const ANNOUNCEMENTS: {
 // Curated set of past-event photos, shown in the "Moments From Our Journey" section
 // to build trust by showing Richa & Riju actually teaching. Kept as a small, hand-picked
 // list (not user/admin uploaded) — see EventsSection in App.tsx.
+// Ordered newest first: ongoing weekly classes, then past events by date (most recent at top).
 export const EVENTS = [
   {
-    id: "singapore-kids-2018",
-    image: "/events/08-kids-seaside-workshop-singapore-2018.webp",
-    year: "2018",
+    id: "ruit-weekly",
+    image: "/events/02-ruit-weekly-sunday-session.webp",
+    year: "Ongoing",
     EN: {
-      title: "Kids Yoga Seaside Workshop",
-      location: "Singapore",
-      description: "Richa led a playful outdoor yoga workshop for children along the waterfront.",
+      title: "Weekly Sunday Evening Yoga Session",
+      location: "Ruit Treffpunkt, Ostfildern",
+      description: "Our regular Sunday evening class — join us for a consistent weekly practice.",
     },
     DE: {
-      title: "Kinder-Yoga-Workshop am Meer",
-      location: "Singapur",
-      description: "Richa leitete einen spielerischen Yoga-Workshop für Kinder direkt am Wasser.",
+      title: "Wöchentliche Yoga-Sitzung am Sonntagabend",
+      location: "Ruit Treffpunkt, Ostfildern",
+      description: "Unser regelmäßiger Sonntagabend-Kurs — machen Sie mit bei einer festen wöchentlichen Praxis.",
     }
   },
   {
-    id: "singapore-iyd-2019",
-    image: "/events/09-iyd-2019-singapore.webp",
-    year: "2019",
+    id: "scharnhauserpark-sunday",
+    image: "/events/12-scharnhauserpark-sunday-active-yoga.webp",
+    year: "Ongoing",
     EN: {
-      title: "International Day of Yoga",
-      location: "Chong Pang, Singapore",
-      description: "A community yoga session for people of all ages, held in celebration of International Yoga Day.",
+      title: "Weekly Sunday Morning Yoga Session",
+      location: "Bürgertreff Scharnhauserpark, Ostfildern",
+      description: "Our weekly Sunday 8:30 am class for strength and an immunity boost — open to everyone.",
     },
     DE: {
-      title: "Internationaler Tag des Yoga",
-      location: "Chong Pang, Singapur",
-      description: "Eine Gemeinschafts-Yoga-Sitzung für Menschen jeden Alters anlässlich des Internationalen Yoga-Tages.",
-    }
-  },
-  {
-    id: "certification-2020",
-    image: "/events/10-rijus-certification-course-2020.webp",
-    year: "2020",
-    EN: {
-      title: "Yoga Teacher Certification Course",
-      location: "Riju leading a practice demo",
-      description: "Riju guiding fellow trainees through an asana demonstration during his yoga certification training.",
-    },
-    DE: {
-      title: "Yogalehrer-Zertifizierungskurs",
-      location: "Riju bei einer Übungsdemonstration",
-      description: "Riju führt Mitauszubildende während seiner Yoga-Ausbildung durch eine Asana-Demonstration.",
-    }
-  },
-  {
-    id: "todtnau-2022",
-    image: "/events/03-iyd-2022-todtnau.webp",
-    year: "2022",
-    EN: {
-      title: "International Day of Yoga",
-      location: "Todtnau, Germany",
-      description: "An outdoor group session set against the Black Forest hills.",
-    },
-    DE: {
-      title: "Internationaler Tag des Yoga",
-      location: "Todtnau, Deutschland",
-      description: "Eine Gruppensitzung im Freien vor der Kulisse des Schwarzwalds.",
-    }
-  },
-  {
-    id: "stuttgart-vaihingen-2023",
-    image: "/events/04-iyd-2023-vaihingen-park-stuttgart.webp",
-    year: "2023",
-    EN: {
-      title: "International Day of Yoga",
-      location: "Stadtpark Vaihingen, Stuttgart",
-      description: "A public park gathering with 50 rounds of Sun Salutation, open to the whole community.",
-    },
-    DE: {
-      title: "Internationaler Tag des Yoga",
-      location: "Stadtpark Vaihingen, Stuttgart",
-      description: "Ein öffentliches Treffen im Park mit 50 Runden Sonnengruß, offen für die gesamte Gemeinschaft.",
-    }
-  },
-  {
-    id: "stuttgart-berliner-platz-2024",
-    image: "/events/05-iyd-2024-berliner-platz-stuttgart.webp",
-    year: "2024",
-    EN: {
-      title: "10th International Day of Yoga",
-      location: "Berliner Platz, Stuttgart",
-      description: "Hosted with the Consulate General of India, Munich, and several Indian community associations in Stuttgart.",
-    },
-    DE: {
-      title: "10. Internationaler Tag des Yoga",
-      location: "Berliner Platz, Stuttgart",
-      description: "Ausgerichtet mit dem Generalkonsulat von Indien, München, und mehreren indischen Gemeinschaftsvereinen in Stuttgart.",
-    }
-  },
-  {
-    id: "ruit-yoga-concept-2025",
-    image: "/events/01-ruit-presentation-the-yoga-concept.webp",
-    year: "2025",
-    EN: {
-      title: "\"The Yoga Concept\" Talk",
-      location: "Ruit, Ostfildern",
-      description: "A talk on holistic well-being, held as part of the International Weeks Against Racism.",
-    },
-    DE: {
-      title: "Vortrag „The Yoga Concept\"",
-      location: "Ruit, Ostfildern",
-      description: "Ein Vortrag über ganzheitliches Wohlbefinden im Rahmen der Internationalen Wochen gegen Rassismus.",
-    }
-  },
-  {
-    id: "scharnhausenpark-2025",
-    image: "/events/07-iyd-2025-scharnhausenpark-ostfildern.webp",
-    year: "2025",
-    featured: true,
-    EN: {
-      title: "International Day of Yoga — Chair Yoga",
-      location: "Bürgertreff Scharnhausenpark, Ostfildern",
-      description: "Richa presenting a Chair Yoga session, drawing on her certifications in holistic wellbeing coaching and healing.",
-    },
-    DE: {
-      title: "Internationaler Tag des Yoga — Stuhl-Yoga",
-      location: "Bürgertreff Scharnhausenpark, Ostfildern",
-      description: "Richa stellt eine Stuhl-Yoga-Sitzung vor, gestützt auf ihre Zertifizierungen im ganzheitlichen Wellbeing-Coaching und in der Heilarbeit.",
-    }
-  },
-  {
-    id: "kemnat-2026",
-    image: "/events/06-iyd-2026-kemnat-festhalle-ostfildern.webp",
-    year: "2026",
-    EN: {
-      title: "International Yoga Day 2026",
-      location: "Kemnat Festhalle, Ostfildern",
-      description: "Hosted by the Niramay Wohlbefinden Verein (association), with the full team leading poses, talks, and a closing ceremony.",
-    },
-    DE: {
-      title: "Internationaler Yoga-Tag 2026",
-      location: "Kemnat Festhalle, Ostfildern",
-      description: "Ausgerichtet vom Niramay Wohlbefinden Verein, mit dem gesamten Team bei Übungen, Vorträgen und einer Abschlusszeremonie.",
+      title: "Wöchentliche Yoga-Sitzung am Sonntagmorgen",
+      location: "Bürgertreff Scharnhauserpark, Ostfildern",
+      description: "Unser wöchentlicher Kurs sonntags um 8:30 Uhr für Kraft und Immunität – offen für alle.",
     }
   },
   {
@@ -3041,33 +2936,139 @@ export const EVENTS = [
     }
   },
   {
-    id: "scharnhauserpark-sunday",
-    image: "/events/12-scharnhauserpark-sunday-active-yoga.webp",
-    year: "Ongoing",
+    id: "kemnat-2026",
+    image: "/events/06-iyd-2026-kemnat-festhalle-ostfildern.webp",
+    year: "2026",
     EN: {
-      title: "Sunday Morning Active Yoga",
-      location: "Bürgertreff Scharnhauserpark, Ostfildern",
-      description: "Our weekly Sunday 8:30 am class for strength and an immunity boost — open to everyone.",
+      title: "International Yoga Day 2026",
+      location: "Kemnat Festhalle, Ostfildern",
+      description: "Hosted by the Niramay Wohlbefinden Verein (association), with the full team leading poses, talks, and a closing ceremony.",
     },
     DE: {
-      title: "Active Yoga am Sonntagmorgen",
-      location: "Bürgertreff Scharnhauserpark, Ostfildern",
-      description: "Unser wöchentlicher Kurs sonntags um 8:30 Uhr für Kraft und Immunität – offen für alle.",
+      title: "Internationaler Yoga-Tag 2026",
+      location: "Kemnat Festhalle, Ostfildern",
+      description: "Ausgerichtet vom Niramay Wohlbefinden Verein, mit dem gesamten Team bei Übungen, Vorträgen und einer Abschlusszeremonie.",
     }
   },
   {
-    id: "ruit-weekly",
-    image: "/events/02-ruit-weekly-sunday-session.webp",
-    year: "Ongoing",
+    id: "scharnhausenpark-2025",
+    image: "/events/07-iyd-2025-scharnhausenpark-ostfildern.webp",
+    year: "2025",
+    featured: true,
     EN: {
-      title: "Weekly Sunday Session",
-      location: "Ruit Treffpunkt, Ostfildern",
-      description: "Our regular Sunday evening class — join us for a consistent weekly practice.",
+      title: "International Day of Yoga — Chair Yoga",
+      location: "Bürgertreff Scharnhausenpark, Ostfildern",
+      description: "Richa presenting a Chair Yoga session, drawing on her certifications in holistic wellbeing coaching and healing.",
     },
     DE: {
-      title: "Wöchentliche Sonntagssitzung",
-      location: "Ruit Treffpunkt, Ostfildern",
-      description: "Unser regelmäßiger Sonntagabend-Kurs — machen Sie mit bei einer festen wöchentlichen Praxis.",
+      title: "Internationaler Tag des Yoga — Stuhl-Yoga",
+      location: "Bürgertreff Scharnhausenpark, Ostfildern",
+      description: "Richa stellt eine Stuhl-Yoga-Sitzung vor, gestützt auf ihre Zertifizierungen im ganzheitlichen Wellbeing-Coaching und in der Heilarbeit.",
+    }
+  },
+  {
+    id: "ruit-yoga-concept-2025",
+    image: "/events/01-ruit-presentation-the-yoga-concept.webp",
+    year: "2025",
+    EN: {
+      title: "\"The Yoga Concept\" Talk",
+      location: "Ruit, Ostfildern",
+      description: "A talk on holistic well-being, held as part of the International Weeks Against Racism.",
+    },
+    DE: {
+      title: "Vortrag „The Yoga Concept\"",
+      location: "Ruit, Ostfildern",
+      description: "Ein Vortrag über ganzheitliches Wohlbefinden im Rahmen der Internationalen Wochen gegen Rassismus.",
+    }
+  },
+  {
+    id: "stuttgart-berliner-platz-2024",
+    image: "/events/05-iyd-2024-berliner-platz-stuttgart.webp",
+    year: "2024",
+    EN: {
+      title: "10th International Day of Yoga",
+      location: "Berliner Platz, Stuttgart",
+      description: "Hosted with the Consulate General of India, Munich, and several Indian community associations in Stuttgart.",
+    },
+    DE: {
+      title: "10. Internationaler Tag des Yoga",
+      location: "Berliner Platz, Stuttgart",
+      description: "Ausgerichtet mit dem Generalkonsulat von Indien, München, und mehreren indischen Gemeinschaftsvereinen in Stuttgart.",
+    }
+  },
+  {
+    id: "stuttgart-vaihingen-2023",
+    image: "/events/04-iyd-2023-vaihingen-park-stuttgart.webp",
+    year: "2023",
+    EN: {
+      title: "International Day of Yoga",
+      location: "Stadtpark Vaihingen, Stuttgart",
+      description: "A public park gathering with 50 rounds of Sun Salutation, open to the whole community.",
+    },
+    DE: {
+      title: "Internationaler Tag des Yoga",
+      location: "Stadtpark Vaihingen, Stuttgart",
+      description: "Ein öffentliches Treffen im Park mit 50 Runden Sonnengruß, offen für die gesamte Gemeinschaft.",
+    }
+  },
+  {
+    id: "todtnau-2022",
+    image: "/events/03-iyd-2022-todtnau.webp",
+    year: "2022",
+    EN: {
+      title: "International Day of Yoga",
+      location: "Todtnau, Germany",
+      description: "An outdoor group session set against the Black Forest hills.",
+    },
+    DE: {
+      title: "Internationaler Tag des Yoga",
+      location: "Todtnau, Deutschland",
+      description: "Eine Gruppensitzung im Freien vor der Kulisse des Schwarzwalds.",
+    }
+  },
+  {
+    id: "certification-2020",
+    image: "/events/10-rijus-certification-course-2020.webp",
+    year: "2020",
+    EN: {
+      title: "Yoga Teacher Certification Course",
+      location: "Riju leading a practice demo",
+      description: "Riju guiding fellow trainees through an asana demonstration during his yoga certification training.",
+    },
+    DE: {
+      title: "Yogalehrer-Zertifizierungskurs",
+      location: "Riju bei einer Übungsdemonstration",
+      description: "Riju führt Mitauszubildende während seiner Yoga-Ausbildung durch eine Asana-Demonstration.",
+    }
+  },
+  {
+    id: "singapore-iyd-2019",
+    image: "/events/09-iyd-2019-singapore.webp",
+    year: "2019",
+    EN: {
+      title: "International Day of Yoga",
+      location: "Chong Pang, Singapore",
+      description: "A community yoga session for people of all ages, held in celebration of International Yoga Day.",
+    },
+    DE: {
+      title: "Internationaler Tag des Yoga",
+      location: "Chong Pang, Singapur",
+      description: "Eine Gemeinschafts-Yoga-Sitzung für Menschen jeden Alters anlässlich des Internationalen Yoga-Tages.",
+    }
+  },
+  {
+    id: "singapore-kids-2018",
+    image: "/events/08-kids-seaside-workshop-singapore-2018.webp",
+    year: "2018",
+    EN: {
+      title: "Kids Yoga Seaside Workshop",
+      location: "Singapore",
+      description: "Richa led a playful outdoor yoga workshop for children along the waterfront.",
+    },
+    DE: {
+      title: "Kinder-Yoga-Workshop am Meer",
+      location: "Singapur",
+      description: "Richa leitete einen spielerischen Yoga-Workshop für Kinder direkt am Wasser.",
     }
   },
 ];
