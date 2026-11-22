@@ -3025,6 +3025,37 @@ export const EVENTS = [
     }
   },
   {
+    // Participants are blurred in this photo; only the instructor (Riju) is shown.
+    id: "vhs-surya-namaskar-2026",
+    image: "/events/11-vhs-surya-namaskar-course-2026.webp",
+    year: "2026",
+    EN: {
+      title: "Surya Namaskar Course",
+      location: "VHS Ostfildern · Nov 14, 2026",
+      description: "Riju guiding a small group through the Sun Salutation in a VHS Ostfildern course — no prior experience needed.",
+    },
+    DE: {
+      title: "Surya-Namaskar-Kurs",
+      location: "VHS Ostfildern · 14. Nov. 2026",
+      description: "Riju führt eine kleine Gruppe in einem Kurs der VHS Ostfildern durch den Sonnengruß – ganz ohne Vorkenntnisse.",
+    }
+  },
+  {
+    id: "scharnhauserpark-sunday",
+    image: "/events/12-scharnhauserpark-sunday-active-yoga.webp",
+    year: "Ongoing",
+    EN: {
+      title: "Sunday Morning Active Yoga",
+      location: "Bürgertreff Scharnhauserpark, Ostfildern",
+      description: "Our weekly Sunday 8:30 am class for strength and an immunity boost — open to everyone.",
+    },
+    DE: {
+      title: "Active Yoga am Sonntagmorgen",
+      location: "Bürgertreff Scharnhauserpark, Ostfildern",
+      description: "Unser wöchentlicher Kurs sonntags um 8:30 Uhr für Kraft und Immunität – offen für alle.",
+    }
+  },
+  {
     id: "ruit-weekly",
     image: "/events/02-ruit-weekly-sunday-session.webp",
     year: "Ongoing",
