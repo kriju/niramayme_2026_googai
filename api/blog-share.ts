@@ -145,7 +145,37 @@ function articleBody(post: Post, lang: "EN" | "DE"): string {
         <p>${escapeHtml(author)}${date ? ` · <time datetime="${date}">${date}</time>` : ""}</p>
         ${blocks.join("\n        ")}
       </article>
+      ${relatedServicesHtml(post, lang)}
       <p><a href="${blogHome}">${lang === "DE" ? "Alle Beiträge" : "All posts"}</a></p></main>`;
+}
+
+// The "Related sessions" links BlogPostPage (src/App.tsx) shows under a
+// post, by its category, so they're in the no-JS HTML too. Keep in sync
+// with BLOG_RELATED_SERVICE_IDS and the services' titles in src/constants.ts.
+const SERVICE_TITLES: Record<string, { EN: string; DE: string }> = {
+  yoga: { EN: "Holistic Yoga", DE: "Ganzheitliches Yoga" },
+  reiki: { EN: "Reiki Energy Healing", DE: "Reiki-Energieheilung" },
+  "intuitive-guidance": { EN: "Intuitive Guidance & Soul Counseling", DE: "Intuitive Begleitung & Seelenberatung" },
+  tarot: { EN: "Tarot Guidance & Clarity Session", DE: "Tarot-Beratung & Klarheits-Sitzung" },
+  astrology: { EN: "Vedic Astrology & Kundali Reading", DE: "Vedische Astrologie & Kundali-Lesung" },
+};
+const RELATED_SERVICES: Record<string, string[]> = {
+  "Physical Wellness": ["yoga"],
+  "Chair Yoga": ["yoga"],
+  "Kids Yoga": ["yoga"],
+  "Spiritual Healing": ["reiki", "intuitive-guidance"],
+  "Mental Clarity": ["tarot", "intuitive-guidance"],
+  "Tarot Reading": ["tarot", "astrology"],
+  "Vedic Astrology": ["astrology", "tarot"],
+};
+const RELATED_FALLBACK = ["yoga", "reiki"];
+
+function relatedServicesHtml(post: Post, lang: "EN" | "DE"): string {
+  const ids = (typeof post.category === "string" && RELATED_SERVICES[post.category]) || RELATED_FALLBACK;
+  const prefix = lang === "DE" ? "/de" : "";
+  const links = ids.map(id => `<li><a href="${prefix}/services/${id}">${escapeHtml(SERVICE_TITLES[id][lang])}</a></li>`).join("");
+  const title = lang === "DE" ? "Passende Angebote — online & in Ostfildern" : "Related sessions — online & in Ostfildern";
+  return `<h2>${escapeHtml(title)}</h2><ul>${links}</ul>`;
 }
 
 let cachedShell: string | null = null;

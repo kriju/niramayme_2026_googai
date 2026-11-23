@@ -352,6 +352,7 @@ export const TRANSLATIONS = {
       breadcrumbBlog: "Blog",
       listenLabel: "Listen to this article",
       otherPostsTitle: "More Posts",
+      relatedServicesTitle: "Related sessions — online & in Ostfildern",
       byline: "Written by",
       authoredBy: "Article authored by",
       // Shown at /blog/:slug when that post exists only in German (e.g.
@@ -1198,6 +1199,7 @@ export const TRANSLATIONS = {
       breadcrumbBlog: "Blog",
       listenLabel: "Diesen Artikel anhören",
       otherPostsTitle: "Weitere Beiträge",
+      relatedServicesTitle: "Passende Angebote — online & in Ostfildern",
       byline: "Geschrieben von",
       authoredBy: "Artikel verfasst von",
       onlyInOther: "Dieser Artikel ist nur auf Englisch verfügbar.",
@@ -1757,6 +1759,22 @@ export const REVIEW_GROUPS: { key: string; categories: string[]; EN: string; DE:
   { key: "tarot", categories: ["Tarot Reading", "Vedic Astrology"], EN: "Tarot & Astrology", DE: "Tarot & Astrologie" },
 ];
 export const reviewGroupOf = (category?: string) => REVIEW_GROUPS.find(g => category && g.categories.includes(category))?.key;
+
+// Which service pages a blog post links to under "Related sessions", by the
+// post's category, so readers (and search engines) can go from an article
+// to the matching offer. Only services bookable online or hybrid are listed.
+// Keep in sync with RELATED_SERVICES in api/blog-share.ts, which renders
+// the same links into the server-side HTML.
+export const BLOG_RELATED_SERVICE_IDS: Record<string, string[]> = {
+  "Physical Wellness": ["yoga"],
+  "Chair Yoga": ["yoga"],
+  "Kids Yoga": ["yoga"],
+  "Spiritual Healing": ["reiki", "intuitive-guidance"],
+  "Mental Clarity": ["tarot", "intuitive-guidance"],
+  "Tarot Reading": ["tarot", "astrology"],
+  "Vedic Astrology": ["astrology", "tarot"],
+};
+export const BLOG_RELATED_SERVICE_FALLBACK = ["yoga", "reiki"];
 
 // Shown on their own page (/astrology-tarot) instead of the homepage's
 // services grid, so the homepage leads with yoga and holistic wellbeing.
