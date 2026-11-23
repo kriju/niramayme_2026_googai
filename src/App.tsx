@@ -58,7 +58,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { NavigationMenu } from "@base-ui/react/navigation-menu";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { SERVICES, ASTROLOGY_SERVICE_IDS, ASTROLOGY_PAGE_PATH, TESTIMONIALS, type ClientStory, FAQS, HEALER_CERTIFICATIONS, HEALER_IMAGES, TRANSLATIONS, REVIEW_GROUPS, reviewGroupOf, categoryLabel, ONGOING_SESSIONS, COURSES, EVENTS, ANNOUNCEMENTS, GOOGLE_REVIEW_URL, BUSINESS_STREET_ADDRESS, BUSINESS_POSTAL_CODE, BUSINESS_CITY, GOOGLE_MAPS_URL, GOOGLE_MAPS_EMBED_URL, HOME_SEO, serviceSeoTitle } from "./constants";
+import { SERVICES, ASTROLOGY_SERVICE_IDS, ASTROLOGY_PAGE_PATH, TESTIMONIALS, type ClientStory, FAQS, HEALER_CERTIFICATIONS, HEALER_IMAGES, TRANSLATIONS, REVIEW_GROUPS, reviewGroupOf, categoryLabel, ONGOING_SESSIONS, COURSES, EVENTS, ANNOUNCEMENTS, GOOGLE_REVIEW_URL, BUSINESS_STREET_ADDRESS, BUSINESS_POSTAL_CODE, BUSINESS_CITY, GOOGLE_MAPS_URL, GOOGLE_MAPS_EMBED_URL, HOME_SEO, serviceSeoTitle, BLOG_RELATED_SERVICE_IDS, BLOG_RELATED_SERVICE_FALLBACK } from "./constants";
 import { LEGAL_DOCS, LEGAL_LINK_LABELS, type LegalDocType, type LegalLink } from "./legal";
 import { BOOKING_LEGAL_TEXT, EMPTY_LEGAL_STATE, WITHDRAW_TEXT, isLegalComplete, toLegalAcks, type BookingLegalState } from "./legal/booking";
 import { LEGAL_CONFIG, vatPriceNote } from "./legal/config";
@@ -3207,6 +3207,9 @@ const BlogPostPage = () => {
   if (!post) return null;
 
   const authorName = post.author?.trim() || "Niramay";
+  const relatedServices = (BLOG_RELATED_SERVICE_IDS[post.category] ?? BLOG_RELATED_SERVICE_FALLBACK)
+    .map(id => SERVICES.find(s => s.id === id && !s.openInModal))
+    .filter(s => s !== undefined);
   const dateStr = post.createdAt?.toDate
     ? post.createdAt.toDate().toLocaleDateString(lang === "DE" ? "de-DE" : "en-US")
     : "";
@@ -3272,6 +3275,24 @@ const BlogPostPage = () => {
             <p className="font-semibold text-stone-600 mb-1">{bp.disclaimerTitle}</p>
             <p>{bp.disclaimer}</p>
           </aside>
+        )}
+
+        {relatedServices.length > 0 && (
+          <div className="mb-12">
+            <h2 className="text-2xl font-serif font-bold mb-6">{bp.relatedServicesTitle}</h2>
+            <div className="grid sm:grid-cols-2 gap-4">
+              {relatedServices.map(service => (
+                <Link
+                  key={service.id}
+                  to={`${prefix}/services/${service.id}`}
+                  className="flex items-center justify-between gap-3 p-4 rounded-xl border border-stone-100 hover:border-primary/30 hover:bg-stone-50 transition-colors group"
+                >
+                  <span className="font-medium">{service[lang].title}</span>
+                  <ArrowRight className="w-4 h-4 text-primary shrink-0 group-hover:translate-x-1 transition-transform" />
+                </Link>
+              ))}
+            </div>
+          </div>
         )}
 
         <div className="flex items-center gap-4 pt-8 border-t border-stone-100 mb-8">
